@@ -499,7 +499,7 @@ export default function ListTab({ trip, setTrip }) {
       />
 
       {/* ===== 永遠兩欄的分類區塊 ===== */}
-      <section className="grid grid-cols-2 gap-5 mb-6">
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {categories.map((cat) => renderCategoryCard(cat))}
         {renderOtherCard()}
       </section>
