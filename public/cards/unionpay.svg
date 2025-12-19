@@ -1,0 +1,11 @@
+<svg width="120" height="40" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
+<rect width="120" height="40" fill="white"/>
+
+<rect x="35" y="8" width="16" height="24" rx="3" fill="#016FD0"/>
+<rect x="51" y="8" width="16" height="24" rx="3" fill="#00A85A"/>
+<rect x="67" y="8" width="16" height="24" rx="3" fill="#D81E06"/>
+
+<text x="38" y="26" fill="white" font-family="Arial Black, sans-serif" font-size="13">U</text>
+<text x="55" y="26" fill="white" font-family="Arial Black, sans-serif" font-size="13">P</text>
+<text x="72" y="26" fill="white" font-family="Arial Black, sans-serif" font-size="13">C</text>
+</svg>

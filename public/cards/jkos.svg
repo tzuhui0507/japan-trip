@@ -1,0 +1,8 @@
+<svg width="120" height="40" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
+<rect width="120" height="40" fill="white"/>
+
+<rect x="35" y="8" width="50" height="24" rx="4" fill="#E53F3F"/>
+<text x="42" y="27" fill="white" font-family="Arial Black, sans-serif" font-size="14">
+街口
+</text>
+</svg>

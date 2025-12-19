@@ -1,0 +1,7 @@
+<svg width="120" height="40" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
+<rect width="120" height="40" fill="white"/>
+<rect x="30" y="8" width="60" height="24" rx="3" fill="#2E77BB"/>
+<text x="44" y="27" fill="white" font-family="Arial Black, sans-serif" font-size="14" letter-spacing="1">
+AMEX
+</text>
+</svg>
