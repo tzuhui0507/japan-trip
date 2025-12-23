@@ -447,8 +447,8 @@ className={`w-4 h-4 mb-1 ${loadingRate ? "animate-spin" : ""}`}
 
       {/* 左側 — 信用卡 icon + 標題（靠左下） */}
       <div className="flex items-center gap-2">
-        <CreditCard className="w-8 h-8 text-[#917c64]" />
-        <p className="text-[24px] font-semibold text-[#5A4636]">
+        <CreditCard className="w-7 h-7 text-[#917c64]" />
+        <p className="text-[20px] font-semibold text-[#5A4636]">
           {activeCard?.name}
         </p>
       </div>
