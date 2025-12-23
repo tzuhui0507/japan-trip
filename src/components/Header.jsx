@@ -62,24 +62,24 @@ export default function Header({ trip, setTrip }) {
         <div className="relative py-6 text-center">
 
           {/* ===== 右上角 icon 操作 ===== */}
-          <div className="absolute top-4 right-4 flex items-center gap-3">
+          <div className="absolute top-3 right-3 flex items-center gap-2">
             {/* 分享 Viewer */}
             <button
               onClick={handleShare}
-              className="w-9 h-9 rounded-full border border-[#D8CFC4] bg-white flex items-center justify-center hover:bg-[#F7F1EB]"
+              className="w-8 h-8 rounded-full border border-[#D8CFC4] bg-white flex items-center justify-center hover:bg-[#F7F1EB]"
               title="分享 Viewer"
             >
-              <Link className="w-4 h-4 text-[#8C6A4F]" />
+              <Link className="w-3.5 h-3.5 text-[#8C6A4F]" />
             </button>
 
             {/* 匯出（Owner only） */}
             {!isViewer && (
               <button
                 onClick={handleExport}
-                className="w-9 h-9 rounded-full border border-[#D8CFC4] bg-white flex items-center justify-center hover:bg-[#F7F1EB]"
+                className="w-8 h-8 rounded-full border border-[#D8CFC4] bg-white flex items-center justify-center hover:bg-[#F7F1EB]"
                 title="匯出行程"
               >
-                <Upload className="w-4 h-4 text-[#8C6A4F]" />
+                <Upload className="w-3.5 h-3.5 text-[#8C6A4F]" />
               </button>
             )}
 
@@ -87,10 +87,10 @@ export default function Header({ trip, setTrip }) {
             {!isViewer && (
               <button
                 onClick={() => setShowImport(true)}
-                className="w-9 h-9 rounded-full border border-dashed border-[#D8CFC4] bg-white flex items-center justify-center hover:bg-[#F7F1EB]"
+                className="w-8 h-8 rounded-full border border-dashed border-[#D8CFC4] bg-white flex items-center justify-center hover:bg-[#F7F1EB]"
                 title="匯入行程"
               >
-                <Download className="w-4 h-4 text-[#8C6A4F]" />
+                <Download className="w-3.5 h-3.5 text-[#8C6A4F]" />
               </button>
             )}
           </div>
