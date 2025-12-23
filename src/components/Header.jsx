@@ -14,7 +14,7 @@ export default function Header({ trip, setTrip }) {
   const [showImport, setShowImport] = useState(false);
   const [importText, setImportText] = useState("");
 
-  // ===== 分享 Viewer 連結 =====
+  // ===== 分享 Viewer 連結（Owner only）=====
   const handleShare = async () => {
     const url = new URL(window.location.href);
     url.searchParams.set("mode", "viewer");
@@ -27,7 +27,7 @@ export default function Header({ trip, setTrip }) {
     }
   };
 
-  // ===== 匯出 =====
+  // ===== 匯出（Owner only）=====
   const handleExport = async () => {
     try {
       const data = JSON.stringify(trip, null, 2);
@@ -38,7 +38,7 @@ export default function Header({ trip, setTrip }) {
     }
   };
 
-  // ===== 匯入 =====
+  // ===== 匯入（Owner / Viewer 都可）=====
   const handleImport = () => {
     try {
       const parsed = JSON.parse(importText);
@@ -63,16 +63,19 @@ export default function Header({ trip, setTrip }) {
 
           {/* ===== 右上角 icon 操作 ===== */}
           <div className="absolute top-3 right-3 flex items-center gap-2">
-            {/* 分享 Viewer */}
-            <button
-              onClick={handleShare}
-              className="w-8 h-8 rounded-full border border-[#D8CFC4] bg-white flex items-center justify-center hover:bg-[#F7F1EB]"
-              title="分享 Viewer"
-            >
-              <Link className="w-3.5 h-3.5 text-[#8C6A4F]" />
-            </button>
+            
+            {/* 🔗 分享 Viewer（Owner only） */}
+            {!isViewer && (
+              <button
+                onClick={handleShare}
+                className="w-8 h-8 rounded-full border border-[#D8CFC4] bg-white flex items-center justify-center hover:bg-[#F7F1EB]"
+                title="分享 Viewer"
+              >
+                <Link className="w-3.5 h-3.5 text-[#8C6A4F]" />
+              </button>
+            )}
 
-            {/* 匯出（Owner only） */}
+            {/* 📤 匯出（Owner only） */}
             {!isViewer && (
               <button
                 onClick={handleExport}
@@ -83,16 +86,14 @@ export default function Header({ trip, setTrip }) {
               </button>
             )}
 
-            {/* 匯入（Owner only） */}
-            {!isViewer && (
-              <button
-                onClick={() => setShowImport(true)}
-                className="w-8 h-8 rounded-full border border-dashed border-[#D8CFC4] bg-white flex items-center justify-center hover:bg-[#F7F1EB]"
-                title="匯入行程"
-              >
-                <Download className="w-3.5 h-3.5 text-[#8C6A4F]" />
-              </button>
-            )}
+            {/* 📥 匯入（Owner / Viewer 都可） */}
+            <button
+              onClick={() => setShowImport(true)}
+              className="w-8 h-8 rounded-full border border-dashed border-[#D8CFC4] bg-white flex items-center justify-center hover:bg-[#F7F1EB]"
+              title="匯入行程"
+            >
+              <Download className="w-3.5 h-3.5 text-[#8C6A4F]" />
+            </button>
           </div>
 
           {/* ===== 中央標題 ===== */}
