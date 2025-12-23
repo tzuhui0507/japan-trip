@@ -195,7 +195,7 @@ return (
   <ShareModeProvider mode={trip.shareMode}>
     <div className="pb-20">
       <ShareModeBanner mode={trip.shareMode} />
-      <Header trip={trip} />
+      <Header trip={trip} setTrip={setTrip} />
 
       <div className="h-32" />
 
