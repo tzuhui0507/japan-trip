@@ -126,6 +126,11 @@ const DEFAULT_TRIP = {
 };
 
 export default function TripDetail() {
+const params = new URLSearchParams(window.location.search);
+const modeFromUrl = params.get("mode");
+
+const shareMode = modeFromUrl === "viewer" ? "viewer" : "owner";
+
 const [trip, setTrip] = useState(null);
 const [tab, setTab] = useState("PLAN");
 
@@ -133,13 +138,15 @@ const [tab, setTab] = useState("PLAN");
 // 初次載入：只做一次
 // ============================================================
 useEffect(() => {
-const raw = localStorage.getItem(STORAGE_KEY);
-if (raw) {
-setTrip(JSON.parse(raw));
-} else {
-localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_TRIP));
-setTrip(DEFAULT_TRIP);
-}
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+   const parsed = JSON.parse(raw);
+   setTrip({ ...parsed, shareMode });
+  } else {
+   const init = { ...DEFAULT_TRIP, shareMode };
+   localStorage.setItem(STORAGE_KEY, JSON.stringify(init));
+   setTrip(init);
+  }
 }, []);
 
 // ============================================================
@@ -184,10 +191,8 @@ switch (tab) {
   }
 };
 
-const isShareLink = false; // ⬅️ 先寫死，之後再接 URL
-
 return (
-  <ShareModeProvider mode={isShareLink ? "share" : "owner"}>
+  <ShareModeProvider mode={trip.shareMode}>
     <div className="pb-20">
       <ShareModeBanner mode={trip.shareMode} />
       <Header trip={trip} />
