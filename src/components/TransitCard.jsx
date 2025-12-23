@@ -78,7 +78,7 @@ const ShinkansenIcon = ({ className = "w-4 h-4", stroke = "#8C6A4F" }) => (
   </svg>
 );
  
-function TransitCard({ id, defaultData, onUpdate }) {
+function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
   const [legs, setLegs] = useState(() => {
     if (defaultData?.legs) return defaultData.legs;
     return [{ id: "1", mode: "train", duration: "10" }];
@@ -108,6 +108,7 @@ function TransitCard({ id, defaultData, onUpdate }) {
   }, [legs]);
 
   const commitUpdate = () => {
+    if (isViewer) return;
     onUpdate && onUpdate(id, { legs });
   };
 
@@ -158,16 +159,16 @@ function TransitCard({ id, defaultData, onUpdate }) {
   };
 
   const updateLeg = (legId, key, value) => {
+    if (isViewer) return;
     setIsEditing(true);
-
     setLegs((prev) =>
       prev.map((l) => (l.id === legId ? { ...l, [key]: value } : l))
     );
   };
 
   const addLeg = () => {
+    if (isViewer) return;
     setIsEditing(true);
-
     setLegs((prev) => [
       ...prev,
       { id: Date.now().toString(), mode: "train", duration: "5" },
@@ -175,22 +176,19 @@ function TransitCard({ id, defaultData, onUpdate }) {
   };
 
   const removeLeg = (legId) => {
+    if (isViewer) return;
     setIsEditing(true);
-
     setLegs((prev) => prev.filter((l) => l.id !== legId));
   };
   
   const toggleMode = (legId) => {
+    if (isViewer) return;
     setIsEditing(true);
-
     const MODES = ["train", "shinkansen", "walk", "taxi", "bus", "plane"];
     setLegs((prev) =>
       prev.map((l) =>
         l.id === legId
-          ? {
-              ...l,
-              mode: MODES[(MODES.indexOf(l.mode) + 1) % MODES.length],
-            }
+          ? { ...l, mode: MODES[(MODES.indexOf(l.mode) + 1) % MODES.length] }
           : l
       )
     );
@@ -250,7 +248,7 @@ function TransitCard({ id, defaultData, onUpdate }) {
       {/* 外框＋摘要列 */}
       <div
         onClick={() => {
-          if (isExpanded) commitUpdate(); // 👈 收起時才存
+          if (!isViewer && isExpanded) commitUpdate(); // 👈 收起時才存
           setIsExpanded((v) => !v);
         }}
         className="flex bg-white border border-[#E5D5C5] rounded-lg px-3 py-2 shadow-sm cursor-pointer w-full"
@@ -280,7 +278,7 @@ function TransitCard({ id, defaultData, onUpdate }) {
       </div>
 
       {/* 展開版編輯區 */}
-      {isExpanded && (
+      {isExpanded && !isViewer && (
         <div className="mt-3 ml-1 bg-white border border-[#E5D5C5] rounded-2xl p-4 shadow-lg w-full max-w-[350px]">
           <h4 className="text-[11px] font-bold text-[#8C6A4F]/70 tracking-widest mb-3">
             編輯交通方式

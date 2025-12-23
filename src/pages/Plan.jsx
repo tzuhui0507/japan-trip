@@ -623,12 +623,12 @@ export default function Plan({ trip, setTrip }) {
                         </div>
 
                                       {/* Transit Card */}
-                                      {index < currentItems.length - 1 && !isViewer && (
+                                      {index < currentItems.length - 1 && (
                                         <TransitCard
                                           id={item.transit?.id ?? `transit-${item.id}`}
                                           defaultData={item.transit}
                                           onUpdate={(transitId, data) => {
-                                            if (isViewer) return;
+                                            if (isViewer) return; // Viewer 防呆 (保留)
                                             setDays((prev) => {
                                               const next = structuredClone(prev);
                                               const day = next[activeDayIndex];
@@ -655,6 +655,7 @@ export default function Plan({ trip, setTrip }) {
                                               return next;
                                             });
                                           }}
+                                          isViewer={isViewer}
                                         />
                                       )}
                                     </div>

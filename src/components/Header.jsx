@@ -1,3 +1,4 @@
+// src/components/Header.jsx
 import React, { useState } from "react";
 
 const STORAGE_KEY = "trip_local_v1";
@@ -12,12 +13,34 @@ export default function Header({ trip, setTrip }) {
   const [showImport, setShowImport] = useState(false);
   const [importText, setImportText] = useState("");
 
-  // ===== 匯出 =====
+  // ===== 匯出（純 JSON）=====
   const handleExport = async () => {
     try {
       const data = JSON.stringify(trip, null, 2);
       await navigator.clipboard.writeText(data);
       alert("✅ 行程已複製，請貼給朋友");
+    } catch {
+      alert("❌ 複製失敗，請手動複製");
+    }
+  };
+
+  // ===== ⭐ 分享 Viewer（連結 + JSON）=====
+  const handleShareViewer = async () => {
+    try {
+      const viewerUrl = `${window.location.origin}${window.location.pathname}?mode=viewer`;
+      const data = JSON.stringify(trip, null, 2);
+
+      const text = `📍 日本行程分享（查看模式）
+
+🔗 行程連結（先開）：
+${viewerUrl}
+
+📦 行程資料（複製全部 → 在頁面點「匯入行程」貼上）：
+${data}
+`;
+
+      await navigator.clipboard.writeText(text);
+      alert("✅ Viewer 連結＋行程資料已複製，直接貼給朋友即可！");
     } catch {
       alert("❌ 複製失敗，請手動複製");
     }
@@ -32,7 +55,7 @@ export default function Header({ trip, setTrip }) {
         throw new Error("Invalid format");
       }
 
-      // 保留目前的 shareMode（避免被覆蓋）
+      // ⭐ 保留目前的 shareMode（避免被覆蓋）
       const nextTrip = {
         ...parsed,
         shareMode: trip.shareMode,
@@ -44,7 +67,7 @@ export default function Header({ trip, setTrip }) {
       setShowImport(false);
       setImportText("");
       alert("✅ 行程匯入成功！");
-    } catch (e) {
+    } catch {
       alert("❌ JSON 格式錯誤，請確認內容");
     }
   };
@@ -72,8 +95,18 @@ export default function Header({ trip, setTrip }) {
         </p>
 
         {/* ===== 操作按鈕 ===== */}
-        <div className="mt-3 flex justify-center gap-2">
-          {/* 匯出（只有 Owner 顯示） */}
+        <div className="mt-3 flex flex-wrap justify-center gap-2">
+          {/* ⭐ 分享 Viewer（只有 Owner） */}
+          {!isViewer && (
+            <button
+              onClick={handleShareViewer}
+              className="px-3 py-1.5 text-xs rounded-full bg-[#8C6A4F] text-white hover:opacity-90"
+            >
+              🔗 分享給朋友（Viewer）
+            </button>
+          )}
+
+          {/* 匯出（只有 Owner） */}
           {!isViewer && (
             <button
               onClick={handleExport}
