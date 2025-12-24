@@ -538,7 +538,7 @@ export default function Plan({ trip, setTrip }) {
                                         ? id
                                         : trip.tickets?.find((t) => t.id === id);
 
-                                    if (!ticket) return null;
+                                    if (!ticket || !ticket.id) return null;
 
                                     const meta =
                                       TICKET_META[ticket.type] || {
@@ -691,10 +691,20 @@ export default function Plan({ trip, setTrip }) {
           tickets={trip.tickets || []} // ⭐ 關鍵
           onClose={() => setEditingItem(null)}
           onSave={(updated) => {
+            // ✅ 票券結構正規化（防白畫面）
+            const normalized = {
+              ...updated,
+              ticketIds: Array.isArray(updated.ticketIds)
+                ? updated.ticketIds.filter(Boolean).map((t) =>
+                    typeof t === "object" ? t.id : t
+                  )
+                : [],
+            };
+
             const newDays = [...days];
             const list = [...newDays[activeDayIndex].items];
-            const idx = list.findIndex((i) => i.id === updated.id);
-            if (idx !== -1) list[idx] = updated;
+            const idx = list.findIndex((i) => i.id === normalized.id);
+            if (idx !== -1) list[idx] = normalized;
 
             newDays[activeDayIndex].items = list;
             setDays(newDays);
