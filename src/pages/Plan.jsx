@@ -147,7 +147,7 @@ export default function Plan({ trip, setTrip }) {
       time: "09:00",
       type: "ATTRACTION",
       title: "新的行程",
-      ticket:"",
+      ticketIds: [],
       subtitle: "",
       address: "",
       openingHours: "",
@@ -450,9 +450,10 @@ export default function Plan({ trip, setTrip }) {
 
                           {/* Card */}
                           <div
-                            onClick={() =>
+                            onClick={() => {
+                              if (isViewer) return;
                               setSlideOpenId(isOpen ? null : item.id)
-                            }
+                            }}
                             style={{
                               transform: isOpen
                                 ? "translateX(-100px)"
@@ -535,7 +536,7 @@ export default function Plan({ trip, setTrip }) {
                                     const ticket =
                                       typeof id === "object"
                                         ? id
-                                        : trip.tickets.find((t) => t.id === id);
+                                        : trip.tickets?.find((t) => t.id === id);
 
                                     if (!ticket) return null;
 
@@ -555,7 +556,7 @@ export default function Plan({ trip, setTrip }) {
                                         type="button"
                                         onClick={(e) => {
                                           e.stopPropagation(); // ⭐ 關鍵：阻止左滑
-                                          setTrip((p) => ({ ...p, viewTicket: ticket }))
+                                          setViewTicket(ticket)
                                         }}
                                         className="
                                           inline-flex items-center gap-1.5

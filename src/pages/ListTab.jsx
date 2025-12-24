@@ -255,24 +255,24 @@ export default function ListTab({ trip, setTrip }) {
   const renderCategoryCard = (cat) => (
     <div
       key={cat.id}
-      className="bg-[#FFFDFA] rounded-[28px] shadow-sm overflow-hidden border border-[#E5D5C5] flex flex-col"
+      className="bg-[#FFFDFA] rounded-[18px] shadow-sm overflow-hidden border border-[#E5D5C5] flex flex-col"
     >
       {/* Header */}
       <div
-        className="h-16 px-6 relative flex items-center justify-center"
+        className="h-12 px-4 relative flex items-center justify-center"
         style={{ backgroundColor: cat.color }}
       >
         <span className="absolute left-6 w-2 h-2 rounded-full bg-white/75" />
         <span className="absolute right-6 w-2 h-2 rounded-full bg-white/75" />
 
-        <span className="text-xl font-bold tracking-[0.15em] text-white text-center">
+        <span className="text-sm font-bold tracking-[0.12em] text-white text-center">
           {cat.title}
         </span>
       </div>
 
       {/* Body */}
       <div
-        className="flex-1 px-6 py-4"
+        className="flex-1 px-4 py-3"
         style={{
           backgroundImage:
             "radial-gradient(circle, #E9DED3 1px, transparent 0)",
@@ -290,25 +290,25 @@ export default function ListTab({ trip, setTrip }) {
                 key={item.id}
                 type="button"
                 onClick={() => toggleItem(cat.id, item.id)}
-                className="w-full flex items-center gap-3 text-left"
+                className="w-full flex items-center gap-2 text-left"
               >
                 <span
-                  className={`w-5 h-5 rounded-md border flex items-center justify-center ${
+                  className={`w-4 h-4 rounded-md border flex items-center justify-center ${
                     checked
                       ? "bg-[#91867A] border-[#D5C7B8]"
                       : "bg-white border-[#D5C7B8]"
                   }`}
                 >
                   {checked && (
-                    <Check className="w-3 h-3 text-white stroke-[3]" />
+                    <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
                   )}
                 </span>
 
                 <span
                   className={
                     checked
-                      ? "text-[15px] text-[#B3A496] line-through"
-                      : "text-[15px] text-[#4F3B2B]"
+                      ? "text-[13px] text-[#B3A496] line-through"
+                      : "text-[13px] text-[#4F3B2B]"
                   }
                 >
                   {item.label}
@@ -322,21 +322,21 @@ export default function ListTab({ trip, setTrip }) {
   );
 
   const renderOtherCard = () => (
-    <div className="bg-[#FFFDFA] rounded-[28px] shadow-sm overflow-hidden border border-[#E5D5C5] flex flex-col">
+    <div className="bg-[#FFFDFA] rounded-[18px] shadow-sm overflow-hidden border border-[#E5D5C5] flex flex-col">
       <div
-        className="h-16 px-6 relative flex items-center justify-center"
+        className="h-12 px-4 relative flex items-center justify-center"
         style={{ backgroundColor: "#A46875" }}
       >
         <span className="absolute left-6 w-2 h-2 rounded-full bg-white/75" />
         <span className="absolute right-6 w-2 h-2 rounded-full bg-white/75" />
 
-        <span className="text-xl font-bold tracking-[0.15em] text-white">
+        <span className="text-sm font-bold tracking-[0.15em] text-white">
           其他
         </span>
       </div>
 
       <div
-        className="flex-1 px-6 pt-4 pb-4 flex flex-col gap-3"
+        className="flex-1 px-4 pt-3 pb-3 flex flex-col gap-3"
         style={{
           backgroundImage:
             "radial-gradient(circle, #E9DED3 1px, transparent 0)",
@@ -346,7 +346,7 @@ export default function ListTab({ trip, setTrip }) {
       >
         <div className="space-y-2 min-h-[96px]">
           {otherCustom.length === 0 ? (
-            <p className="text-sm text-[#C0AFA0] italic text-center mt-4">
+            <p className="text-xs text-[#C0AFA0] italic text-center mt-4">
               ＊暫無項目，請新增
             </p>
           ) : (
@@ -433,11 +433,11 @@ export default function ListTab({ trip, setTrip }) {
   );
 
   const renderBagCard = (bag) => {
-    const isOpen = bagSlideId === bag.id;
-    const Icon = getBagIcon(bag);
+    const isOpen = !isViewer && bagSlideId === bag.id;
 
     return (
       <div key={bag.id} className="relative">
+      {!isViewer && (
         <div
           className={`absolute top-1/2 right-4 -translate-y-1/2 flex gap-2 transition-all ${
             isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -456,13 +456,19 @@ export default function ListTab({ trip, setTrip }) {
             <Trash2 className="w-4 h-4 text-white" />
           </button>
         </div>
+      )}
 
         <div
-          onClick={() => setBagSlideId(isOpen ? null : bag.id)}
+          onClick={() => {
+            if (isViewer) return;
+            setBagSlideId(isOpen ? null : bag.id);
+          }}
           style={{
             transform: isOpen ? "translateX(-100px)" : "translateX(0)",
           }}
-          className="relative bg-[#FFFCF7] rounded-3xl border border-dashed border-[#E1D3C5] px-5 py-4 shadow-sm"
+          className={`relative bg-[#FFFCF7] rounded-3xl border border-dashed border-[#E1D3C5] px-5 py-4 shadow-sm ${
+            isViewer ? "cursor-default" : "cursor-pointer"
+          }`}
         >
           <div className="flex items-center gap-3 mb-1">
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#B7A591]/10 border border-[#B7A591]/40 text-xs text-[#8C6A4F]">
@@ -499,13 +505,13 @@ export default function ListTab({ trip, setTrip }) {
       />
 
       {/* ===== 永遠兩欄的分類區塊 ===== */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <section className="grid grid-cols-2 gap-3">
         {categories.map((cat) => renderCategoryCard(cat))}
         {renderOtherCard()}
       </section>
 
       {/* 下方托運／隨身卡片 */}
-      <section className="mt-4 bg-[#FFF9F2] border border-[#E5D5C5] rounded-[32px] px-5 py-6">
+      <section className="mt-4 bg-[#FFF9F2] border border-[#E5D5C5] rounded-[18px] px-5 py-6">
         <div className="space-y-4">
           {bags.map((bag) => renderBagCard(bag))}
         </div>
