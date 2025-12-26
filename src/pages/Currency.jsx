@@ -412,7 +412,6 @@ className={`w-4 h-4 mb-1 ${loadingRate ? "animate-spin" : ""}`}
 
     {/* 上排：LOGO + 主卡星星 */}
     <div className="flex items-center justify-between mb-3">
-      {/* 卡組織 LOGO */}
       <div className="flex items-center gap-2">
         {activeCard && getOrgLogoSrc(activeCard.org) ? (
           <img
@@ -427,7 +426,6 @@ className={`w-4 h-4 mb-1 ${loadingRate ? "animate-spin" : ""}`}
         )}
       </div>
 
-      {/* 主卡星星 */}
       <button
         onClick={() => setPrimaryCard(activeCard.id)}
         className="w-8 h-8 rounded-full bg-white/80 border border-[#E5D5C5] flex items-center justify-center"
@@ -442,47 +440,50 @@ className={`w-4 h-4 mb-1 ${loadingRate ? "animate-spin" : ""}`}
       </button>
     </div>
 
-    {/* 主列：左側標題 + 右側（手續費 + 回饋 + 金額） */}
-    <div className="flex justify-between items-end">
+    {/* 🔑 核心：Grid 兩列結構 */}
+    <div className="grid grid-rows-[auto_auto] gap-3">
 
-      {/* 左側 — 信用卡 icon + 標題（靠左下） */}
-      <div className="flex items-center gap-2">
-        <CreditCard className="w-7 h-7 text-[#917c64]" />
-        <p className="text-[20px] font-semibold text-[#5A4636]">
-          {activeCard?.name}
-        </p>
-      </div>
-
-      {/* 右側 — 手續費 + 回饋金 + 金額 */}
-      <div className="text-right leading-tight">
-
-        {/* 手續費 */}
-        <p className="text-[11px] text-[#a59c93]">
+      {/* 第 1 列：手續費 / 回饋（只會撐高，不會壓） */}
+      <div className="text-right text-[11px] text-[#a59c93] leading-snug">
+        <div>
           手續費：+{feeAmount.toFixed(2)} TWD（{feePercent.toFixed(1)}%）
-        </p>
-
-        {/* 回饋返還 */}
-        <p className="text-[11px] text-[#a59c93] mb-1">
+        </div>
+        <div>
           回饋返還：-{cashbackAmount.toFixed(2)} TWD（
           {cashbackPercent.toFixed(1)}%）
-        </p>
+        </div>
+      </div>
 
-        {/* 大金額 */}
-        <p
-          className="text-4xl font-extrabold"
-          style={{
-            background: "linear-gradient(90deg, #9C744F, #C58B4B)",
-            WebkitBackgroundClip: "text",
-            color: "transparent",
-          }}
-        >
-          {cardResultInt}
-        </p>
-        <p className="text-[12px] text-[#5A4636]">新台幣 TWD</p>
+      {/* 第 2 列：卡名 + 金額 */}
+      <div className="flex items-end justify-between">
+
+        {/* 左側：卡名 */}
+        <div className="flex items-center gap-2 min-w-0">
+          <CreditCard className="w-7 h-7 text-[#917c64]" />
+          <p className="text-[20px] font-semibold text-[#5A4636] truncate">
+            {activeCard?.name}
+          </p>
+        </div>
+
+        {/* 右側：金額 */}
+        <div className="text-right">
+          <p
+            className="text-4xl font-extrabold leading-none"
+            style={{
+              background: "linear-gradient(90deg, #9C744F, #C58B4B)",
+              WebkitBackgroundClip: "text",
+              color: "transparent",
+            }}
+          >
+            {cardResultInt}
+          </p>
+          <p className="text-[12px] text-[#5A4636] mt-1">
+            新台幣 TWD
+          </p>
+        </div>
 
       </div>
     </div>
-
   </div>
 </section>
 

@@ -32,6 +32,27 @@ export default function Plan({ trip, setTrip }) {
 
   const tickets = trip?.tickets || [];
 
+  const fetchGeoByLocation = async (name) => {
+    if (!name) return null;
+
+    try {
+      const res = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
+          name
+        )}&count=1&language=ja`
+      );
+      const data = await res.json();
+
+      if (!data.results || data.results.length === 0) return null;
+
+      const { latitude, longitude } = data.results[0];
+      return { latitude, longitude };
+    } catch (e) {
+      console.error("Geocoding failed", e);
+      return null;
+    }
+  };
+
   // ============================================================
   // 依 startDate / endDate 生成 Days
   // ============================================================
@@ -70,14 +91,14 @@ export default function Plan({ trip, setTrip }) {
   };
 
   const [days, setDays] = useState(generateDays());
-  const [activeDayIndex, setActiveDayIndex] = useState(trip.activeDayIndex || 0);
+  // ⭐ 單一來源：從 TripDetail 來
+  const activeDayIndex = trip.activeDayIndex ?? 0;
 
   useEffect(() => {
     if (trip.days && trip.days.length > 0) return;
 
     const newDays = generateDays();
     setDays(newDays);
-    setActiveDayIndex(0);
 
     setTrip((prev) => ({
       ...prev,
@@ -89,7 +110,6 @@ export default function Plan({ trip, setTrip }) {
   const currentDay = days[activeDayIndex];
 
   const switchDay = (i) => {
-    setActiveDayIndex(i);
     if (isViewer) return;
     setTrip((p) => ({ ...p, activeDayIndex: i }));
   };
@@ -110,32 +130,67 @@ export default function Plan({ trip, setTrip }) {
   };
 
   useEffect(() => {
-    if (!currentDay) return;
-    const { latitude, longitude } = currentDay;
+    if (!currentDay?.heroLocation) return;
 
-    async function fetchWeather() {
+    async function geocode() {
       try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,weathercode&forecast_days=1&timezone=Asia%2FTokyo`;
-        const res = await fetch(url);
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+            currentDay.heroLocation
+          )}`
+        );
         const data = await res.json();
 
-        const list = data.hourly.time.map((t, index) => {
-          const hour = new Date(t).getHours();
-          return {
-            timeLabel: `${String(hour).padStart(2, "0")}:00`,
-            temp: Math.round(data.hourly.temperature_2m[index]),
-            code: data.hourly.weathercode[index],
-          };
-        });
+        if (!data || data.length === 0) return;
 
-        setWeatherHourly(list);
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+
+        // ⚠️ 重點：真的把座標寫回 day
+        setDays((prev) => {
+          const next = structuredClone(prev);
+          next[activeDayIndex].latitude = lat;
+          next[activeDayIndex].longitude = lon;
+          next[activeDayIndex].weatherLocation = currentDay.heroLocation;
+
+          // 同步存回 trip
+          setTrip((t) => ({ ...t, days: next }));
+          return next;
+        });
       } catch (e) {
-        console.error(e);
+        console.error("Geocoding failed", e);
       }
     }
 
+    geocode();
+  }, [currentDay?.heroLocation]);
+
+  useEffect(() => {
+    if (!currentDay?.latitude || !currentDay?.longitude) return;
+
+    async function fetchWeather() {
+    try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentDay.latitude}&longitude=${currentDay.longitude}&hourly=temperature_2m,weathercode&forecast_days=1&timezone=Asia%2FTokyo`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const list = data.hourly.time.map((t, index) => {
+    const hour = new Date(t).getHours();
+    return {
+    timeLabel: `${String(hour).padStart(2, "0")}:00`,
+    temp: Math.round(data.hourly.temperature_2m[index]),
+    code: data.hourly.weathercode[index],
+    };
+    });
+
+    setWeatherHourly(list);
+    } catch (e) {
+    console.error(e);
+    }
+    }
+
     fetchWeather();
-  }, [currentDay?.id]);
+    }, [currentDay?.latitude, currentDay?.longitude]);
 
   // ============================================================
   // 行程 CRUD
@@ -229,10 +284,24 @@ export default function Plan({ trip, setTrip }) {
   // ------------------------------
   const [editingHero, setEditingHero] = useState(null);
 
-  const saveHero = (updatedDay) => {
+  const saveHero = async (updatedDay) => {
     if (isViewer) return;
+
+    let nextDay = { ...updatedDay };
+
+    // 地標 → 經緯度 → 天氣用
+    if (updatedDay.heroLocation) {
+    const geo = await fetchGeoByLocation(updatedDay.heroLocation);
+    if (geo) {
+    nextDay.latitude = geo.latitude;
+    nextDay.longitude = geo.longitude;
+    nextDay.weatherLocation = updatedDay.heroLocation;
+    }
+    }
+
     const newDays = [...days];
-    newDays[activeDayIndex] = updatedDay;
+    newDays[activeDayIndex] = nextDay;
+
     setDays(newDays);
     setTrip((p) => ({ ...p, days: newDays }));
     setEditingHero(null);
@@ -326,40 +395,6 @@ export default function Plan({ trip, setTrip }) {
 
           </div>
         </div>
-      </div>
-
-      {/* ---------------- Day Tabs ---------------- */}
-      <div className="flex justify-between mb-4">
-        {days.map((day, index) => {
-          const active = index === activeDayIndex;
-          return (
-            <button
-              key={day.id}
-              onClick={() => switchDay(index)}
-              className="flex-1 flex flex-col items-center"
-            >
-              <span
-                className={`text-[11px] tracking-[0.3em] ${
-                  active ? "text-[#5A4636]" : "text-[#D1C2B3]"
-                }`}
-              >
-                {day.weekday}
-              </span>
-              <span
-                className={`mt-1 text-xl ${
-                  active ? "text-[#5A4636]" : "text-[#D1C2B3]"
-                }`}
-              >
-                {day.dayNumber}
-              </span>
-              <span
-                className={`mt-1 w-1.5 h-1.5 rounded-full bg-[#C22929] ${
-                  active ? "opacity-100" : "opacity-0"
-                }`}
-              />
-            </button>
-          );
-        })}
       </div>
 
       {/* ---------------- 天氣區 ---------------- */}
