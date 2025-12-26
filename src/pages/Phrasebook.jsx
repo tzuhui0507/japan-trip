@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import PageHeader from "../components/PageHeader";
 import VegetarianCard from "../components/VegetarianCard";
+
 import {
   Volume2,
   Languages,
@@ -11,7 +12,6 @@ import {
   Bus,
   AlertCircle,
   Leaf,
-  Sprout,
 } from "lucide-react";
 
 const PHRASES = {
@@ -40,10 +40,6 @@ const PHRASES = {
     { ja: "おすすめはありますか？", romaji: "Osusume wa arimasu ka?", zh: "有推薦的嗎？" },
     { ja: "辛くしないでください", romaji: "Karakushinaide kudasai", zh: "請不要做太辣" },
     { ja: "お会計をお願いします", romaji: "O-kaikei o onegai shimasu", zh: "請結帳" },
-    { ja: "私はベジタリアンです", romaji: "Watashi wa bejitarian desu", zh: "我是素食主義者" },
-    { ja: "肉と魚は食べられません", romaji: "Niku to sakana wa taberaremasen", zh: "我不吃肉和魚" },
-    { ja: "これは肉が入っていますか？", romaji: "Kore wa niku ga haitte imasu ka?", zh: "這個有肉嗎？" },
-    { ja: "アレルギーがあります", romaji: "Arerugī ga arimasu", zh: "我有過敏" },
   ],
 
   shopping: [
@@ -76,7 +72,6 @@ const CATEGORIES = [
 export default function Phrasebook() {
   const [active, setActive] = useState("basic");
   const [showVegCard, setShowVegCard] = useState(false);
-  const [vegType, setVegType] = useState(null);
 
   const speak = (text) => {
     if (!window.speechSynthesis) {
@@ -121,53 +116,17 @@ export default function Phrasebook() {
         </div>
       </section>
 
-      {/* Food 專用：素食卡按鈕 */}
+      {/* ⭐ Food 專用：開啟素食卡 */}
       {active === "food" && (
-        <div className="space-y-3">
-
-            <div className="grid grid-cols-2 gap-2">
-            <button
-                onClick={() => setVegType("vegan")}
-                className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-[#6A8A55] text-white text-sm font-semibold"
-            >
-                <Leaf className="w-4 h-4" />
-                全素 Vegan
-            </button>
-
-            <button
-                onClick={() => setVegType("vegetarian")}
-                className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-[#8FB28F] text-white text-sm font-semibold"
-            >
-                <Sprout className="w-4 h-4" />
-                蛋奶素
-            </button>
-
-            <button
-                onClick={() => setVegType("noMeat")}
-                className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-[#C6A087] text-white text-sm font-semibold"
-            >
-                <Leaf className="w-4 h-4" />
-                不吃肉（可魚）
-            </button>
-
-            <button
-                onClick={() => setVegType("noFive")}
-                className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-[#A8937C] text-white text-sm font-semibold"
-            >
-                <Sprout className="w-4 h-4" />
-                五辛素
-            </button>
-            </div>
-
-            {/* 素食卡片 */}
-            {vegType && (
-            <VegetarianCard
-                type={vegType}
-                onClose={() => setVegType(null)}
-            />
-            )}
-        </div>
-        )}
+        <button
+          onClick={() => setShowVegCard(true)}
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl
+                     bg-[#a5bda2] text-white text-sm font-semibold shadow"
+        >
+          <Leaf className="w-4 h-4" />
+          開啟素食說明卡（給店員看）
+        </button>
+      )}
 
       {/* 句子列表 */}
       <section className="space-y-3">
@@ -182,7 +141,8 @@ export default function Phrasebook() {
               </span>
               <button
                 onClick={() => speak(p.ja)}
-                className="w-8 h-8 rounded-full border border-[#E5D5C5] bg-[#F7F1EB] flex items-center justify-center"
+                className="w-8 h-8 rounded-full border border-[#E5D5C5] bg-[#F7F1EB]
+                           flex items-center justify-center"
               >
                 <Volume2 className="w-4 h-4 text-[#8C6A4F]" />
               </button>
@@ -194,7 +154,7 @@ export default function Phrasebook() {
         ))}
       </section>
 
-      {/* 素食卡 Modal */}
+      {/* ⭐ 素食卡 Modal */}
       {showVegCard && (
         <VegetarianCard onClose={() => setShowVegCard(false)} />
       )}
