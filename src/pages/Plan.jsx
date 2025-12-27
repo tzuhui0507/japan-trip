@@ -24,15 +24,18 @@ import {
   Ticket,
 } from "lucide-react";
 
-export default function Plan({ trip, setTrip }) {
+export default function Plan({ trip, setTrip, dayIndex }) {
   if (!trip) return null;
 
   const isViewer = trip.shareMode === "viewer";
 
   /* ===============================
-   * ✅ Day Index：單一來源
+   * ✅ Day Index：唯一來源（TripDetail）
    * =============================== */
-  const activeDayIndex = trip.activeDayIndex ?? 0;
+  const activeDayIndex =
+    typeof dayIndex === "number"
+      ? dayIndex
+      : trip.activeDayIndex ?? 0;
 
   /* ===============================
    * HERO / ITEM UI state
@@ -78,8 +81,9 @@ export default function Plan({ trip, setTrip }) {
     });
   };
 
-  const [days, setDays] = useState(generateDays());
+  const [days, setDays] = useState(generateDays);
 
+  // owner 初始化 days
   useEffect(() => {
     if (isViewer) return;
     if (trip.days?.length) return;
@@ -153,7 +157,7 @@ export default function Plan({ trip, setTrip }) {
       notes: "",
     };
 
-    const next = [...days];
+    const next = structuredClone(days);
     next[activeDayIndex].items.push(newItem);
     setDays(next);
     setTrip((p) => ({ ...p, days: next }));
@@ -162,7 +166,7 @@ export default function Plan({ trip, setTrip }) {
   const deleteItem = (id) => {
     if (isViewer) return;
 
-    const next = [...days];
+    const next = structuredClone(days);
     next[activeDayIndex].items = next[activeDayIndex].items.filter(
       (i) => i.id !== id
     );
@@ -174,12 +178,12 @@ export default function Plan({ trip, setTrip }) {
     if (isViewer) return;
     if (!result.destination) return;
 
-    const next = [...days];
-    const items = [...next[activeDayIndex].items];
+    const next = structuredClone(days);
+    const items = next[activeDayIndex].items;
+
     const [moved] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, moved);
 
-    next[activeDayIndex].items = items;
     setDays(next);
     setTrip((p) => ({ ...p, days: next }));
   };
