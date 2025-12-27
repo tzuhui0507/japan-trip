@@ -152,7 +152,13 @@ export default function TripDetail() {
         )}
 
         {/* ===== 分頁內容 ===== */}
-        <div className="px-4">{renderTabContent()}</div>
+        <div className="px-4">
+          {renderTabContent() ?? (
+            <div className="py-12 text-center text-sm text-[#8C6A4F]">
+              載入中…
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ===== Bottom Nav ===== */}

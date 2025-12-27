@@ -20,40 +20,40 @@ const DEFAULT_CATEGORIES = [
   { id: "other", title: "其他", items: [] },
 ];
 
-/* 分類樣式（Header 顏色 + Icon） */
+/* 分類樣式 */
 const CATEGORY_STYLES = {
-  drugstore: {
-    header: "bg-[#CFA1A8]",
-    icon: Droplet,
-  },
-  snack: {
-    header: "bg-[#D4A18A]",
-    icon: Cookie,
-  },
-  electronics: {
-    header: "bg-[#AFC1A9]",
-    icon: Plug,
-  },
-  other: {
-    header: "bg-[#B7A2BC]",
-    icon: MoreHorizontal,
-  },
+  drugstore: { header: "bg-[#CFA1A8]", icon: Droplet },
+  snack: { header: "bg-[#D4A18A]", icon: Cookie },
+  electronics: { header: "bg-[#AFC1A9]", icon: Plug },
+  other: { header: "bg-[#B7A2BC]", icon: MoreHorizontal },
 };
 
-/* 行李清單同款點點背景 */
+/* 點點背景 */
 const dottedBg = {
   backgroundImage: "radial-gradient(#E8E1DA 1px, transparent 1px)",
   backgroundSize: "12px 12px",
 };
 
 export default function Shopping({ trip, setTrip }) {
+  if (!trip) return null;
+
+  const isViewer = trip?.shareMode === "viewer";
+
   const shopping =
     Array.isArray(trip.shopping) && trip.shopping.length > 0
       ? trip.shopping
       : DEFAULT_CATEGORIES;
 
-  /* 新增項目 */
+  if (!Array.isArray(shopping)) {
+    return (
+      <div className="pt-24 text-center text-sm text-[#8C6A4F]">
+        購物清單載入中…
+      </div>
+    );
+  }
+
   const addItem = (catId) => {
+    if (isViewer) return;
     setTrip((p) => ({
       ...p,
       shopping: shopping.map((c) =>
@@ -75,8 +75,8 @@ export default function Shopping({ trip, setTrip }) {
     }));
   };
 
-  /* 更新項目 */
   const updateItem = (catId, itemId, patch) => {
+    if (isViewer) return;
     setTrip((p) => ({
       ...p,
       shopping: p.shopping.map((c) =>
@@ -92,8 +92,8 @@ export default function Shopping({ trip, setTrip }) {
     }));
   };
 
-  /* 刪除項目 */
   const deleteItem = (catId, itemId) => {
+    if (isViewer) return;
     setTrip((p) => ({
       ...p,
       shopping: p.shopping.map((c) =>
@@ -104,8 +104,8 @@ export default function Shopping({ trip, setTrip }) {
     }));
   };
 
-  /* 圖片轉 base64 */
   const handleImageUpload = (file, catId, itemId) => {
+    if (isViewer) return;
     const reader = new FileReader();
     reader.onload = () => {
       updateItem(catId, itemId, { image: reader.result });
@@ -115,14 +115,12 @@ export default function Shopping({ trip, setTrip }) {
 
   return (
     <div className="pt-4 pb-24 space-y-4">
-      {/* ===== Header ===== */}
       <PageHeader
         icon={ShoppingBag}
         title="購物清單"
         subtitle="SHOPPING LIST"
       />
 
-      {/* ===== 分類卡片 ===== */}
       {shopping.map((cat) => {
         const Icon = CATEGORY_STYLES[cat.id]?.icon;
 
@@ -131,7 +129,6 @@ export default function Shopping({ trip, setTrip }) {
             key={cat.id}
             className="rounded-3xl border border-[#E5D5C5] overflow-hidden bg-white"
           >
-            {/* 分類 Header */}
             <div
               className={`px-4 py-3 flex items-center justify-between ${
                 CATEGORY_STYLES[cat.id]?.header || "bg-[#8C6A4F]"
@@ -139,24 +136,20 @@ export default function Shopping({ trip, setTrip }) {
             >
               <div className="flex items-center gap-2 text-white">
                 {Icon && <Icon className="w-5 h-5 opacity-90" />}
-                <h3 className="font-semibold tracking-wide">
-                  {cat.title}
-                </h3>
+                <h3 className="font-semibold tracking-wide">{cat.title}</h3>
               </div>
 
-              <button
-                onClick={() => addItem(cat.id)}
-                className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center"
-              >
-                <Plus className="w-4 h-4 text-[#5A4636]" />
-              </button>
+              {!isViewer && (
+                <button
+                  onClick={() => addItem(cat.id)}
+                  className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center"
+                >
+                  <Plus className="w-4 h-4 text-[#5A4636]" />
+                </button>
+              )}
             </div>
 
-            {/* 內容區（點點背景） */}
-            <div
-              className="p-4 space-y-3 bg-[#FFF9F2]"
-              style={dottedBg}
-            >
+            <div className="p-4 space-y-3 bg-[#FFF9F2]" style={dottedBg}>
               {cat.items.length === 0 && (
                 <p className="text-xs text-[#A8937C]">尚無項目</p>
               )}
@@ -169,6 +162,7 @@ export default function Shopping({ trip, setTrip }) {
                   <input
                     type="checkbox"
                     checked={item.checked}
+                    disabled={isViewer}
                     onChange={(e) =>
                       updateItem(cat.id, item.id, {
                         checked: e.target.checked,
@@ -180,46 +174,52 @@ export default function Shopping({ trip, setTrip }) {
                   <div className="flex-1 space-y-2">
                     <input
                       value={item.name}
+                      disabled={isViewer}
                       onChange={(e) =>
-                        updateItem(cat.id, item.id, { name: e.target.value })
+                        updateItem(cat.id, item.id, {
+                          name: e.target.value,
+                        })
                       }
                       placeholder="輸入購物項目"
                       className="w-full bg-transparent border-b border-[#E5D5C5] text-sm outline-none"
                     />
 
-                    {item.image ? (
-                      <img
-                        src={item.image}
-                        alt=""
-                        className="w-20 h-20 object-cover rounded-lg border"
-                      />
-                    ) : (
-                      <label className="inline-flex items-center gap-1 text-xs text-[#8C6A4F] cursor-pointer">
-                        <ImageIcon className="w-4 h-4" />
-                        上傳照片
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) =>
-                            e.target.files &&
-                            handleImageUpload(
-                              e.target.files[0],
-                              cat.id,
-                              item.id
-                            )
-                          }
+                    {!isViewer &&
+                      (item.image ? (
+                        <img
+                          src={item.image}
+                          alt=""
+                          className="w-20 h-20 object-cover rounded-lg border"
                         />
-                      </label>
-                    )}
+                      ) : (
+                        <label className="inline-flex items-center gap-1 text-xs text-[#8C6A4F] cursor-pointer">
+                          <ImageIcon className="w-4 h-4" />
+                          上傳照片
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) =>
+                              e.target.files &&
+                              handleImageUpload(
+                                e.target.files[0],
+                                cat.id,
+                                item.id
+                              )
+                            }
+                          />
+                        </label>
+                      ))}
                   </div>
 
-                  <button
-                    onClick={() => deleteItem(cat.id, item.id)}
-                    className="p-1"
-                  >
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </button>
+                  {!isViewer && (
+                    <button
+                      onClick={() => deleteItem(cat.id, item.id)}
+                      className="p-1"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

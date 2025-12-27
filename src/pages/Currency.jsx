@@ -53,30 +53,17 @@ function getOrgLogoSrc(org) {
 }
 
 export default function Currency({ trip, setTrip }) {
-  /* ======================================================
-     ✅ 所有 Hooks 一定放在最上面（不准條件）
-  ====================================================== */
-  const [viewerCurrency, setViewerCurrency] = useState(null);
-
-  const [loadingRate, setLoadingRate] = useState(false);
-  const [rateError, setRateError] = useState("");
-  const [calcValue, setCalcValue] = useState(null);
-  const [operator, setOperator] = useState(null);
-
-  const [cardModalOpen, setCardModalOpen] = useState(false);
-  const [editingCardId, setEditingCardId] = useState(null);
-  const [cardDraft, setCardDraft] = useState(createNewCard());
-
-  /* ======================================================
-     🔒 hooks 宣告完，才可以 early return
-  ====================================================== */
   if (!trip) return null;
 
-  const isViewer = trip.shareMode === "viewer";
+  // ======================================================
+  // STEP 5：viewer-only 判斷
+  // ======================================================
+  const isViewer = trip?.shareMode === "viewer";
+  const [viewerCurrency, setViewerCurrency] = useState(null);
 
-  /* ======================================================
-     初始化（viewer / owner 分流）
-  ====================================================== */
+  // ======================================================
+  // 初始化（owner / viewer 分流）
+  // ======================================================
   useEffect(() => {
     if (isViewer) {
       const raw = localStorage.getItem(VIEWER_CURRENCY_KEY);
@@ -96,6 +83,7 @@ export default function Currency({ trip, setTrip }) {
       return;
     }
 
+    // owner 初始化（只做一次）
     if (!trip.currency) {
       setTrip((prev) => ({
         ...prev,
@@ -110,9 +98,9 @@ export default function Currency({ trip, setTrip }) {
     }
   }, [isViewer, trip, setTrip]);
 
-  /* ======================================================
-     統一資料來源
-  ====================================================== */
+  // ======================================================
+  // 資料來源統一出口
+  // ======================================================
   const currency = isViewer
     ? viewerCurrency || trip.currency
     : trip.currency;
@@ -127,9 +115,9 @@ export default function Currency({ trip, setTrip }) {
     amountStr,
   } = currency;
 
-  /* ======================================================
-     寫回 helper
-  ====================================================== */
+  // ======================================================
+  // 寫回 helper（核心）
+  // ======================================================
   const updateCurrency = (patch) => {
     if (isViewer) {
       setViewerCurrency((prev) => {
@@ -150,29 +138,21 @@ export default function Currency({ trip, setTrip }) {
     }));
   };
 
-  /* ======================================================
-     計算
-  ====================================================== */
-  const activeCard =
-    cards.find((c) => c.id === activeCardId) ||
-    cards.find((c) => c.isPrimary) ||
-    cards[0];
+  // ======================================================
+  // Local UI state
+  // ======================================================
+  const [loadingRate, setLoadingRate] = useState(false);
+  const [rateError, setRateError] = useState("");
+  const [calcValue, setCalcValue] = useState(null);
+  const [operator, setOperator] = useState(null);
 
-  const amount = parseFloat(amountStr || "0") || 0;
-  const baseResult = rate ? amount * rate : 0;
-  const baseResultInt = Math.round(baseResult);
+  const [cardModalOpen, setCardModalOpen] = useState(false);
+  const [editingCardId, setEditingCardId] = useState(null);
+  const [cardDraft, setCardDraft] = useState(createNewCard());
 
-  const feePercent = Number(activeCard?.feePercent || 0);
-  const cashbackPercent = Number(activeCard?.cashbackPercent || 0);
-
-  const feeAmount = (baseResult * feePercent) / 100;
-  const afterFee = baseResult + feeAmount;
-  const cashbackAmount = (afterFee * cashbackPercent) / 100;
-  const cardResultInt = Math.round(afterFee - cashbackAmount);
-
-  /* ======================================================
-     匯率 API
-  ====================================================== */
+  // ======================================================
+  // 匯率 API
+  // ======================================================
   const fetchRate = async () => {
     setLoadingRate(true);
     setRateError("");
@@ -193,9 +173,91 @@ export default function Currency({ trip, setTrip }) {
     }
   };
 
-  /* ======================================================
-     Keypad
-  ====================================================== */
+  // ======================================================
+  // Active card
+  // ======================================================
+  const activeCard =
+    cards.find((c) => c.id === activeCardId) ||
+    cards.find((c) => c.isPrimary) ||
+    cards[0];
+
+  // ======================================================
+  // 計算
+  // ======================================================
+  const amount = parseFloat(amountStr || "0") || 0;
+  const baseResult = rate ? amount * rate : 0;
+  const baseResultInt = Math.round(baseResult);
+
+  const feePercent = Number(activeCard?.feePercent || 0);
+  const cashbackPercent = Number(activeCard?.cashbackPercent || 0);
+
+  const feeAmount = (baseResult * feePercent) / 100;
+  const afterFee = baseResult + feeAmount;
+  const cashbackAmount = (afterFee * cashbackPercent) / 100;
+  const cardResultInt = Math.round(afterFee - cashbackAmount);
+
+  // ======================================================
+  // Card actions
+  // ======================================================
+  const openNewCardModal = () => {
+    setEditingCardId(null);
+    setCardDraft(createNewCard());
+    setCardModalOpen(true);
+  };
+
+  const openEditCardModal = () => {
+    if (!activeCard) return;
+    setEditingCardId(activeCard.id);
+    setCardDraft({ ...activeCard });
+    setCardModalOpen(true);
+  };
+
+  const closeCardModal = () => setCardModalOpen(false);
+
+  const saveCardFromDraft = () => {
+    let updated = [...cards];
+
+    if (cardDraft.isPrimary) {
+      updated = updated.map((c) => ({ ...c, isPrimary: false }));
+    }
+
+    if (editingCardId) {
+      updated = updated.map((c) =>
+        c.id === editingCardId ? { ...cardDraft, id: editingCardId } : c
+      );
+      updateCurrency({ cards: updated, activeCardId: editingCardId });
+    } else {
+      const newCard = { ...cardDraft, id: `card-${Date.now()}` };
+      updated.push(newCard);
+      updateCurrency({ cards: updated, activeCardId: newCard.id });
+    }
+
+    setCardModalOpen(false);
+  };
+
+  const deleteCurrentCard = () => {
+    const remain = cards.filter((c) => c.id !== editingCardId);
+    const fallback = remain.length ? remain : DEFAULT_CARDS;
+    updateCurrency({
+      cards: fallback,
+      activeCardId: fallback[0].id,
+    });
+    setCardModalOpen(false);
+  };
+
+  const setPrimaryCard = (cardId) => {
+    updateCurrency({
+      cards: cards.map((c) => ({
+        ...c,
+        isPrimary: c.id === cardId,
+      })),
+      activeCardId: cardId,
+    });
+  };
+
+  // ======================================================
+  // Keypad
+  // ======================================================
   const keypadButtons = [
     ["7", "8", "9", "÷"],
     ["4", "5", "6", "×"],

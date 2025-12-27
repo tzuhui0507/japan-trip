@@ -95,6 +95,8 @@ export default function Plan({ trip, setTrip }) {
   const activeDayIndex = trip.activeDayIndex ?? 0;
 
   useEffect(() => {
+    if (isViewer) return;
+
     if (trip.days && trip.days.length > 0) return;
 
     const newDays = generateDays();
@@ -130,6 +132,8 @@ export default function Plan({ trip, setTrip }) {
   };
 
   useEffect(() => {
+    if (isViewer) return;
+
     if (!currentDay?.heroLocation) return;
 
     async function geocode() {
@@ -166,6 +170,8 @@ export default function Plan({ trip, setTrip }) {
   }, [currentDay?.heroLocation]);
 
   useEffect(() => {
+    if (isViewer) return;
+    
     if (!currentDay?.latitude || !currentDay?.longitude) return;
 
     async function fetchWeather() {
@@ -315,6 +321,14 @@ export default function Plan({ trip, setTrip }) {
   // ============================================================
   // RENDER
   // ============================================================
+  if (!currentDay) {
+    return (
+      <div className="pt-24 pb-24 text-center text-sm text-[#8C6A4F]">
+        行程資料載入中…
+      </div>
+    );
+  }
+
   return (
     <div className="pt-4 pb-24">
 
