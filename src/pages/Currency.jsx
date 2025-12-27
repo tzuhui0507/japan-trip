@@ -190,6 +190,55 @@ export default function Currency({ trip, setTrip }) {
   const cashbackAmount = (afterFee * cashbackPercent) / 100;
   const cardResultInt = Math.round(afterFee - cashbackAmount);
 
+  // ======================================================
+  // Card actions（❗一定要存在，UI 會用）
+  // ======================================================
+  const openNewCardModal = () => {
+    setEditingCardId(null);
+    setCardDraft(createNewCard());
+    setCardModalOpen(true);
+  };
+
+  const openEditCardModal = () => {
+    if (!activeCard) return;
+    setEditingCardId(activeCard.id);
+    setCardDraft({ ...activeCard });
+    setCardModalOpen(true);
+  };
+
+  const closeCardModal = () => setCardModalOpen(false);
+
+  const saveCardFromDraft = () => {
+    let updated = [...cards];
+
+    if (cardDraft.isPrimary) {
+      updated = updated.map((c) => ({ ...c, isPrimary: false }));
+    }
+
+    if (editingCardId) {
+      updated = updated.map((c) =>
+        c.id === editingCardId ? { ...cardDraft, id: editingCardId } : c
+      );
+      updateCurrency({ cards: updated, activeCardId: editingCardId });
+    } else {
+      const newCard = { ...cardDraft, id: `card-${Date.now()}` };
+      updated.push(newCard);
+      updateCurrency({ cards: updated, activeCardId: newCard.id });
+    }
+
+    setCardModalOpen(false);
+  };
+
+const deleteCurrentCard = () => {
+  const remain = cards.filter((c) => c.id !== editingCardId);
+  const fallback = remain.length ? remain : DEFAULT_CARDS;
+  updateCurrency({
+    cards: fallback,
+    activeCardId: fallback[0].id,
+  });
+  setCardModalOpen(false);
+};
+
   // ------------------------------
   // Keypad
   // ------------------------------
