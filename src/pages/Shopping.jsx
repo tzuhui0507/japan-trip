@@ -9,10 +9,12 @@ import {
   Cookie,
   Plug,
   MoreHorizontal,
+  X,
+  Pencil,
 } from "lucide-react";
 import PageHeader from "../components/PageHeader";
 
-/* 預設購物分類 */
+/* ================== constants ================== */
 const DEFAULT_CATEGORIES = [
   { id: "drugstore", title: "藥妝", items: [] },
   { id: "snack", title: "零食", items: [] },
@@ -20,7 +22,6 @@ const DEFAULT_CATEGORIES = [
   { id: "other", title: "其他", items: [] },
 ];
 
-/* 分類樣式 */
 const CATEGORY_STYLES = {
   drugstore: { header: "bg-[#CFA1A8]", icon: Droplet },
   snack: { header: "bg-[#D4A18A]", icon: Cookie },
@@ -28,7 +29,6 @@ const CATEGORY_STYLES = {
   other: { header: "bg-[#B7A2BC]", icon: MoreHorizontal },
 };
 
-/* 行李清單同款點點背景 */
 const dottedBg = {
   backgroundImage: "radial-gradient(#E8E1DA 1px, transparent 1px)",
   backgroundSize: "12px 12px",
@@ -36,11 +36,15 @@ const dottedBg = {
 
 const VIEWER_SHOPPING_KEY = "viewer_shopping_v1";
 
+/* ================== component ================== */
 export default function Shopping({ trip, setTrip }) {
   const isViewer = trip?.shareMode === "viewer";
   const [viewerShopping, setViewerShopping] = useState(null);
 
-  /* viewer 初始化 */
+  const [previewImage, setPreviewImage] = useState(null);
+  const [menuOpenId, setMenuOpenId] = useState(null);
+
+  /* ---------- init ---------- */
   useEffect(() => {
     if (!isViewer) return;
 
@@ -54,7 +58,6 @@ export default function Shopping({ trip, setTrip }) {
     }
   }, [isViewer, trip.shopping]);
 
-  /* owner 初始化 */
   useEffect(() => {
     if (isViewer) return;
     if (!trip.shopping) {
@@ -66,32 +69,26 @@ export default function Shopping({ trip, setTrip }) {
     ? viewerShopping || DEFAULT_CATEGORIES
     : trip.shopping || DEFAULT_CATEGORIES;
 
-  /* 🔑 統一寫入出口 */
+  /* ---------- helpers ---------- */
   const updateShopping = (updater) => {
     if (isViewer) {
       setViewerShopping((prev) => {
-        const base = prev || DEFAULT_CATEGORIES;
         const next =
-          typeof updater === "function" ? updater(base) : updater;
-        localStorage.setItem(
-          VIEWER_SHOPPING_KEY,
-          JSON.stringify(next)
-        );
+          typeof updater === "function" ? updater(prev) : updater;
+        localStorage.setItem(VIEWER_SHOPPING_KEY, JSON.stringify(next));
         return next;
       });
-      return;
+    } else {
+      setTrip((p) => ({
+        ...p,
+        shopping:
+          typeof updater === "function"
+            ? updater(p.shopping)
+            : updater,
+      }));
     }
-
-    setTrip((p) => ({
-      ...p,
-      shopping:
-        typeof updater === "function"
-          ? updater(p.shopping || DEFAULT_CATEGORIES)
-          : updater,
-    }));
   };
 
-  /* 新增項目 */
   const addItem = (catId) => {
     updateShopping((list) =>
       list.map((c) =>
@@ -102,7 +99,7 @@ export default function Shopping({ trip, setTrip }) {
                 ...c.items,
                 {
                   id: `item-${Date.now()}`,
-                  name: "",
+                  name: "新的項目",
                   checked: false,
                   image: null,
                 },
@@ -146,6 +143,7 @@ export default function Shopping({ trip, setTrip }) {
     reader.readAsDataURL(file);
   };
 
+  /* ================== render ================== */
   return (
     <div className="pt-4 pb-24 space-y-4">
       <PageHeader
@@ -160,10 +158,11 @@ export default function Shopping({ trip, setTrip }) {
         return (
           <div
             key={cat.id}
-            className="rounded-3xl border border-[#E5D5C5] overflow-hidden bg-white"
+            className="rounded-3xl border border-[#E5D5C5] bg-white overflow-visible"
           >
+            {/* header */}
             <div
-              className={`px-4 py-3 flex items-center justify-between ${
+              className={`px-4 py-3 flex items-center justify-between rounded-t-3xl ${
                 CATEGORY_STYLES[cat.id]?.header || ""
               }`}
             >
@@ -180,21 +179,28 @@ export default function Shopping({ trip, setTrip }) {
               </button>
             </div>
 
+            {/* body */}
             <div
-              className="p-4 space-y-3 bg-[#FFF9F2]"
+              className="p-4 space-y-2 bg-[#FFF9F2] rounded-b-3xl"
               style={dottedBg}
             >
-              {cat.items.length === 0 && (
-                <p className="text-xs text-[#A8937C]">尚無項目</p>
-              )}
-
               {cat.items.map((item) => (
                 <div
                   key={item.id}
-                  className="flex gap-3 items-start border border-[#F0E3D5] rounded-xl p-3 bg-white"
+                  className="
+                    relative w-full
+                    flex items-center
+                    h-[52px]
+                    px-4
+                    bg-white
+                    border border-[#F0E3D5]
+                    rounded-2xl
+                  "
                 >
+                  {/* checkbox */}
                   <input
                     type="checkbox"
+                    className="shrink-0 w-4 h-4 accent-[#8C6A4F]"
                     checked={item.checked}
                     onChange={(e) =>
                       updateItem(cat.id, item.id, {
@@ -203,26 +209,69 @@ export default function Shopping({ trip, setTrip }) {
                     }
                   />
 
-                  <div className="flex-1 space-y-2">
-                    <input
-                      value={item.name}
-                      onChange={(e) =>
-                        updateItem(cat.id, item.id, {
-                          name: e.target.value,
-                        })
-                      }
-                      placeholder="輸入購物項目"
-                      className="w-full bg-transparent border-b border-[#E5D5C5] text-sm outline-none"
-                    />
+                  {/* name */}
+                  <button
+                    onClick={() =>
+                      item.image && setPreviewImage(item.image)
+                    }
+                    className={`ml-3 flex-1 pr-2 text-left text-sm truncate ${
+                      item.checked
+                        ? "line-through text-[#A8937C]"
+                        : "text-[#5A4636]"
+                    }`}
+                  >
+                    {item.name}
+                  </button>
 
-                    {item.image ? (
-                      <img
-                        src={item.image}
-                        alt=""
-                        className="w-20 h-20 object-cover rounded-lg border"
-                      />
-                    ) : (
-                      <label className="inline-flex items-center gap-1 text-xs text-[#8C6A4F] cursor-pointer">
+                  {/* right tools */}
+                  <div className="ml-auto flex items-center gap-2 shrink-0">
+                    {/* image icon (佔位用，避免高度不一) */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        item.image && setPreviewImage(item.image)
+                      }
+                      className={`p-1.5 rounded-full hover:bg-[#F7F1EB] transition ${
+                        item.image
+                          ? "opacity-100"
+                          : "opacity-0 pointer-events-none"
+                      }`}
+                    >
+                      <ImageIcon className="w-5 h-5 text-[#A8937C]" />
+                    </button>
+
+                    {/* more */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setMenuOpenId(
+                          menuOpenId === item.id ? null : item.id
+                        )
+                      }
+                      className="p-1.5 rounded-full hover:bg-[#F7F1EB]"
+                    >
+                      <MoreHorizontal className="w-5 h-5 text-[#8C6A4F]" />
+                    </button>
+                  </div>
+
+                  {/* menu */}
+                  {menuOpenId === item.id && (
+                    <div className="absolute right-2 top-[56px] z-50 w-40 bg-white border border-[#E5D5C5] rounded-lg shadow-lg">
+                      <button
+                        className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#F7F1EB] w-full"
+                        onClick={() => {
+                          const name = prompt("編輯名稱", item.name);
+                          if (name !== null) {
+                            updateItem(cat.id, item.id, { name });
+                          }
+                          setMenuOpenId(null);
+                        }}
+                      >
+                        <Pencil className="w-4 h-4" />
+                        編輯名稱
+                      </button>
+
+                      <label className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#F7F1EB] cursor-pointer">
                         <ImageIcon className="w-4 h-4" />
                         上傳照片
                         <input
@@ -239,22 +288,44 @@ export default function Shopping({ trip, setTrip }) {
                           }
                         />
                       </label>
-                    )}
-                  </div>
 
-                  <button
-                    onClick={() =>
-                      deleteItem(cat.id, item.id)
-                    }
-                  >
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </button>
+                      <button
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-[#F7F1EB] w-full"
+                        onClick={() => {
+                          deleteItem(cat.id, item.id);
+                          setMenuOpenId(null);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        刪除
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           </div>
         );
       })}
+
+      {/* image preview */}
+      {previewImage && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+          <div className="relative bg-white rounded-2xl p-4">
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute top-2 right-2"
+            >
+              <X />
+            </button>
+            <img
+              src={previewImage}
+              alt=""
+              className="max-w-[80vw] max-h-[70vh] rounded-xl"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
