@@ -8,7 +8,7 @@ import {
   Languages,
   Ticket,
   Coins,
-  ShoppingBag, // ⭐ 新增
+  ShoppingBag,
 } from "lucide-react";
 
 import Header from "../components/Header";
@@ -22,10 +22,24 @@ import InfoTab from "./Info";
 import Tickets from "./Tickets";
 import Phrasebook from "./Phrasebook";
 import Currency from "./Currency";
-import Shopping from "./Shopping"; // ⭐ 新增（之後建立）
+import Shopping from "./Shopping";
 import TicketDetail from "../components/TicketDetail";
 
 const STORAGE_KEY = "trip_local_v1";
+
+/* ⭐ viewer 最小可 render trip（關鍵） */
+function createViewerTrip() {
+  return {
+    shareMode: "viewer",
+    days: [],
+    activeDayIndex: 0,
+    tickets: [],
+    luggage: null,
+    shopping: null,
+    currency: null,
+    viewTicket: null,
+  };
+}
 
 export default function TripDetail() {
   const params = new URLSearchParams(window.location.search);
@@ -36,35 +50,43 @@ export default function TripDetail() {
   const [tab, setTab] = useState("PLAN");
 
   /* ================================
-     初次載入
+     初次載入（owner / viewer 分流）
   ================================= */
   useEffect(() => {
     const raw = localStorage.getItem(STORAGE_KEY);
+
     if (raw) {
       const parsed = JSON.parse(raw);
       setTrip({ ...parsed, shareMode });
+      return;
     }
-  }, []);
+
+    // ⭐ viewer fallback：一定要有 trip
+    if (shareMode === "viewer") {
+      setTrip(createViewerTrip());
+    }
+  }, [shareMode]);
 
   /* ================================
-     自動存 localStorage
+     自動存 localStorage（只存 owner）
   ================================= */
   useEffect(() => {
-    if (trip) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(trip));
-    }
+    if (!trip) return;
+    if (trip.shareMode === "viewer") return;
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(trip));
   }, [trip]);
 
   if (!trip) return null;
 
   /* ================================
-     Tabs 定義（⭐ 新增 SHOPPING）
+     Tabs 定義
   ================================= */
   const TABS = [
     { key: "PLAN", short: "PLAN", icon: Route },
     { key: "EXPENSES", short: "COST", icon: Wallet },
     { key: "LIST", short: "PACK", icon: Luggage },
-    { key: "SHOPPING", short: "LIST", icon: ShoppingBag }, // ⭐ 新增
+    { key: "SHOPPING", short: "LIST", icon: ShoppingBag },
     { key: "TICKETS", short: "TICKET", icon: Ticket },
     { key: "PHRASEBOOK", short: "JP", icon: Languages },
     { key: "CURRENCY", short: "RATE", icon: Coins },
@@ -72,7 +94,7 @@ export default function TripDetail() {
   ];
 
   /* ================================
-     分頁內容切換
+     分頁內容
   ================================= */
   const renderTabContent = () => {
     switch (tab) {
@@ -82,7 +104,7 @@ export default function TripDetail() {
         return <Expenses trip={trip} setTrip={setTrip} />;
       case "LIST":
         return <ListTab trip={trip} setTrip={setTrip} />;
-      case "SHOPPING": // ⭐ 新增
+      case "SHOPPING":
         return <Shopping trip={trip} setTrip={setTrip} />;
       case "TICKETS":
         return <Tickets trip={trip} setTrip={setTrip} />;
@@ -99,13 +121,13 @@ export default function TripDetail() {
 
   return (
     <ShareModeProvider mode={trip.shareMode}>
-      {/* ===== Header（固定）===== */}
+      {/* ===== Header ===== */}
       <Header trip={trip} setTrip={setTrip} />
       <ShareModeBanner mode={trip.shareMode} />
 
-      {/* ===== 主內容區 ===== */}
+      {/* ===== 主內容 ===== */}
       <div className="pt-[96px] pb-20">
-        {/* ===== DayTab（只在 PLAN）===== */}
+        {/* DayTab（只在 PLAN） */}
         {tab === "PLAN" && (
           <div className="sticky top-[96px] z-40 bg-[#F8F5F1] border-b border-[#E8E1DA]">
             <div className="flex justify-between px-6 py-3">
@@ -151,7 +173,7 @@ export default function TripDetail() {
           </div>
         )}
 
-        {/* ===== 分頁內容 ===== */}
+        {/* 分頁內容 */}
         <div className="px-4">
           {renderTabContent() ?? (
             <div className="py-12 text-center text-sm text-[#8C6A4F]">
