@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 
 import Header from "../components/Header";
-import ShareModeBanner from "../components/ShareModeBanner";
 import { ShareModeProvider } from "../context/ShareModeContext";
 
 import Plan from "./Plan";
@@ -27,49 +26,36 @@ import TicketDetail from "../components/TicketDetail";
 
 const STORAGE_KEY = "trip_local_v1";
 
-/* ⭐ viewer 最小可 render trip（關鍵） */
-function createViewerTrip() {
-  return {
-    shareMode: "viewer",
-    days: [],
-    activeDayIndex: 0,
-    tickets: [],
-    luggage: null,
-    shopping: null,
-    currency: null,
-    viewTicket: null,
-  };
-}
-
 export default function TripDetail() {
   const params = new URLSearchParams(window.location.search);
   const modeFromUrl = params.get("mode");
   const shareMode = modeFromUrl === "viewer" ? "viewer" : "owner";
+  const isViewer = shareMode === "viewer";
 
   const [trip, setTrip] = useState(null);
   const [tab, setTab] = useState("PLAN");
 
   /* ================================
-     初次載入（owner / viewer 分流）
-  ================================= */
+   * 初次載入（viewer / owner 共用）
+   * ================================ */
   useEffect(() => {
     const raw = localStorage.getItem(STORAGE_KEY);
-
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      setTrip({ ...parsed, shareMode });
+    if (!raw) {
+      setTrip(null);
       return;
     }
 
-    // ⭐ viewer fallback：一定要有 trip
-    if (shareMode === "viewer") {
-      setTrip(createViewerTrip());
-    }
+    const parsed = JSON.parse(raw);
+    setTrip({
+      ...parsed,
+      shareMode,
+      activeDayIndex: parsed.activeDayIndex ?? 0,
+    });
   }, [shareMode]);
 
   /* ================================
-     自動存 localStorage（只存 owner）
-  ================================= */
+   * 自動存 localStorage（只存 owner）
+   * ================================ */
   useEffect(() => {
     if (!trip) return;
     if (trip.shareMode === "viewer") return;
@@ -80,8 +66,8 @@ export default function TripDetail() {
   if (!trip) return null;
 
   /* ================================
-     Tabs 定義
-  ================================= */
+   * Tabs
+   * ================================ */
   const TABS = [
     { key: "PLAN", short: "PLAN", icon: Route },
     { key: "EXPENSES", short: "COST", icon: Wallet },
@@ -94,8 +80,8 @@ export default function TripDetail() {
   ];
 
   /* ================================
-     分頁內容
-  ================================= */
+   * 分頁內容
+   * ================================ */
   const renderTabContent = () => {
     switch (tab) {
       case "PLAN":
@@ -123,26 +109,25 @@ export default function TripDetail() {
     <ShareModeProvider mode={trip.shareMode}>
       {/* ===== Header ===== */}
       <Header trip={trip} setTrip={setTrip} />
-      <ShareModeBanner mode={trip.shareMode} />
 
       {/* ===== 主內容 ===== */}
       <div className="pt-[96px] pb-20">
-        {/* DayTab（只在 PLAN） */}
+        {/* ===== DayTab（PLAN only） ===== */}
         {tab === "PLAN" && (
           <div className="sticky top-[96px] z-40 bg-[#F8F5F1] border-b border-[#E8E1DA]">
             <div className="flex justify-between px-6 py-3">
               {(trip.days || []).map((day, index) => {
                 const active = index === trip.activeDayIndex;
+
                 return (
                   <button
                     key={day.id}
-                    onClick={() => {
-                      if (trip.shareMode === "viewer") return;
+                    onClick={() =>
                       setTrip((p) => ({
                         ...p,
                         activeDayIndex: index,
-                      }));
-                    }}
+                      }))
+                    }
                     className="flex-1 flex flex-col items-center"
                   >
                     <span
@@ -173,7 +158,7 @@ export default function TripDetail() {
           </div>
         )}
 
-        {/* 分頁內容 */}
+        {/* ===== 分頁內容 ===== */}
         <div className="px-4">
           {renderTabContent() ?? (
             <div className="py-12 text-center text-sm text-[#8C6A4F]">

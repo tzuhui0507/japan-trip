@@ -1,5 +1,5 @@
 // src/pages/Shopping.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Plus,
   Trash2,
@@ -28,35 +28,73 @@ const CATEGORY_STYLES = {
   other: { header: "bg-[#B7A2BC]", icon: MoreHorizontal },
 };
 
-/* 點點背景 */
+/* 行李清單同款點點背景 */
 const dottedBg = {
   backgroundImage: "radial-gradient(#E8E1DA 1px, transparent 1px)",
   backgroundSize: "12px 12px",
 };
 
+const VIEWER_SHOPPING_KEY = "viewer_shopping_v1";
+
 export default function Shopping({ trip, setTrip }) {
-  if (!trip) return null;
-
   const isViewer = trip?.shareMode === "viewer";
+  const [viewerShopping, setViewerShopping] = useState(null);
 
-  const shopping =
-    Array.isArray(trip.shopping) && trip.shopping.length > 0
-      ? trip.shopping
-      : DEFAULT_CATEGORIES;
+  /* viewer 初始化 */
+  useEffect(() => {
+    if (!isViewer) return;
 
-  if (!Array.isArray(shopping)) {
-    return (
-      <div className="pt-24 text-center text-sm text-[#8C6A4F]">
-        購物清單載入中…
-      </div>
-    );
-  }
+    const raw = localStorage.getItem(VIEWER_SHOPPING_KEY);
+    if (raw) {
+      setViewerShopping(JSON.parse(raw));
+    } else {
+      const init = trip.shopping || DEFAULT_CATEGORIES;
+      localStorage.setItem(VIEWER_SHOPPING_KEY, JSON.stringify(init));
+      setViewerShopping(init);
+    }
+  }, [isViewer, trip.shopping]);
 
-  const addItem = (catId) => {
+  /* owner 初始化 */
+  useEffect(() => {
     if (isViewer) return;
+    if (!trip.shopping) {
+      setTrip((p) => ({ ...p, shopping: DEFAULT_CATEGORIES }));
+    }
+  }, [isViewer, trip.shopping, setTrip]);
+
+  const shopping = isViewer
+    ? viewerShopping || DEFAULT_CATEGORIES
+    : trip.shopping || DEFAULT_CATEGORIES;
+
+  /* 🔑 統一寫入出口 */
+  const updateShopping = (updater) => {
+    if (isViewer) {
+      setViewerShopping((prev) => {
+        const base = prev || DEFAULT_CATEGORIES;
+        const next =
+          typeof updater === "function" ? updater(base) : updater;
+        localStorage.setItem(
+          VIEWER_SHOPPING_KEY,
+          JSON.stringify(next)
+        );
+        return next;
+      });
+      return;
+    }
+
     setTrip((p) => ({
       ...p,
-      shopping: shopping.map((c) =>
+      shopping:
+        typeof updater === "function"
+          ? updater(p.shopping || DEFAULT_CATEGORIES)
+          : updater,
+    }));
+  };
+
+  /* 新增項目 */
+  const addItem = (catId) => {
+    updateShopping((list) =>
+      list.map((c) =>
         c.id === catId
           ? {
               ...c,
@@ -71,15 +109,13 @@ export default function Shopping({ trip, setTrip }) {
               ],
             }
           : c
-      ),
-    }));
+      )
+    );
   };
 
   const updateItem = (catId, itemId, patch) => {
-    if (isViewer) return;
-    setTrip((p) => ({
-      ...p,
-      shopping: p.shopping.map((c) =>
+    updateShopping((list) =>
+      list.map((c) =>
         c.id === catId
           ? {
               ...c,
@@ -88,24 +124,21 @@ export default function Shopping({ trip, setTrip }) {
               ),
             }
           : c
-      ),
-    }));
+      )
+    );
   };
 
   const deleteItem = (catId, itemId) => {
-    if (isViewer) return;
-    setTrip((p) => ({
-      ...p,
-      shopping: p.shopping.map((c) =>
+    updateShopping((list) =>
+      list.map((c) =>
         c.id === catId
           ? { ...c, items: c.items.filter((i) => i.id !== itemId) }
           : c
-      ),
-    }));
+      )
+    );
   };
 
   const handleImageUpload = (file, catId, itemId) => {
-    if (isViewer) return;
     const reader = new FileReader();
     reader.onload = () => {
       updateItem(catId, itemId, { image: reader.result });
@@ -131,25 +164,26 @@ export default function Shopping({ trip, setTrip }) {
           >
             <div
               className={`px-4 py-3 flex items-center justify-between ${
-                CATEGORY_STYLES[cat.id]?.header || "bg-[#8C6A4F]"
+                CATEGORY_STYLES[cat.id]?.header || ""
               }`}
             >
               <div className="flex items-center gap-2 text-white">
-                {Icon && <Icon className="w-5 h-5 opacity-90" />}
-                <h3 className="font-semibold tracking-wide">{cat.title}</h3>
+                {Icon && <Icon className="w-5 h-5" />}
+                <h3 className="font-semibold">{cat.title}</h3>
               </div>
 
-              {!isViewer && (
-                <button
-                  onClick={() => addItem(cat.id)}
-                  className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center"
-                >
-                  <Plus className="w-4 h-4 text-[#5A4636]" />
-                </button>
-              )}
+              <button
+                onClick={() => addItem(cat.id)}
+                className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center"
+              >
+                <Plus className="w-4 h-4 text-[#5A4636]" />
+              </button>
             </div>
 
-            <div className="p-4 space-y-3 bg-[#FFF9F2]" style={dottedBg}>
+            <div
+              className="p-4 space-y-3 bg-[#FFF9F2]"
+              style={dottedBg}
+            >
               {cat.items.length === 0 && (
                 <p className="text-xs text-[#A8937C]">尚無項目</p>
               )}
@@ -162,19 +196,16 @@ export default function Shopping({ trip, setTrip }) {
                   <input
                     type="checkbox"
                     checked={item.checked}
-                    disabled={isViewer}
                     onChange={(e) =>
                       updateItem(cat.id, item.id, {
                         checked: e.target.checked,
                       })
                     }
-                    className="mt-1"
                   />
 
                   <div className="flex-1 space-y-2">
                     <input
                       value={item.name}
-                      disabled={isViewer}
                       onChange={(e) =>
                         updateItem(cat.id, item.id, {
                           name: e.target.value,
@@ -184,42 +215,40 @@ export default function Shopping({ trip, setTrip }) {
                       className="w-full bg-transparent border-b border-[#E5D5C5] text-sm outline-none"
                     />
 
-                    {!isViewer &&
-                      (item.image ? (
-                        <img
-                          src={item.image}
-                          alt=""
-                          className="w-20 h-20 object-cover rounded-lg border"
+                    {item.image ? (
+                      <img
+                        src={item.image}
+                        alt=""
+                        className="w-20 h-20 object-cover rounded-lg border"
+                      />
+                    ) : (
+                      <label className="inline-flex items-center gap-1 text-xs text-[#8C6A4F] cursor-pointer">
+                        <ImageIcon className="w-4 h-4" />
+                        上傳照片
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) =>
+                            e.target.files &&
+                            handleImageUpload(
+                              e.target.files[0],
+                              cat.id,
+                              item.id
+                            )
+                          }
                         />
-                      ) : (
-                        <label className="inline-flex items-center gap-1 text-xs text-[#8C6A4F] cursor-pointer">
-                          <ImageIcon className="w-4 h-4" />
-                          上傳照片
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) =>
-                              e.target.files &&
-                              handleImageUpload(
-                                e.target.files[0],
-                                cat.id,
-                                item.id
-                              )
-                            }
-                          />
-                        </label>
-                      ))}
+                      </label>
+                    )}
                   </div>
 
-                  {!isViewer && (
-                    <button
-                      onClick={() => deleteItem(cat.id, item.id)}
-                      className="p-1"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() =>
+                      deleteItem(cat.id, item.id)
+                    }
+                  >
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </button>
                 </div>
               ))}
             </div>

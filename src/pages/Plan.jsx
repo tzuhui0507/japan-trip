@@ -27,98 +27,74 @@ import {
 export default function Plan({ trip, setTrip }) {
   if (!trip) return null;
 
-  // ✅ ShareMode 判斷
-  const isViewer = trip?.shareMode === "viewer";
+  const isViewer = trip.shareMode === "viewer";
 
-  const tickets = trip?.tickets || [];
+  /* ===============================
+   * ✅ Day Index：單一來源
+   * =============================== */
+  const activeDayIndex = trip.activeDayIndex ?? 0;
 
-  const fetchGeoByLocation = async (name) => {
-    if (!name) return null;
+  /* ===============================
+   * HERO / ITEM UI state
+   * =============================== */
+  const [showHeroEdit, setShowHeroEdit] = useState(false);
+  const [editingHero, setEditingHero] = useState(null);
+  const [editingItem, setEditingItem] = useState(null);
+  const [slideOpenId, setSlideOpenId] = useState(null);
+  const [viewTicket, setViewTicket] = useState(null);
 
-    try {
-      const res = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
-          name
-        )}&count=1&language=ja`
-      );
-      const data = await res.json();
-
-      if (!data.results || data.results.length === 0) return null;
-
-      const { latitude, longitude } = data.results[0];
-      return { latitude, longitude };
-    } catch (e) {
-      console.error("Geocoding failed", e);
-      return null;
-    }
-  };
-
-  // ============================================================
-  // 依 startDate / endDate 生成 Days
-  // ============================================================
+  /* ===============================
+   * Days 初始化
+   * =============================== */
   const generateDays = () => {
     const start = new Date(trip.startDate);
     const end = new Date(trip.endDate);
 
-    if (isNaN(start) || isNaN(end) || end < start) return trip.days || [];
+    if (isNaN(start) || isNaN(end) || end < start) {
+      return trip.days || [];
+    }
 
     const ONE_DAY = 86400000;
     const total = Math.round((end - start) / ONE_DAY) + 1;
     const weekdayMap = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
-    const list = [];
-    for (let i = 0; i < total; i++) {
+    return Array.from({ length: total }).map((_, i) => {
       const d = new Date(start.getTime() + i * ONE_DAY);
       const original = trip.days?.[i] || {};
 
-      list.push({
+      return {
         id: `day-${i + 1}`,
         label: `第 ${i + 1} 天`,
         weekday: weekdayMap[d.getDay()],
         dayNumber: d.getDate(),
-
         heroTitle: original.heroTitle || "",
         heroLocation: original.heroLocation || "",
         heroImage: original.heroImage || "",
-
         weatherLocation: original.weatherLocation || "東京",
         latitude: original.latitude || 35.6895,
         longitude: original.longitude || 139.6917,
         items: original.items || [],
-      });
-    }
-    return list;
+      };
+    });
   };
 
   const [days, setDays] = useState(generateDays());
-  // ⭐ 單一來源：從 TripDetail 來
-  const activeDayIndex = trip.activeDayIndex ?? 0;
 
   useEffect(() => {
     if (isViewer) return;
-
-    if (trip.days && trip.days.length > 0) return;
+    if (trip.days?.length) return;
 
     const newDays = generateDays();
     setDays(newDays);
-
-    setTrip((prev) => ({
-      ...prev,
-      days: newDays,
-      activeDayIndex: 0,
-    }));
+    setTrip((p) => ({ ...p, days: newDays, activeDayIndex: 0 }));
   }, [trip.startDate, trip.endDate]);
 
   const currentDay = days[activeDayIndex];
+  const currentItems = currentDay?.items || [];
 
-  const switchDay = (i) => {
-    if (isViewer) return;
-    setTrip((p) => ({ ...p, activeDayIndex: i }));
-  };
-
-  // ============================================================
-  // 天氣
-  // ============================================================
+  /* ===============================
+   * 天氣（viewer 也會跑）
+   * =============================== */
   const [weatherHourly, setWeatherHourly] = useState([]);
 
   const weatherIcon = (code) => {
@@ -132,77 +108,38 @@ export default function Plan({ trip, setTrip }) {
   };
 
   useEffect(() => {
-    if (isViewer) return;
-
-    if (!currentDay?.heroLocation) return;
-
-    async function geocode() {
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-            currentDay.heroLocation
-          )}`
-        );
-        const data = await res.json();
-
-        if (!data || data.length === 0) return;
-
-        const lat = parseFloat(data[0].lat);
-        const lon = parseFloat(data[0].lon);
-
-        // ⚠️ 重點：真的把座標寫回 day
-        setDays((prev) => {
-          const next = structuredClone(prev);
-          next[activeDayIndex].latitude = lat;
-          next[activeDayIndex].longitude = lon;
-          next[activeDayIndex].weatherLocation = currentDay.heroLocation;
-
-          // 同步存回 trip
-          setTrip((t) => ({ ...t, days: next }));
-          return next;
-        });
-      } catch (e) {
-        console.error("Geocoding failed", e);
-      }
-    }
-
-    geocode();
-  }, [currentDay?.heroLocation]);
-
-  useEffect(() => {
-    if (isViewer) return;
-    
     if (!currentDay?.latitude || !currentDay?.longitude) return;
 
     async function fetchWeather() {
-    try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentDay.latitude}&longitude=${currentDay.longitude}&hourly=temperature_2m,weathercode&forecast_days=1&timezone=Asia%2FTokyo`;
-    const res = await fetch(url);
-    const data = await res.json();
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentDay.latitude}&longitude=${currentDay.longitude}&hourly=temperature_2m,weathercode&forecast_days=1&timezone=Asia%2FTokyo`;
+        const res = await fetch(url);
+        const data = await res.json();
 
-    const list = data.hourly.time.map((t, index) => {
-    const hour = new Date(t).getHours();
-    return {
-    timeLabel: `${String(hour).padStart(2, "0")}:00`,
-    temp: Math.round(data.hourly.temperature_2m[index]),
-    code: data.hourly.weathercode[index],
-    };
-    });
+        const list = data.hourly.time.map((t, index) => {
+          const hour = new Date(t).getHours();
+          return {
+            timeLabel: `${String(hour).padStart(2, "0")}:00`,
+            temp: Math.round(data.hourly.temperature_2m[index]),
+            code: data.hourly.weathercode[index],
+          };
+        });
 
-    setWeatherHourly(list);
-    } catch (e) {
-    console.error(e);
-    }
+        setWeatherHourly(list);
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     fetchWeather();
-    }, [currentDay?.latitude, currentDay?.longitude]);
+  }, [currentDay?.latitude, currentDay?.longitude]);
 
-  // ============================================================
-  // 行程 CRUD
-  // ============================================================
+  /* ===============================
+   * 行程 CRUD
+   * =============================== */
   const addItem = () => {
     if (isViewer) return;
+
     const newItem = {
       id: `item-${Date.now()}`,
       time: "09:00",
@@ -216,44 +153,40 @@ export default function Plan({ trip, setTrip }) {
       notes: "",
     };
 
-    const newDays = [...days];
-    newDays[activeDayIndex].items.push(newItem);
-    setDays(newDays);
-    setTrip((p) => ({ ...p, days: newDays }));
+    const next = [...days];
+    next[activeDayIndex].items.push(newItem);
+    setDays(next);
+    setTrip((p) => ({ ...p, days: next }));
   };
 
   const deleteItem = (id) => {
     if (isViewer) return;
-    const newDays = [...days];
-    newDays[activeDayIndex].items = newDays[activeDayIndex].items.filter(
+
+    const next = [...days];
+    next[activeDayIndex].items = next[activeDayIndex].items.filter(
       (i) => i.id !== id
     );
-    setDays(newDays);
-    setTrip((p) => ({ ...p, days: newDays }));
+    setDays(next);
+    setTrip((p) => ({ ...p, days: next }));
   };
 
-  // ============================================================
-  // 拖曳排序
-  // ============================================================
   const onDragEnd = (result) => {
     if (isViewer) return;
     if (!result.destination) return;
 
-    const newDays = [...days];
-    const items = [...newDays[activeDayIndex].items];
-
+    const next = [...days];
+    const items = [...next[activeDayIndex].items];
     const [moved] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, moved);
 
-    newDays[activeDayIndex].items = items;
-    setDays(newDays);
-    setTrip((p) => ({ ...p, days: newDays }));
+    next[activeDayIndex].items = items;
+    setDays(next);
+    setTrip((p) => ({ ...p, days: next }));
   };
 
-  // ============================================================
-  // 類別 UI meta
-  // ============================================================
-  
+  /* ===============================
+   * 類別 Meta
+   * =============================== */
   const TYPE_META = {
     ATTRACTION: {
       label: "景點",
@@ -280,43 +213,6 @@ export default function Plan({ trip, setTrip }) {
       icon: BedDouble,
     },
   };
-
-  const [slideOpenId, setSlideOpenId] = useState(null);
-  const [editingItem, setEditingItem] = useState(null);
-  const [viewTicket, setViewTicket] = useState(null);
-
-  // ------------------------------
-  // HERO 編輯
-  // ------------------------------
-  const [editingHero, setEditingHero] = useState(null);
-
-  const saveHero = async (updatedDay) => {
-    if (isViewer) return;
-
-    let nextDay = { ...updatedDay };
-
-    // 地標 → 經緯度 → 天氣用
-    if (updatedDay.heroLocation) {
-    const geo = await fetchGeoByLocation(updatedDay.heroLocation);
-    if (geo) {
-    nextDay.latitude = geo.latitude;
-    nextDay.longitude = geo.longitude;
-    nextDay.weatherLocation = updatedDay.heroLocation;
-    }
-    }
-
-    const newDays = [...days];
-    newDays[activeDayIndex] = nextDay;
-
-    setDays(newDays);
-    setTrip((p) => ({ ...p, days: newDays }));
-    setEditingHero(null);
-  };
-
-  // 控制 HERO 是否顯示編輯鍵
-  const [showHeroEdit, setShowHeroEdit] = useState(false);
-
-  const currentItems = currentDay?.items || [];
 
   // ============================================================
   // RENDER
