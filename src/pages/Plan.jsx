@@ -321,7 +321,7 @@ export default function Plan({ trip, setTrip }) {
       {/* ---------------- HERO 大圖區塊 ---------------- */}
       <div className="mb-6 relative">
         <div
-          className="w-full rounded-3xl overflow-hidden relative shadow"
+          className="w-full rounded-[18px] overflow-hidden relative shadow"
           onClick={() => {
             if (isViewer) return;
             setShowHeroEdit(!showHeroEdit);
@@ -495,7 +495,7 @@ export default function Plan({ trip, setTrip }) {
                                 : "translateX(0)",
                               transition: "transform 0.3s ease",
                             }}
-                            className="bg-white border border-[#E5D5C5] rounded-3xl px-5 py-4 shadow-sm"
+                            className="bg-white border border-[#E5D5C5] rounded-[10px] px-5 py-4 shadow-sm"
                           >
                             {/* 類別 pill + 時間 */}
                             <div className="flex items-center justify-between mb-3">

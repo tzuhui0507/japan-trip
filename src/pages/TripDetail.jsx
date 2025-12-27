@@ -8,6 +8,7 @@ import {
   Languages,
   Ticket,
   Coins,
+  ShoppingBag, // ⭐ 新增
 } from "lucide-react";
 
 import Header from "../components/Header";
@@ -21,6 +22,7 @@ import InfoTab from "./Info";
 import Tickets from "./Tickets";
 import Phrasebook from "./Phrasebook";
 import Currency from "./Currency";
+import Shopping from "./Shopping"; // ⭐ 新增（之後建立）
 import TicketDetail from "../components/TicketDetail";
 
 const STORAGE_KEY = "trip_local_v1";
@@ -55,16 +57,23 @@ export default function TripDetail() {
 
   if (!trip) return null;
 
+  /* ================================
+     Tabs 定義（⭐ 新增 SHOPPING）
+  ================================= */
   const TABS = [
-    { key: "PLAN", short: "Plan", icon: Route },
-    { key: "EXPENSES", short: "Cost", icon: Wallet },
-    { key: "LIST", short: "List", icon: Luggage },
-    { key: "TICKETS", short: "Ticket", icon: Ticket },
+    { key: "PLAN", short: "PLAN", icon: Route },
+    { key: "EXPENSES", short: "COST", icon: Wallet },
+    { key: "LIST", short: "PACK", icon: Luggage },
+    { key: "SHOPPING", short: "LIST", icon: ShoppingBag }, // ⭐ 新增
+    { key: "TICKETS", short: "TICKET", icon: Ticket },
     { key: "PHRASEBOOK", short: "JP", icon: Languages },
-    { key: "CURRENCY", short: "Rate", icon: Coins },
-    { key: "INFO", short: "Info", icon: Info },
+    { key: "CURRENCY", short: "RATE", icon: Coins },
+    { key: "INFO", short: "INFO", icon: Info },
   ];
 
+  /* ================================
+     分頁內容切換
+  ================================= */
   const renderTabContent = () => {
     switch (tab) {
       case "PLAN":
@@ -73,6 +82,8 @@ export default function TripDetail() {
         return <Expenses trip={trip} setTrip={setTrip} />;
       case "LIST":
         return <ListTab trip={trip} setTrip={setTrip} />;
+      case "SHOPPING": // ⭐ 新增
+        return <Shopping trip={trip} setTrip={setTrip} />;
       case "TICKETS":
         return <Tickets trip={trip} setTrip={setTrip} />;
       case "PHRASEBOOK":
@@ -93,9 +104,8 @@ export default function TripDetail() {
       <ShareModeBanner mode={trip.shareMode} />
 
       {/* ===== 主內容區 ===== */}
-      {/* Header 高度 ≈ 96px；DayTab ≈ 56px */}
       <div className="pt-[96px] pb-20">
-        {/* ===== DayTab（只在 PLAN，sticky）===== */}
+        {/* ===== DayTab（只在 PLAN）===== */}
         {tab === "PLAN" && (
           <div className="sticky top-[96px] z-40 bg-[#F8F5F1] border-b border-[#E8E1DA]">
             <div className="flex justify-between px-6 py-3">
@@ -147,7 +157,7 @@ export default function TripDetail() {
 
       {/* ===== Bottom Nav ===== */}
       <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-[#E5D5C5]">
-        <div className="grid grid-cols-7 h-14">
+        <div className="grid grid-cols-8 h-14">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.key;

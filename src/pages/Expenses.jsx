@@ -20,20 +20,36 @@ const VIEWER_EXPENSES_KEY = "viewer_expenses_v1";
 
 // 類別定義
 const CATEGORY_MAP = {
-TRANSPORT: { key: "TRANSPORT", label: "交通", icon: Train },
-FOOD: { key: "FOOD", label: "餐飲", icon: UtensilsCrossed },
-SIGHT: { key: "SIGHT", label: "景點", icon: Landmark },
-SHOP: { key: "SHOP", label: "購物", icon: ShoppingBag },
+  TRANSPORT: {
+    key: "TRANSPORT",
+    label: "交通",
+    icon: Train,
+    color: "#6B8EAE", // 藍灰：交通
+  },
+  FOOD: {
+    key: "FOOD",
+    label: "餐飲",
+    icon: UtensilsCrossed,
+    color: "#C58B4B", // 溫暖棕：餐飲
+  },
+  SIGHT: {
+    key: "SIGHT",
+    label: "景點",
+    icon: Landmark,
+    color: "#8A7CC2", // 紫灰：觀光
+  },
+  SHOP: {
+    key: "SHOP",
+    label: "購物",
+    icon: ShoppingBag,
+    color: "#5F8F6B", // 綠色：購物
+  },
 };
 
 const CATEGORY_ORDER = ["TRANSPORT", "FOOD", "SIGHT", "SHOP"];
 
 const DEFAULT_DATA = {
-members: [
-{ id: "m1", name: "A" },
-{ id: "m2", name: "B" },
-{ id: "m3", name: "C" },
-],
+members: [],
 expenses: [],
 };
 
@@ -328,94 +344,108 @@ setExpenses((prev) => prev.filter((e) => e.id !== id));
 const formatYen = (n) => `¥${n.toLocaleString("ja-JP")}`;
 
 return (
-<div className="px-4 py-6 pb-24">
+  <div className="px-4 py-6 pb-24">
 
-{/* ---------------- Header（新版） ---------------- */}
-<PageHeader
-  icon={Wallet}
-  title="花費總覽"
-  subtitle="EXPENSES"
-/>
+    {/* ---------------- Header ---------------- */}
+    <PageHeader
+      icon={Wallet}
+      title="花費總覽"
+      subtitle="EXPENSES"
+    />
 
-{/* -------------- Buttons -------------- */}
-<div className="flex justify-end gap-2 mb-6">
-<button
-onClick={() => setMemberModalOpen(true)}
-className="px-3 py-1.5 rounded-full border border-[#C6A087] text-sm text-[#5A4636]"
->
-<Users className="w-4 h-4 inline" /> 成員
-</button>
-<button
-onClick={openAdd}
-className="px-3 py-1.5 bg-[#C6A087] text-white rounded-full"
->
-<PlusCircle className="w-4 h-4 inline" /> 新增
-</button>
-</div>
+    {/* ---------------- Buttons ---------------- */}
+    <div className="flex justify-end gap-2 mb-6">
+      <button
+        onClick={() => setMemberModalOpen(true)}
+        className="px-3 py-1.5 rounded-full border border-[#C6A087] text-sm text-[#5A4636] flex items-center gap-1"
+      >
+        <Users className="w-4 h-4" />
+        成員
+      </button>
+      <button
+        onClick={openAdd}
+        className="px-3 py-1.5 bg-[#C6A087] text-white rounded-full flex items-center gap-1"
+      >
+        <PlusCircle className="w-4 h-4" />
+        新增
+      </button>
+    </div>
 
- {/* ----------------- 總額區塊 ----------------- */}
- <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
- <div className="bg-[#4A372A] text-white rounded-2xl p-5">
- <p className="text-sm tracking-[0.2em]">TOTAL</p>
- <p className="text-3xl font-bold">{formatYen(totalYen)}</p>
- <p className="text-xs text-white/70">
- ≈ NT${totalTwd.toLocaleString()}
- </p>
- </div>
+    {/* ---------------- 總額 ---------------- */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="bg-[#4A372A] text-white rounded-2xl p-5">
+        <p className="text-sm tracking-[0.2em]">TOTAL</p>
+        <p className="text-3xl font-bold">{formatYen(totalYen)}</p>
+        <p className="text-xs text-white/70">
+          ≈ NT${totalTwd.toLocaleString()}
+        </p>
+      </div>
 
- {/* 類別統計 */}
- <div className="md:col-span-2 grid grid-cols-2 gap-3">
- {CATEGORY_ORDER.map((c) => {
- const Icon = CATEGORY_MAP[c].icon;
- return (
- <div
- key={c}
- className="bg-white rounded-2xl border border-[#E5D5C5] px-4 py-3 flex items-center gap-3"
- >
- <div className="w-8 h-8 rounded-full border border-[#C6A087] flex items-center justify-center">
- <Icon className="w-4 h-4 text-[#C6A087]" />
- </div>
- <div>
- <p className="text-xs text-[#8C6A4F]/70">
- {CATEGORY_MAP[c].label}
- </p>
- <p className="text-sm font-semibold">
- {formatYen(categoryTotals[c])}
- </p>
- </div>
- </div>
- );
- })}
- </div>
- </div>
+      {/* -------- 類別統計（icon 分色） -------- */}
+      <div className="md:col-span-2 grid grid-cols-2 gap-3">
+        {CATEGORY_ORDER.map((c) => {
+          const Icon = CATEGORY_MAP[c].icon;
+          const style = {
+            TRANSPORT: { bg: "#E4F1E3", color: "#4E6B48" },
+            FOOD: { bg: "#FBE7DF", color: "#8C4A2F" },
+            SIGHT: { bg: "#E7EEF9", color: "#4A607F" },
+            SHOP: { bg: "#F3E3F0", color: "#7A4D6E" },
+          }[c];
 
- {/* ----------------- 代墊結算 ----------------- */}
- <div className="bg-[#a9846a] text-white rounded-2xl p-5 mb-8">
- <p className="text-sm font-semibold">代墊結算</p>
- <p className="text-2xl font-bold">
- {formatYen(
- advanceSummary.reduce((s, a) => s + a.amount, 0)
- )}
- </p>
+          return (
+            <div
+              key={c}
+              className="bg-white rounded-2xl border border-[#E5D5C5] px-4 py-3 flex items-center gap-3"
+            >
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: style.bg }}
+              >
+                <Icon
+                  className="w-4 h-4"
+                  style={{ color: style.color }}
+                />
+              </div>
 
- <div className="mt-3 space-y-2">
- {advanceSummary.length === 0 ? (
- <p className="text-xs text-white/80">
- 尚無代墊紀錄
- </p>
- ) : (
- advanceSummary.map((a) => (
- <div
- key={a.id}
- className="flex justify-between bg-white/10 px-3 py-1.5 rounded-full"
- >
- <span>{a.name}</span>
- <span>{formatYen(a.amount)}</span>
- </div>
- ))
- )}
- </div>
- </div>
+              <div>
+                <p className="text-xs text-[#8C6A4F]/70">
+                  {CATEGORY_MAP[c].label}
+                </p>
+                <p className="text-sm font-semibold">
+                  {formatYen(categoryTotals[c])}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+
+    {/* ---------------- 代墊結算 ---------------- */}
+    <div className="bg-[#a9846a] text-white rounded-2xl p-5 mb-8">
+      <p className="text-sm font-semibold">代墊結算</p>
+      <p className="text-2xl font-bold">
+        {formatYen(
+          advanceSummary.reduce((s, a) => s + a.amount, 0)
+        )}
+      </p>
+
+      <div className="mt-3 space-y-2">
+        {advanceSummary.length === 0 ? (
+          <p className="text-xs text-white/80">尚無代墊紀錄</p>
+        ) : (
+          advanceSummary.map((a) => (
+            <div
+              key={a.id}
+              className="flex justify-between bg-white/10 px-3 py-1.5 rounded-full"
+            >
+              <span>{a.name}</span>
+              <span>{formatYen(a.amount)}</span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
 
  {/* ----------------- 篩選 Tabs ----------------- */}
  <div className="flex gap-2 mb-3">
