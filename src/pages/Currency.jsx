@@ -15,17 +15,26 @@ import PageHeader from "../components/PageHeader";
 const RATE_API_URL = "https://open.er-api.com/v6/latest/JPY";
 const VIEWER_CURRENCY_KEY = "viewer_currency_v1";
 
-const DEFAULT_CARDS = [
-  {
-    id: "card-default",
-    name: "自訂支付",
-    org: "VISA",
-    feePercent: 1.5,
-    cashbackPercent: 0,
-    note: "",
-    isPrimary: true,
-  },
-];
+/* ===============================
+   預設資料（⚠️ 很重要）
+================================ */
+const DEFAULT_CURRENCY = {
+  rate: null,
+  rateUpdatedAt: "",
+  cards: [
+    {
+      id: "card-default",
+      name: "自訂支付",
+      org: "VISA",
+      feePercent: 1.5,
+      cashbackPercent: 0,
+      note: "",
+      isPrimary: true,
+    },
+  ],
+  activeCardId: "card-default",
+  amountStr: "0",
+};
 
 function createNewCard() {
   return {
@@ -55,73 +64,61 @@ function getOrgLogoSrc(org) {
 export default function Currency({ trip, setTrip }) {
   if (!trip) return null;
 
-  // ======================================================
-  // STEP 5：viewer-only 判斷
-  // ======================================================
-  const isViewer = trip?.shareMode === "viewer";
+  /* ===============================
+     Share mode
+  ================================ */
+  const isViewer = trip.shareMode === "viewer";
   const [viewerCurrency, setViewerCurrency] = useState(null);
 
-  // ======================================================
-  // 初始化（owner / viewer 分流）
-  // ======================================================
+  /* ===============================
+     初始化（viewer / owner）
+     ❗ 不 return，不中斷 hooks
+  ================================ */
   useEffect(() => {
     if (isViewer) {
       const raw = localStorage.getItem(VIEWER_CURRENCY_KEY);
       if (raw) {
         setViewerCurrency(JSON.parse(raw));
       } else {
-        const init = trip.currency || {
-          rate: null,
-          rateUpdatedAt: "",
-          cards: DEFAULT_CARDS,
-          activeCardId: DEFAULT_CARDS[0].id,
-          amountStr: "0",
-        };
+        const init = trip.currency || DEFAULT_CURRENCY;
         localStorage.setItem(VIEWER_CURRENCY_KEY, JSON.stringify(init));
         setViewerCurrency(init);
       }
       return;
     }
 
-    // owner 初始化（只做一次）
+    // owner
     if (!trip.currency) {
       setTrip((prev) => ({
         ...prev,
-        currency: {
-          rate: null,
-          rateUpdatedAt: "",
-          cards: DEFAULT_CARDS,
-          activeCardId: DEFAULT_CARDS[0].id,
-          amountStr: "0",
-        },
+        currency: DEFAULT_CURRENCY,
       }));
     }
   }, [isViewer, trip, setTrip]);
 
-  // ======================================================
-  // 資料來源統一出口
-  // ======================================================
+  /* ===============================
+     ✅ 統一資料來源（永遠有值）
+     ❗ 關鍵修正點
+  ================================ */
   const currency = isViewer
-    ? viewerCurrency || trip.currency
-    : trip.currency;
-
-  if (!currency) return null;
+    ? viewerCurrency || trip.currency || DEFAULT_CURRENCY
+    : trip.currency || DEFAULT_CURRENCY;
 
   const {
     rate,
     rateUpdatedAt,
-    cards = DEFAULT_CARDS,
+    cards,
     activeCardId,
     amountStr,
   } = currency;
 
-  // ======================================================
-  // 寫回 helper（核心）
-  // ======================================================
+  /* ===============================
+     寫回 helper
+  ================================ */
   const updateCurrency = (patch) => {
     if (isViewer) {
       setViewerCurrency((prev) => {
-        const base = prev || currency;
+        const base = prev || DEFAULT_CURRENCY;
         const next = { ...base, ...patch };
         localStorage.setItem(VIEWER_CURRENCY_KEY, JSON.stringify(next));
         return next;
@@ -132,15 +129,15 @@ export default function Currency({ trip, setTrip }) {
     setTrip((prev) => ({
       ...prev,
       currency: {
-        ...prev.currency,
+        ...(prev.currency || DEFAULT_CURRENCY),
         ...patch,
       },
     }));
   };
 
-  // ======================================================
-  // Local UI state
-  // ======================================================
+  /* ===============================
+     Local UI states（⚠️ hooks 順序固定）
+  ================================ */
   const [loadingRate, setLoadingRate] = useState(false);
   const [rateError, setRateError] = useState("");
   const [calcValue, setCalcValue] = useState(null);
@@ -150,9 +147,9 @@ export default function Currency({ trip, setTrip }) {
   const [editingCardId, setEditingCardId] = useState(null);
   const [cardDraft, setCardDraft] = useState(createNewCard());
 
-  // ======================================================
-  // 匯率 API
-  // ======================================================
+  /* ===============================
+     匯率 API
+  ================================ */
   const fetchRate = async () => {
     setLoadingRate(true);
     setRateError("");
@@ -173,17 +170,17 @@ export default function Currency({ trip, setTrip }) {
     }
   };
 
-  // ======================================================
-  // Active card
-  // ======================================================
+  /* ===============================
+     Active card
+  ================================ */
   const activeCard =
     cards.find((c) => c.id === activeCardId) ||
     cards.find((c) => c.isPrimary) ||
     cards[0];
 
-  // ======================================================
-  // 計算
-  // ======================================================
+  /* ===============================
+     計算
+  ================================ */
   const amount = parseFloat(amountStr || "0") || 0;
   const baseResult = rate ? amount * rate : 0;
   const baseResultInt = Math.round(baseResult);
@@ -196,9 +193,9 @@ export default function Currency({ trip, setTrip }) {
   const cashbackAmount = (afterFee * cashbackPercent) / 100;
   const cardResultInt = Math.round(afterFee - cashbackAmount);
 
-  // ======================================================
-  // Card actions
-  // ======================================================
+  /* ===============================
+     Card actions
+  ================================ */
   const openNewCardModal = () => {
     setEditingCardId(null);
     setCardDraft(createNewCard());
@@ -211,8 +208,6 @@ export default function Currency({ trip, setTrip }) {
     setCardDraft({ ...activeCard });
     setCardModalOpen(true);
   };
-
-  const closeCardModal = () => setCardModalOpen(false);
 
   const saveCardFromDraft = () => {
     let updated = [...cards];
@@ -237,7 +232,7 @@ export default function Currency({ trip, setTrip }) {
 
   const deleteCurrentCard = () => {
     const remain = cards.filter((c) => c.id !== editingCardId);
-    const fallback = remain.length ? remain : DEFAULT_CARDS;
+    const fallback = remain.length ? remain : DEFAULT_CURRENCY.cards;
     updateCurrency({
       cards: fallback,
       activeCardId: fallback[0].id,
@@ -255,9 +250,9 @@ export default function Currency({ trip, setTrip }) {
     });
   };
 
-  // ======================================================
-  // Keypad
-  // ======================================================
+  /* ===============================
+     Keypad
+  ================================ */
   const keypadButtons = [
     ["7", "8", "9", "÷"],
     ["4", "5", "6", "×"],
