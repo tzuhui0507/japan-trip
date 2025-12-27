@@ -116,7 +116,14 @@ export default function TripDetail() {
   const renderTabContent = () => {
     switch (tab) {
       case "PLAN":
-        return <Plan trip={trip} setTrip={setTrip} />;
+        return (
+          <Plan 
+            key={currentDayIndex}
+            trip={trip}
+            setTrip={setTrip}
+            dayIndex={currentDayIndex} 
+          />
+        );
       case "EXPENSES":
         return <Expenses trip={trip} setTrip={setTrip} />;
       case "LIST":
