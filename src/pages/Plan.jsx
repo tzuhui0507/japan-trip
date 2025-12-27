@@ -30,7 +30,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
   const isViewer = trip.shareMode === "viewer";
 
   /* ===============================
-   * ✅ Day Index：唯一來源（TripDetail）
+   * ✅ Day Index（唯一來源）
    * =============================== */
   const activeDayIndex =
     typeof dayIndex === "number"
@@ -38,7 +38,14 @@ export default function Plan({ trip, setTrip, dayIndex }) {
       : trip.activeDayIndex ?? 0;
 
   /* ===============================
-   * HERO / ITEM UI state
+   * ✅ 單一資料來源：trip.days
+   * =============================== */
+  const days = trip.days || [];
+  const currentDay = days[activeDayIndex];
+  const currentItems = currentDay?.items || [];
+
+  /* ===============================
+   * UI State（只管畫面）
    * =============================== */
   const [showHeroEdit, setShowHeroEdit] = useState(false);
   const [editingHero, setEditingHero] = useState(null);
@@ -47,57 +54,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
   const [viewTicket, setViewTicket] = useState(null);
 
   /* ===============================
-   * Days 初始化
-   * =============================== */
-  const generateDays = () => {
-    const start = new Date(trip.startDate);
-    const end = new Date(trip.endDate);
-
-    if (isNaN(start) || isNaN(end) || end < start) {
-      return trip.days || [];
-    }
-
-    const ONE_DAY = 86400000;
-    const total = Math.round((end - start) / ONE_DAY) + 1;
-    const weekdayMap = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-
-    return Array.from({ length: total }).map((_, i) => {
-      const d = new Date(start.getTime() + i * ONE_DAY);
-      const original = trip.days?.[i] || {};
-
-      return {
-        id: `day-${i + 1}`,
-        label: `第 ${i + 1} 天`,
-        weekday: weekdayMap[d.getDay()],
-        dayNumber: d.getDate(),
-        heroTitle: original.heroTitle || "",
-        heroLocation: original.heroLocation || "",
-        heroImage: original.heroImage || "",
-        weatherLocation: original.weatherLocation || "東京",
-        latitude: original.latitude || 35.6895,
-        longitude: original.longitude || 139.6917,
-        items: original.items || [],
-      };
-    });
-  };
-
-  const [days, setDays] = useState(generateDays);
-
-  // owner 初始化 days
-  useEffect(() => {
-    if (isViewer) return;
-    if (trip.days?.length) return;
-
-    const newDays = generateDays();
-    setDays(newDays);
-    setTrip((p) => ({ ...p, days: newDays, activeDayIndex: 0 }));
-  }, [trip.startDate, trip.endDate]);
-
-  const currentDay = days[activeDayIndex];
-  const currentItems = currentDay?.items || [];
-
-  /* ===============================
-   * 天氣（viewer 也會跑）
+   * 天氣
    * =============================== */
   const [weatherHourly, setWeatherHourly] = useState([]);
 
@@ -139,53 +96,54 @@ export default function Plan({ trip, setTrip, dayIndex }) {
   }, [currentDay?.latitude, currentDay?.longitude]);
 
   /* ===============================
-   * 行程 CRUD
+   * 行程 CRUD（只改 trip）
    * =============================== */
+  const updateDays = (updater) => {
+    setTrip((prev) => {
+      const next = structuredClone(prev);
+      updater(next.days);
+      return next;
+    });
+  };
+
   const addItem = () => {
     if (isViewer) return;
 
-    const newItem = {
-      id: `item-${Date.now()}`,
-      time: "09:00",
-      type: "ATTRACTION",
-      title: "新的行程",
-      ticketIds: [],
-      subtitle: "",
-      address: "",
-      openingHours: "",
-      phone: "",
-      notes: "",
-    };
-
-    const next = structuredClone(days);
-    next[activeDayIndex].items.push(newItem);
-    setDays(next);
-    setTrip((p) => ({ ...p, days: next }));
+    updateDays((days) => {
+      days[activeDayIndex].items.push({
+        id: `item-${Date.now()}`,
+        time: "09:00",
+        type: "ATTRACTION",
+        title: "新的行程",
+        ticketIds: [],
+        subtitle: "",
+        address: "",
+        openingHours: "",
+        phone: "",
+        notes: "",
+      });
+    });
   };
 
   const deleteItem = (id) => {
     if (isViewer) return;
 
-    const next = structuredClone(days);
-    next[activeDayIndex].items = next[activeDayIndex].items.filter(
-      (i) => i.id !== id
-    );
-    setDays(next);
-    setTrip((p) => ({ ...p, days: next }));
+    updateDays((days) => {
+      days[activeDayIndex].items = days[activeDayIndex].items.filter(
+        (i) => i.id !== id
+      );
+    });
   };
 
   const onDragEnd = (result) => {
     if (isViewer) return;
     if (!result.destination) return;
 
-    const next = structuredClone(days);
-    const items = next[activeDayIndex].items;
-
-    const [moved] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, moved);
-
-    setDays(next);
-    setTrip((p) => ({ ...p, days: next }));
+    updateDays((days) => {
+      const items = days[activeDayIndex].items;
+      const [moved] = items.splice(result.source.index, 1);
+      items.splice(result.destination.index, 0, moved);
+    });
   };
 
   /* ===============================
