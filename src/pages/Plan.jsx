@@ -269,8 +269,8 @@ export default function Plan({ trip, setTrip, dayIndex }) {
               {/* 地點（無底色） */}
               {currentDay.heroLocation && (
                 <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4 text-[#CDA581] opacity-90" />
-                  <span className="text-sm font-medium text-white opacity-90">
+                  <MapPin className="w-4 h-4 text-[#CDA581]" />
+                  <span className="text-xs font-medium text-white">
                     {currentDay.heroLocation}
                   </span>
                 </div>
@@ -278,7 +278,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
             </div>
 
             {/* Title */}
-            <div className="text-3xl font-bold leading-tight">
+            <div className="text-xl font-bold leading-tight">
               {currentDay.heroTitle || "未設定標題"}
             </div>
 
