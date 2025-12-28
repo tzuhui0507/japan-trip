@@ -259,12 +259,12 @@ export default function Shopping({ trip, setTrip }) {
                       }`}
                     >
                       {/* 總金額 */}
-                      <div className="text-[13px] font-medium text-[#5A4636]">
+                      <div className="text-[12px] font-medium text-[#5A4636]">
                         ¥ {(item.price * item.quantity).toLocaleString()}
                       </div>
 
                       {/* 單價 × 數量 */}
-                      <div className="text-[10px] text-[#A8937C]">
+                      <div className="text-[9px] text-[#A8937C]">
                         ¥ {item.price.toLocaleString()} × {item.quantity}
                       </div>
                     </div>
