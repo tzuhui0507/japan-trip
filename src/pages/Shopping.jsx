@@ -184,11 +184,11 @@ export default function Shopping({ trip, setTrip }) {
         return (
           <div
             key={cat.id}
-            className="rounded-2xl border border-[#EDE3D8] bg-white overflow-hidden"
+            className="rounded-2xl border border-[#EDE3D8] bg-white overflow-visible"
           >
             {/* header */}
             <div
-              className={`px-4 py-3 flex items-center justify-between ${
+              className={`px-4 py-3 flex items-center justify-between rounded-t-2xl ${
                 CATEGORY_STYLES[cat.id]?.header || ""
               }`}
             >
@@ -207,7 +207,7 @@ export default function Shopping({ trip, setTrip }) {
 
             {/* body */}
             <div
-              className="p-4 space-y-2 bg-[#FFF9F2]"
+              className="p-4 space-y-2 bg-[#FFF9F2] rounded-b-2xl"
               style={dottedBg}
             >
               {[...cat.items]
@@ -254,7 +254,7 @@ export default function Shopping({ trip, setTrip }) {
                   typeof item.quantity === "number" &&
                   item.quantity > 0 && (
                     <div
-                      className={`mr-2 text-right leading-sung tabular-nums transition ${
+                      className={`mr-2 text-right leading-snug tabular-nums transition ${
                         item.checked ? "opacity-60" : ""
                       }`}
                     >
