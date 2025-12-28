@@ -184,13 +184,15 @@ export default function Shopping({ trip, setTrip }) {
         return (
           <div
             key={cat.id}
-            className="rounded-2xl border border-[#EDE3D8] bg-white overflow-visible"
+            className="rounded-2xl overflow-visible"
           >
             {/* header */}
             <div
-              className={`px-4 py-3 flex items-center justify-between rounded-t-2xl ${
-                CATEGORY_STYLES[cat.id]?.header || ""
-              }`}
+              className={`px-4 py-3 flex items-center justify-between
+                rounded-t-2xl
+                border border-[#EDE3D8] border-b-0
+                ${CATEGORY_STYLES[cat.id]?.header || ""}
+              `}
             >
               <div className="flex items-center gap-2 text-white">
                 {Icon && <Icon className="w-5 h-5" />}
@@ -207,7 +209,10 @@ export default function Shopping({ trip, setTrip }) {
 
             {/* body */}
             <div
-              className="p-4 space-y-2 bg-[#FFF9F2] rounded-b-2xl"
+              className="p-4 space-y-2 bg-[#FFF9F2]
+                rounded-b-2xl
+                border border-[#EDE3D8] border-t-0
+              "
               style={dottedBg}
             >
               {[...cat.items]
