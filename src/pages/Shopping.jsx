@@ -11,6 +11,7 @@ import {
   MoreHorizontal,
   X,
   Pencil,
+  CircleDollarSign,
 } from "lucide-react";
 import PageHeader from "../components/PageHeader";
 
@@ -102,7 +103,7 @@ export default function Shopping({ trip, setTrip }) {
                   name: "新的項目",
                   checked: false,
                   image: null,
-                  price: 0,
+                  price: null,
                 },
               ],
             }
@@ -269,29 +270,12 @@ export default function Shopping({ trip, setTrip }) {
                   <div className="ml-auto flex items-center gap-2 shrink-0">
                     {/* 💰 金額（¥） */}
                     <div className="flex items-center gap-1">
-                      <span className="text-sm font-medium text-[#8C6A4F]">¥</span>
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        min="0"
-                        value={item.price ?? 0}
-                        onChange={(e) =>
-                          updateItem(cat.id, item.id, {
-                            price: Number(e.target.value) || 0,
-                          })
-                        }
-                        className="
-                          w-16
-                          text-right
-                          text-sm
-                          bg-transparent
-                          border-b border-[#E5D5C5]
-                          focus:outline-none
-                          focus:border-[#C6A087]
-                          text-[#5A4636]
-                        "
-                        placeholder="0"
-                      />
+                      {/* 💰 顯示金額（僅顯示） */}
+                      {typeof item.price === "number" && item.price > 0 && (
+                        <span className="text-sm text-[#8C6A4F] tabular-nums">
+                          ¥ {item.price.toLocaleString()}
+                        </span>
+                      )}
                     </div>
 
                     {/* image icon (佔位用，避免高度不一) */}
@@ -336,6 +320,30 @@ export default function Shopping({ trip, setTrip }) {
                       >
                         <Pencil className="w-4 h-4" />
                         編輯名稱
+                      </button>
+
+                      <button
+                        className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#F7F1EB] w-full"
+                        onClick={() => {
+                          const value = prompt(
+                            "編輯金額（日圓）",
+                            item.price != null ? String(item.price) : ""
+                          );
+
+                          if (value === null) return; // 使用者取消
+
+                          const num = Number(value);
+                          if (Number.isNaN(num) || num < 0) {
+                            alert("請輸入有效的金額");
+                            return;
+                          }
+
+                          updateItem(cat.id, item.id, { price: num });
+                          setMenuOpenId(null);
+                        }}
+                      >
+                        <CircleDollarSign className="w-4 h-4" />
+                        編輯金額
                       </button>
 
                       <label className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#F7F1EB] cursor-pointer">
