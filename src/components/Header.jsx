@@ -4,11 +4,12 @@ import { Link, Upload, Download } from "lucide-react";
 
 const STORAGE_KEY = "trip_local_v1";
 
-export default function Header({ trip, setTrip }) {
+export default function Header({ trip, setTrip, currentTab }) {
   if (!trip) return null;
 
   const year = new Date(trip.startDate).getFullYear();
   const isViewer = trip.shareMode === "viewer";
+  const isPlan = currentTab === "PLAN";
 
   // ===== 匯入 Modal =====
   const [showImport, setShowImport] = useState(false);
@@ -58,7 +59,11 @@ export default function Header({ trip, setTrip }) {
   return (
     <>
       {/* ===== Header ===== */}
-      <header className="fixed top-0 left-0 w-full z-50 bg-[#F8F5F1] border-b border-[#E8E1DA]">
+      <header
+        className={`fixed top-0 left-0 w-full z-50 bg-[#F8F5F1] ${
+          isPlan ? "" : "border-b border-[#E8E1DA]"
+        }`}
+      >
         <div className="relative py-6 text-center">
 
           {/* ===== 右上角 icon 操作 ===== */}

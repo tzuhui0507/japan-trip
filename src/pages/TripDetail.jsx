@@ -145,12 +145,12 @@ export default function TripDetail() {
 
   return (
     <ShareModeProvider mode={trip.shareMode}>
-      <Header trip={trip} setTrip={setTrip} />
+      <Header trip={trip} setTrip={setTrip} currentTab={tab} />
 
-      <div className="pt-[96px] pb-20">
+      <div className="pb-20">
         {/* DayTab */}
         {tab === "PLAN" && (
-          <div className="sticky top-[96px] z-40 bg-[#F8F5F1] border-b border-[#E8E1DA]">
+          <div className="sticky top-[110px] z-40 bg-[#F8F5F1] border-b border-[#E8E1DA]">
             <div className="flex justify-between px-6 py-3">
               {(trip.days || []).map((day, index) => {
                 const active = index === currentDayIndex;
@@ -195,7 +195,9 @@ export default function TripDetail() {
           </div>
         )}
 
-        <div className="px-4">{renderTabContent()}</div>
+        <div className="pt-[96px] px-4">
+          {renderTabContent()}
+        </div>
       </div>
 
       {/* Bottom Nav */}

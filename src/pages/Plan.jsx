@@ -29,6 +29,13 @@ export default function Plan({ trip, setTrip, dayIndex }) {
 
   const isViewer = trip.shareMode === "viewer";
 
+  const numberToChinese = (num) => {
+    const map = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
+    if (num <= 10) return map[num];
+    if (num < 20) return "十" + map[num - 10];
+    return num; // 超過先保底
+  };
+
   /* ===============================
    * ✅ Day Index（唯一來源）
    * =============================== */
@@ -191,15 +198,39 @@ export default function Plan({ trip, setTrip, dayIndex }) {
     <div className="pt-4 pb-24">
 
       {/* ---------------- HERO 大圖區塊 ---------------- */}
-      <div className="mb-6 relative">
+      <div
+        className="mb-6 relative flex gap-4 items-stretch"
+        style={{ height: 240 }}
+      >
+        {/* 左側：線條 icon + 第 X 天（高度對齊 Hero） */}
+        <div className="w-12 flex flex-col items-center h-full">
+
+          {/* 上方圓點 */}
+          <span className="w-2 h-2 rounded-full bg-[#C6A087] mb-2 shrink-0" />
+
+          {/* 中間直線（自動撐高） */}
+          <span className="w-px flex-1 bg-[#D8CFC4]" />
+
+          {/* 第 X 天（直式） */}
+          <div
+            className="mt-3 text-[#5A4636] font-semibold tracking-[0.4em]"
+            style={{
+              writingMode: "vertical-rl",
+              fontSize: "22px",
+              lineHeight: "1.8",
+            }}
+          >
+            第{numberToChinese(activeDayIndex + 1)}天
+          </div>
+
+        </div>
         <div
-          className="w-full rounded-[18px] overflow-hidden relative shadow"
+          className="flex-1 rounded-[18px] overflow-hidden relative shadow"
           onClick={() => {
             if (isViewer) return;
             setShowHeroEdit(!showHeroEdit);
           }}
           style={{
-            height: "280px",
             backgroundImage: `url(${currentDay.heroImage || "/placeholder.jpg"})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
@@ -234,20 +265,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
 
             {/* DAY + 地點 */}
             <div className="flex items-center gap-3 mb-3">
-
-              {/* DAY 玻璃效果 */}
-              <div
-                className="
-                  px-4 py-1.5 rounded-full
-                  bg-white/45
-                  backdrop-blur-3xl
-                  border border-white/70
-                  text-white text-sm font-semibold tracking-[0.25em]
-                  shadow-xl brightness-125
-                "
-              >
-                DAY {activeDayIndex + 1}
-              </div>
 
               {/* 地點（無底色） */}
               {currentDay.heroLocation && (
