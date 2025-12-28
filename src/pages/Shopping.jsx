@@ -102,6 +102,7 @@ export default function Shopping({ trip, setTrip }) {
                   name: "新的項目",
                   checked: false,
                   image: null,
+                  price: 0,
                 },
               ],
             }
@@ -136,10 +137,51 @@ export default function Shopping({ trip, setTrip }) {
   };
 
   const handleImageUpload = (file, catId, itemId) => {
+    if (!file) return;
+
+    // 只處理圖片
+    if (!file.type.startsWith("image/")) {
+      alert("請選擇圖片檔案");
+      return;
+    }
+
+    const img = new Image();
     const reader = new FileReader();
+
     reader.onload = () => {
-      updateItem(catId, itemId, { image: reader.result });
+      img.src = reader.result;
     };
+
+    img.onload = () => {
+      // ===== 縮圖設定 =====
+      const MAX_SIZE = 600; // 最長邊 600px（UI 超夠用）
+      let { width, height } = img;
+
+      if (width > height && width > MAX_SIZE) {
+        height = Math.round((height * MAX_SIZE) / width);
+        width = MAX_SIZE;
+      } else if (height > MAX_SIZE) {
+        width = Math.round((width * MAX_SIZE) / height);
+        height = MAX_SIZE;
+      }
+
+      // ===== Canvas 縮圖 =====
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // ===== 壓縮成 JPEG（體積小很多）=====
+      const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
+
+      // 寫回 item
+      updateItem(catId, itemId, {
+        image: compressedBase64,
+      });
+    };
+
     reader.readAsDataURL(file);
   };
 
@@ -225,12 +267,37 @@ export default function Shopping({ trip, setTrip }) {
 
                   {/* right tools */}
                   <div className="ml-auto flex items-center gap-2 shrink-0">
+                    {/* 💰 金額（¥） */}
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-medium text-[#8C6A4F]">¥</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min="0"
+                        value={item.price ?? 0}
+                        onChange={(e) =>
+                          updateItem(cat.id, item.id, {
+                            price: Number(e.target.value) || 0,
+                          })
+                        }
+                        className="
+                          w-16
+                          text-right
+                          text-sm
+                          bg-transparent
+                          border-b border-[#E5D5C5]
+                          focus:outline-none
+                          focus:border-[#C6A087]
+                          text-[#5A4636]
+                        "
+                        placeholder="0"
+                      />
+                    </div>
+
                     {/* image icon (佔位用，避免高度不一) */}
                     <button
                       type="button"
-                      onClick={() =>
-                        item.image && setPreviewImage(item.image)
-                      }
+                      onClick={() => item.image && setPreviewImage(item.image)}
                       className={`p-1.5 rounded-full hover:bg-[#F7F1EB] transition ${
                         item.image
                           ? "opacity-100"

@@ -32,16 +32,47 @@ setForm((prev) => ({
 
 // 圖片選擇：轉成 dataURL 存在 form.image
 const handleImageChange = (e) => {
-const file = e.target.files?.[0];
-if (!file) return;
-const reader = new FileReader();
-reader.onload = (event) => {
-const dataUrl = event.target?.result;
-if (typeof dataUrl === "string") {
-update("image", dataUrl);
-}
-};
-reader.readAsDataURL(file);
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    alert("請選擇圖片檔案");
+    return;
+  }
+
+  const reader = new FileReader();
+  const img = new Image();
+
+  reader.onload = () => {
+    img.src = reader.result;
+  };
+
+  img.onload = () => {
+    const MAX_SIZE = 600; // 票券 / QR Code 完全夠用
+    let { width, height } = img;
+
+    if (width > height && width > MAX_SIZE) {
+      height = Math.round((height * MAX_SIZE) / width);
+      width = MAX_SIZE;
+    } else if (height > MAX_SIZE) {
+      width = Math.round((width * MAX_SIZE) / height);
+      height = MAX_SIZE;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, width, height);
+
+    // 轉成 JPEG，體積小很多
+    const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
+
+    update("image", compressedBase64);
+  };
+
+  reader.readAsDataURL(file);
 };
 
 const handleSave = () => {
