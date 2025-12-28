@@ -184,11 +184,11 @@ export default function Shopping({ trip, setTrip }) {
         return (
           <div
             key={cat.id}
-            className="rounded-3xl border border-[#E5D5C5] bg-white overflow-visible"
+            className="rounded-2xl border border-[#EDE3D8] bg-white overflow-hidden"
           >
             {/* header */}
             <div
-              className={`px-4 py-3 flex items-center justify-between rounded-t-3xl ${
+              className={`px-4 py-3 flex items-center justify-between ${
                 CATEGORY_STYLES[cat.id]?.header || ""
               }`}
             >
@@ -207,7 +207,7 @@ export default function Shopping({ trip, setTrip }) {
 
             {/* body */}
             <div
-              className="p-4 space-y-2 bg-[#FFF9F2] rounded-b-3xl"
+              className="p-4 space-y-2 bg-[#FFF9F2]"
               style={dottedBg}
             >
               {[...cat.items]
@@ -219,7 +219,7 @@ export default function Shopping({ trip, setTrip }) {
                     <React.Fragment key={item.id}>
                       <div
                         className={`
-                          relative flex items-center h-[52px] px-4 rounded-2xl transition
+                          relative flex items-center h-[52px] px-4 rounded-xl transition
                           ${
                             item.checked
                               ? "bg-[#F7F1EB] border border-[#E8DCCF]"
