@@ -12,6 +12,8 @@ import {
   X,
   Pencil,
   CircleDollarSign,
+  Check,
+  ShoppingBasket,
 } from "lucide-react";
 import PageHeader from "../components/PageHeader";
 
@@ -44,6 +46,11 @@ export default function Shopping({ trip, setTrip }) {
 
   const [previewImage, setPreviewImage] = useState(null);
   const [menuOpenId, setMenuOpenId] = useState(null);
+
+  // ⭐ 浮層編輯用 state
+  const [editingItem, setEditingItem] = useState(null); // { catId, item }
+  const [editingField, setEditingField] = useState(null); // "name" | "price"
+  const [draftValue, setDraftValue] = useState("");
 
   /* ---------- init ---------- */
   useEffect(() => {
@@ -104,6 +111,7 @@ export default function Shopping({ trip, setTrip }) {
                   checked: false,
                   image: null,
                   price: null,
+                  quantity: 1,
                 },
               ],
             }
@@ -140,49 +148,24 @@ export default function Shopping({ trip, setTrip }) {
   const handleImageUpload = (file, catId, itemId) => {
     if (!file) return;
 
-    // 只處理圖片
+    // 只允許圖片
     if (!file.type.startsWith("image/")) {
       alert("請選擇圖片檔案");
       return;
     }
 
-    const img = new Image();
+    // 防止 base64 太大導致畫面異常
+    if (file.size > 2 * 1024 * 1024) {
+      alert("圖片太大，請選擇 2MB 以下的照片");
+      return;
+    }
+
     const reader = new FileReader();
-
     reader.onload = () => {
-      img.src = reader.result;
-    };
-
-    img.onload = () => {
-      // ===== 縮圖設定 =====
-      const MAX_SIZE = 600; // 最長邊 600px（UI 超夠用）
-      let { width, height } = img;
-
-      if (width > height && width > MAX_SIZE) {
-        height = Math.round((height * MAX_SIZE) / width);
-        width = MAX_SIZE;
-      } else if (height > MAX_SIZE) {
-        width = Math.round((width * MAX_SIZE) / height);
-        height = MAX_SIZE;
-      }
-
-      // ===== Canvas 縮圖 =====
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, width, height);
-
-      // ===== 壓縮成 JPEG（體積小很多）=====
-      const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
-
-      // 寫回 item
       updateItem(catId, itemId, {
-        image: compressedBase64,
+        image: reader.result,
       });
     };
-
     reader.readAsDataURL(file);
   };
 
@@ -227,23 +210,27 @@ export default function Shopping({ trip, setTrip }) {
               className="p-4 space-y-2 bg-[#FFF9F2] rounded-b-3xl"
               style={dottedBg}
             >
-              {cat.items.map((item) => (
-                <div
-                  key={item.id}
-                  className="
-                    relative w-full
-                    flex items-center
-                    h-[52px]
-                    px-4
-                    bg-white
-                    border border-[#F0E3D5]
-                    rounded-2xl
-                  "
-                >
-                  {/* checkbox */}
+              {[...cat.items]
+                .sort((a, b) => Number(a.checked) - Number(b.checked))
+                .map((item, index, arr) => {
+                  const nextItem = arr[index + 1];
+
+                  return (
+                    <React.Fragment key={item.id}>
+                      <div
+                        className={`
+                          relative flex items-center h-[52px] px-4 rounded-2xl transition
+                          ${
+                            item.checked
+                              ? "bg-[#F7F1EB] border border-[#E8DCCF]"
+                              : "bg-white border border-[#F0E3D5]"
+                          }
+                        `}
+                      >
+
                   <input
                     type="checkbox"
-                    className="shrink-0 w-4 h-4 accent-[#8C6A4F]"
+                    className="shrink-0 w-4 h-4 accent-[#D8C2AE]"
                     checked={item.checked}
                     onChange={(e) =>
                       updateItem(cat.id, item.id, {
@@ -252,58 +239,60 @@ export default function Shopping({ trip, setTrip }) {
                     }
                   />
 
-                  {/* name */}
-                  <button
-                    onClick={() =>
-                      item.image && setPreviewImage(item.image)
-                    }
-                    className={`ml-3 flex-1 pr-2 text-left text-sm truncate ${
+                  <span
+                    className={`ml-3 flex-1 text-sm truncate transition ${
                       item.checked
                         ? "line-through text-[#A8937C]"
                         : "text-[#5A4636]"
                     }`}
                   >
                     {item.name}
-                  </button>
+                  </span>
 
-                  {/* right tools */}
-                  <div className="ml-auto flex items-center gap-2 shrink-0">
-                    {/* 💰 金額（¥） */}
-                    <div className="flex items-center gap-1">
-                      {/* 💰 顯示金額（僅顯示） */}
-                      {typeof item.price === "number" && item.price > 0 && (
-                        <span className="text-sm text-[#8C6A4F] tabular-nums">
-                          ¥ {item.price.toLocaleString()}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* image icon (佔位用，避免高度不一) */}
-                    <button
-                      type="button"
-                      onClick={() => item.image && setPreviewImage(item.image)}
-                      className={`p-1.5 rounded-full hover:bg-[#F7F1EB] transition ${
-                        item.image
-                          ? "opacity-100"
-                          : "opacity-0 pointer-events-none"
+                  {/* 💰 金額顯示（總價＋單價說明） */}
+                  {typeof item.price === "number" &&
+                  typeof item.quantity === "number" &&
+                  item.quantity > 0 && (
+                    <div
+                      className={`mr-2 text-right leading-tight tabular-nums transition ${
+                        item.checked ? "opacity-60" : ""
                       }`}
                     >
-                      <ImageIcon className="w-5 h-5 text-[#A8937C]" />
-                    </button>
+                      {/* 總金額 */}
+                      <div className="text-sm font-medium text-[#5A4636]">
+                        ¥ {(item.price * item.quantity).toLocaleString()}
+                      </div>
 
-                    {/* more */}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setMenuOpenId(
-                          menuOpenId === item.id ? null : item.id
-                        )
-                      }
-                      className="p-1.5 rounded-full hover:bg-[#F7F1EB]"
-                    >
-                      <MoreHorizontal className="w-5 h-5 text-[#8C6A4F]" />
-                    </button>
-                  </div>
+                      {/* 單價 × 數量 */}
+                      <div className="text-[11px] text-[#A8937C]">
+                        ¥ {item.price.toLocaleString()} × {item.quantity}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* image icon (佔位用，避免高度不一) */}
+                    {item.image && (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewImage(item.image)}
+                        className={`p-1.5 rounded-full hover:bg-[#F7F1EB] transition ${
+                          item.checked ? "opacity-50" : "opacity-100"
+                        }`}
+                        title="查看照片"
+                      >
+                        <ImageIcon className="w-5 h-5 text-[#A8937C]" />
+                      </button>
+                    )}
+
+                  <button
+                    onClick={() =>
+                      setMenuOpenId(
+                        menuOpenId === item.id ? null : item.id
+                      )
+                    }
+                  >
+                    <MoreHorizontal className="w-5 h-5 text-[#8C6A4F]" />
+                  </button>
 
                   {/* menu */}
                   {menuOpenId === item.id && (
@@ -311,10 +300,9 @@ export default function Shopping({ trip, setTrip }) {
                       <button
                         className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#F7F1EB] w-full"
                         onClick={() => {
-                          const name = prompt("編輯名稱", item.name);
-                          if (name !== null) {
-                            updateItem(cat.id, item.id, { name });
-                          }
+                          setEditingItem({ catId: cat.id, item });
+                          setEditingField("name");
+                          setDraftValue(item.name);
                           setMenuOpenId(null);
                         }}
                       >
@@ -325,51 +313,55 @@ export default function Shopping({ trip, setTrip }) {
                       <button
                         className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#F7F1EB] w-full"
                         onClick={() => {
-                          const value = prompt(
-                            "編輯金額（日圓）",
+                          setEditingItem({ catId: cat.id, item });
+                          setEditingField("price");
+                          setDraftValue(
                             item.price != null ? String(item.price) : ""
                           );
-
-                          if (value === null) return; // 使用者取消
-
-                          const num = Number(value);
-                          if (Number.isNaN(num) || num < 0) {
-                            alert("請輸入有效的金額");
-                            return;
-                          }
-
-                          updateItem(cat.id, item.id, { price: num });
                           setMenuOpenId(null);
                         }}
                       >
                         <CircleDollarSign className="w-4 h-4" />
-                        編輯金額
+                        編輯單價
                       </button>
 
+                      <button
+                        className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#F7F1EB] w-full"
+                        onClick={() => {
+                          setEditingItem({ catId: cat.id, item });
+                          setEditingField("quantity"); // ⭐
+                          setDraftValue(
+                            item.quantity != null ? String(item.quantity) : "1"
+                          );
+                          setMenuOpenId(null);
+                        }}
+                      >
+                        <ShoppingBasket className="w-4 h-4" />
+                        編輯數量
+                      </button>
+                      
                       <label className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#F7F1EB] cursor-pointer">
                         <ImageIcon className="w-4 h-4" />
-                        上傳照片
+                        編輯照片
                         <input
                           type="file"
                           accept="image/*"
                           className="hidden"
-                          onChange={(e) =>
-                            e.target.files &&
+                          onChange={(e) => {
+                            if (!e.target.files?.[0]) return;
                             handleImageUpload(
                               e.target.files[0],
                               cat.id,
                               item.id
-                            )
-                          }
+                            );
+                            setMenuOpenId(null);
+                          }}
                         />
                       </label>
 
                       <button
                         className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-[#F7F1EB] w-full"
-                        onClick={() => {
-                          deleteItem(cat.id, item.id);
-                          setMenuOpenId(null);
-                        }}
+                        onClick={() => deleteItem(cat.id, item.id)}
                       >
                         <Trash2 className="w-4 h-4" />
                         刪除
@@ -377,11 +369,79 @@ export default function Shopping({ trip, setTrip }) {
                     </div>
                   )}
                 </div>
-              ))}
+
+                {/* ✅ 分隔線：最後一個未完成項目下面 */}
+                {!item.checked && nextItem?.checked && (
+                  <div className="my-3 h-[3px] rounded-full bg-[#ADA69E]" />
+                )}
+              </React.Fragment>
+            );
+          })}
+      </div>
+      </div>
+      );
+      })}
+
+      {/* ===== 編輯浮層 ===== */}
+      {editingItem && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-4 w-[280px]">
+            <h3 className="text-sm font-semibold mb-2 text-[#5A4636]">
+              {editingField === "name"
+                ? "編輯名稱"
+                : editingField === "price"
+                ? "編輯金額（日圓）"
+                : "編輯數量"}
+            </h3>
+
+            <div className="flex items-center gap-2">
+              {editingField === "price" && (
+                <span className="text-[#8C6A4F]">¥</span>
+              )}
+              <input
+                value={draftValue}
+                onChange={(e) => setDraftValue(e.target.value)}
+                className="flex-1 border border-[#E5D5C5] rounded-lg px-2 py-1 text-sm"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => setEditingItem(null)}
+                className="px-3 py-1 text-sm"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => {
+                  if (editingField === "price") {
+                    const num = Number(draftValue);
+                    if (Number.isNaN(num) || num < 0) return;
+                    updateItem(editingItem.catId, editingItem.item.id, {
+                      price: num,
+                    });
+                  } else if (editingField === "quantity") {
+                    const qty = Number(draftValue);
+                    if (!Number.isInteger(qty) || qty <= 0) return;
+                    updateItem(editingItem.catId, editingItem.item.id, {
+                      quantity: qty,
+                    });
+                  } else {
+                    updateItem(editingItem.catId, editingItem.item.id, {
+                      name: draftValue,
+                    });
+                  }
+                  setEditingItem(null);
+                }}
+                className="px-3 py-1 bg-[#C6A087] text-white rounded-lg flex items-center gap-1"
+              >
+                <Check className="w-4 h-4" />
+                確定
+              </button>
             </div>
           </div>
-        );
-      })}
+        </div>
+      )}
 
       {/* image preview */}
       {previewImage && (
