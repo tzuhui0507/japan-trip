@@ -150,7 +150,7 @@ export default function TripDetail() {
       <div className="pb-20">
         {/* DayTab */}
         {tab === "PLAN" && (
-          <div className="sticky top-[110px] z-40 bg-[#F8F5F1] border-b border-[#E8E1DA]">
+          <div className="sticky top-[96px] z-40 bg-[#F8F5F1] border-b border-[#E8E1DA]">
             <div className="flex justify-between px-6 py-3">
               {(trip.days || []).map((day, index) => {
                 const active = index === currentDayIndex;

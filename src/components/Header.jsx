@@ -117,7 +117,6 @@ export default function Header({ trip, setTrip, currentTab }) {
           </div>
 
           <p className="text-[12px] text-[#A8937C] mt-1">
-            よい旅をしてください
           </p>
         </div>
       </header>
