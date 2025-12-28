@@ -254,17 +254,17 @@ export default function Shopping({ trip, setTrip }) {
                   typeof item.quantity === "number" &&
                   item.quantity > 0 && (
                     <div
-                      className={`mr-2 text-right leading-tight tabular-nums transition ${
+                      className={`mr-2 text-right leading-sung tabular-nums transition ${
                         item.checked ? "opacity-60" : ""
                       }`}
                     >
                       {/* 總金額 */}
-                      <div className="text-sm font-medium text-[#5A4636]">
+                      <div className="text-[13px] font-medium text-[#5A4636]">
                         ¥ {(item.price * item.quantity).toLocaleString()}
                       </div>
 
                       {/* 單價 × 數量 */}
-                      <div className="text-[11px] text-[#A8937C]">
+                      <div className="text-[10px] text-[#A8937C]">
                         ¥ {item.price.toLocaleString()} × {item.quantity}
                       </div>
                     </div>
