@@ -331,9 +331,14 @@ className="w-9 h-9 rounded-full bg-[#E35B5B] flex items-center justify-center sh
 
 {/* 卡片 */}
 <div
-onClick={() => toggleFlightSlide(f.id)}
+onClick={() => {
+if (isReadOnly) return;
+toggleFlightSlide(f.id)
+}}
 style={{
-transform: isOpen ? "translateX(-100px)" : "translateX(0)",
+transform: isReadOnly
+? "translate(0)" : isOpen
+? "translateX(-100px)" : "translateX(0)",
 transition: "transform 0.3s ease",
 }}
 className="bg-white rounded-2xl shadow-sm border border-[#F0E3D5] px-4 py-3 relative overflow-hidden"
@@ -428,9 +433,14 @@ className="w-9 h-9 rounded-full bg-[#E35B5B] flex items-center justify-center sh
 
 {/* 卡片 */}
 <div
-onClick={() => toggleHotelSlide(h.id)}
+onClick={() => {
+if (isReadOnly) return;
+toggleHotelSlide(h.id)
+}}
 style={{
-transform: isOpen ? "translateX(-100px)" : "translateX(0)",
+transform: isReadOnly 
+? "translateX(0)" : isOpen
+? "translateX(-100px)" : "translateX(0)",
 transition: "transform 0.3s ease",
 }}
 className="bg-white rounded-2xl shadow-sm border border-[#F0E3D5] px-5 py-4 relative overflow-hidden"
