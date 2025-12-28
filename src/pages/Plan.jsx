@@ -263,8 +263,8 @@ export default function Plan({ trip, setTrip, dayIndex }) {
           {/* 文字區塊 */}
           <div className="absolute bottom-6 left-6 text-white drop-shadow-lg">
 
-            {/* DAY + 地點 */}
-            <div className="flex items-center gap-3 mb-3">
+            {/* 地點 */}
+            <div className="flex items-center gap-2 mb-1">
 
               {/* 地點（無底色） */}
               {currentDay.heroLocation && (
