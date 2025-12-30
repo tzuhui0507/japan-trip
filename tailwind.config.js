@@ -33,6 +33,13 @@ export default {
           "serif",
         ],
       },
+      // ⭐ 新增這一段
+      fontSize: {
+          input: "16px",     // 所有輸入框
+          body: "14px",      // 一般內文
+          note: "12px",      // 輔助說明
+          tiny: "11px",      // caption / hint
+      },
     },
   },
 

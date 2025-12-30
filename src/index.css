@@ -7,3 +7,16 @@ html {
   background-color: #F7F1EB;
   color: #5A4636;
 }
+
+/* ===== iOS Safari 防止輸入時自動放大 ===== */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+/* 可選：避免某些瀏覽器 focus 時跳動 */
+input:focus,
+textarea:focus {
+  outline: none;
+}

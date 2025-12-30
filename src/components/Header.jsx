@@ -13,7 +13,6 @@ export default function Header({ trip, setTrip, currentTab }) {
 
   // ===== 匯入 Modal =====
   const [showImport, setShowImport] = useState(false);
-  const [importText, setImportText] = useState("");
 
   // ===== 分享 Viewer 連結（Owner only）=====
   const handleShare = async () => {
@@ -29,31 +28,50 @@ export default function Header({ trip, setTrip, currentTab }) {
   };
 
   // ===== 匯出（Owner only）=====
-  const handleExport = async () => {
+  const handleExport = () => {
     try {
       const data = JSON.stringify(trip, null, 2);
-      await navigator.clipboard.writeText(data);
-      alert("📤 行程 JSON 已複製");
+      const blob = new Blob([data], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${trip.title || "japan-trip"}.json`;
+      a.click();
+
+      URL.revokeObjectURL(url);
     } catch {
       alert("❌ 匯出失敗");
     }
   };
 
   // ===== 匯入（Owner / Viewer 都可）=====
-  const handleImport = () => {
-    try {
-      const parsed = JSON.parse(importText);
-      const nextTrip = { ...parsed, shareMode: trip.shareMode };
+  const handleImportFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextTrip));
-      setTrip(nextTrip);
-
-      setShowImport(false);
-      setImportText("");
-      alert("📥 行程匯入成功");
-    } catch {
-      alert("❌ JSON 格式錯誤");
+    if (file.type !== "application/json") {
+      alert("請選擇 JSON 檔案");
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        const nextTrip = { ...parsed, shareMode: trip.shareMode };
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextTrip));
+        setTrip(nextTrip);
+
+        setShowImport(false);
+        alert("📥 行程匯入成功");
+      } catch {
+        alert("❌ 檔案格式錯誤");
+      }
+    };
+
+    reader.readAsText(file);
   };
 
   return (
@@ -129,12 +147,16 @@ export default function Header({ trip, setTrip, currentTab }) {
               匯入行程（JSON）
             </h2>
 
-            <textarea
-              value={importText}
-              onChange={(e) => setImportText(e.target.value)}
-              className="w-full h-40 border border-[#E5D5C5] rounded-xl p-3 text-xs bg-white"
-              placeholder="請貼上行程 JSON"
+            <input
+              type="file"
+              accept="application/json"
+              onChange={handleImportFile}
+              className="w-full border border-[#E5D5C5] rounded-xl p-3 text-sm bg-white"
             />
+
+            <p className="mt-2 text-[11px] text-[#A8937C]">
+              請選擇由本網站匯出的 .json 行程檔案
+            </p>
 
             <div className="mt-3 flex justify-end gap-2">
               <button
@@ -144,10 +166,10 @@ export default function Header({ trip, setTrip, currentTab }) {
                 取消
               </button>
               <button
-                onClick={handleImport}
-                className="px-4 py-1.5 text-xs rounded-full bg-[#C6A087] text-white"
+                onClick={() => setShowImport(false)}
+                className="px-3 py-1.5 text-xs rounded-full border border-[#E5D5C5]"
               >
-                匯入
+                關閉
               </button>
             </div>
           </div>
