@@ -9,6 +9,8 @@ import {
   Ticket,
   Coins,
   ShoppingBag,
+  Download,
+  Folder,
 } from "lucide-react";
 
 import Header from "../components/Header";
@@ -53,6 +55,9 @@ export default function TripDetail() {
   /* viewer 專用 day index（只影響畫面） */
   const [viewerDayIndex, setViewerDayIndex] = useState(0);
 
+  // ✅ ADD HERE：第一次打開提示（只給 viewer）
+  const [showViewerHint, setShowViewerHint] = useState(false); 
+
   /* ================================
      初次載入
   ================================= */
@@ -84,6 +89,20 @@ export default function TripDetail() {
       setTrip(createViewerTrip());
     }
   }, [shareMode, isViewer, dataFromUrl]);
+
+  // ✅ ADD HERE：Viewer 第一次打開提示（只出現一次）
+  useEffect(() => {
+    if (!trip) return;                // 等 trip 載入後再判斷
+    if (trip.shareMode !== "viewer") return;
+
+    const key = "trip_viewer_hint_seen";
+    const seen = localStorage.getItem(key);
+
+    if (!seen) {
+      setShowViewerHint(true);
+      localStorage.setItem(key, "1");
+    }
+  }, [trip]);
 
   /* ================================
      自動存 localStorage（owner only）
@@ -146,6 +165,125 @@ export default function TripDetail() {
   return (
     <ShareModeProvider mode={trip.shareMode}>
       <Header trip={trip} setTrip={setTrip} currentTab={tab} />
+
+      {/* ✅ PLACE HERE：Viewer 第一次提示（只出現一次） */}
+      {showViewerHint && trip.shareMode === "viewer" && (
+        <div className="fixed inset-0 z-[150] bg-black/40 backdrop-blur-sm flex items-center justify-center">
+          <div className="w-full max-w-sm mx-4 bg-[#FFF9F2] rounded-2xl border border-[#E5D5C5] p-5">
+            
+            {/* 標題 */}
+            <h3 className="text-sm font-bold text-[#5A4636] mb-2 tracking-[0.15em] text-center">
+              ようこそ *⸜♡⸝*
+            </h3>
+
+            <p className="text-xs text-[#8C6A4F] text-center mb-4">
+              這是為這趟旅程準備的小小旅行手冊 *⸜( ˶´ ˘ `˶ )⸝*
+            </p>
+
+            {/* Viewer 說明 */}
+            <div className="bg-white rounded-xl border border-[#E5D5C5] px-4 py-3 text-xs text-[#8C6A4F] space-y-2 leading-relaxed">
+              <p>
+                目前為 <span className="font-semibold text-[#5A4636]">觀看模式 ( ˘͈ ᵕ ˘͈ )</span>
+              </p>
+              <p>
+                有些內容無法編輯，但可以自由瀏覽所有行程資訊 (´･ᴗ･`)
+              </p>
+            </div>
+
+            {/* 教學區塊 */}
+            <div className="mt-4 space-y-2 text-xs text-[#5A4636]">
+              <p className="font-semibold text-[#8C6A4F] text-center">
+                可以看看以下內容 ✿
+              </p>
+
+              <ul className="space-y-1.5 leading-relaxed">
+                <li className="flex items-center gap-2">
+                  <Route className="w-4 h-4 text-[#8C6A4F]" />
+                  <span>PLAN｜每日行程與天氣安排</span>
+                </li>
+
+                <li className="flex items-center gap-2">
+                  <Wallet className="w-4 h-4 text-[#8C6A4F]" />
+                  <span>COST｜旅費記帳與分帳（這裡可以自由編輯 ⸝⸝꙳）</span>
+                </li>
+
+                <li className="flex items-center gap-2">
+                  <Luggage className="w-4 h-4 text-[#8C6A4F]" />
+                  <span>PACK｜行李清單（這裡可以自由編輯 ⸝⸝꙳）</span>
+                </li>
+
+                <li className="flex items-center gap-2">
+                  <ShoppingBag className="w-4 h-4 text-[#8C6A4F]" />
+                  <span>LIST｜購物清單（這裡可以自由編輯 ⸝⸝꙳）</span>
+                </li>
+
+                <li className="flex items-center gap-2">
+                  <Ticket className="w-4 h-4 text-[#8C6A4F]" />
+                  <span>TICKET｜票券資訊與 QR Code</span>
+                </li>
+
+                <li className="flex items-center gap-2">
+                  <Languages className="w-4 h-4 text-[#8C6A4F]" />
+                  <span>JP｜常用日文會話（可點擊發音）</span>
+                </li>
+
+                <li className="flex items-center gap-2">
+                  <Coins className="w-4 h-4 text-[#8C6A4F]" />
+                  <span>RATE｜匯率換算（這裡可以自由編輯 ⸝⸝꙳）</span>
+                </li>
+
+                <li className="flex items-center gap-2">
+                  <Info className="w-4 h-4 text-[#8C6A4F]" />
+                  <span>INFO｜航班、住宿、VJW與重要聯絡資訊</span>
+                </li>
+              </ul>
+
+              {/* 分隔 */}
+              <div className="pt-2 border-t border-[#E5D5C5]" />
+
+              {/* 匯入教學（給觀看者） */}
+              <div className="mt-4 space-y-2 text-xs text-[#5A4636]">
+                <p className="font-semibold text-[#8C6A4F] text-center">
+                  旅行APP使用指南 ✿
+                </p>
+
+                <ul className="space-y-1.5 leading-relaxed">
+                  <li className="flex items-start gap-2">
+                    <Folder className="w-4 h-4 mt-0.5 text-[#8C6A4F]" />
+                    <span>
+                      請先下載行程檔案（.json）
+                    </span>
+                  </li>
+
+                  <li className="flex items-start gap-2">
+                    <Download className="w-4 h-4 mt-0.5 text-[#8C6A4F]" />
+                    <span>
+                      回到這個頁面後，點右上角的「匯入」
+                    </span>
+                  </li>
+
+                  <li className="flex items-start gap-2">
+                    <Languages className="w-4 h-4 mt-0.5 text-[#8C6A4F]" />
+                    <span>
+                      選擇檔案後，就可以開始使用囉 ♡
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* 按鈕 */}
+            <div className="mt-5 flex justify-center">
+              <button
+                onClick={() => setShowViewerHint(false)}
+                className="px-6 py-2 text-xs rounded-full bg-[#C6A087] text-white tracking-widest"
+              >
+                OKです ✿
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="pb-20">
         {/* DayTab */}
