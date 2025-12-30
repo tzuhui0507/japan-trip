@@ -12,7 +12,7 @@ html {
 input,
 textarea,
 select {
-  font-size: 16px;
+  font-size: 16px !important;
 }
 
 /* 可選：避免某些瀏覽器 focus 時跳動 */
