@@ -11,6 +11,7 @@ import {
   ShoppingBag,
   Download,
   Folder,
+  FileText,
 } from "lucide-react";
 
 import Header from "../components/Header";
@@ -234,7 +235,7 @@ export default function TripDetail() {
 
                 <li className="flex items-center gap-2">
                   <Info className="w-4 h-4 text-[#8C6A4F]" />
-                  <span>INFO｜航班、住宿、VJW與重要聯絡資訊</span>
+                  <span>INFO｜航班、住宿、VJW與緊急聯絡資訊</span>
                 </li>
               </ul>
 
@@ -263,7 +264,7 @@ export default function TripDetail() {
                   </li>
 
                   <li className="flex items-start gap-2">
-                    <Languages className="w-4 h-4 mt-0.5 text-[#8C6A4F]" />
+                    <FileText className="w-4 h-4 mt-0.5 text-[#8C6A4F]" />
                     <span>
                       選擇檔案後，就可以開始使用囉 ♡
                     </span>
