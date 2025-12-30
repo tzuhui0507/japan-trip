@@ -73,13 +73,26 @@ export default function Phrasebook() {
   const [active, setActive] = useState("basic");
   const [showVegCard, setShowVegCard] = useState(false);
 
+  React.useEffect(() => {
+    window.speechSynthesis.getVoices();
+  }, []);
+
   const speak = (text) => {
     if (!window.speechSynthesis) {
       alert("此裝置不支援語音播放");
       return;
     }
+
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = "ja-JP";
+
+    const voices = window.speechSynthesis.getVoices();
+    const jaVoice = voices.find(v => v.lang === "ja-JP");
+
+    if (jaVoice) {
+      utter.voice = jaVoice; // ⭐ 關鍵：鎖定日文語音
+    }
+
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utter);
   };
