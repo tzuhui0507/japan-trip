@@ -89,6 +89,22 @@ export default function TripDetail() {
     if (isViewer) {
       setTrip(createViewerTrip());
     }
+
+    // 🔴 owner 保底（iOS 主畫面第一次開會走到這裡）
+    if (!isViewer) {
+      setTrip({
+        shareMode: "owner",
+        title: "日本自由行",
+        startDate: new Date().toISOString(),
+        activeDayIndex: 0,
+        days: [],
+        tickets: [],
+        luggage: null,
+        shopping: null,
+        currency: null,
+        viewTicket: null,
+      });
+    }
   }, [shareMode, isViewer, dataFromUrl]);
 
   // ✅ ADD HERE：Viewer 第一次打開提示（只出現一次）
