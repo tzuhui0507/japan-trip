@@ -203,7 +203,7 @@ export default function TripDetail() {
                 目前為 <span className="font-semibold text-[#5A4636]">觀看模式 ( ˘͈ ᵕ ˘͈ )</span>
               </p>
               <p>
-                有些內容無法編輯，但可以自由瀏覽所有行程資訊 (´･ᴗ･`)
+                有些內容無法編輯，但可以自由瀏覽行程資訊 (´･ᴗ･`)
               </p>
             </div>
 
