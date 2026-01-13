@@ -22,6 +22,7 @@ import {
   Train,
   BedDouble,
   Ticket,
+  MapPinned,
 } from "lucide-react";
 
 export default function Plan({ trip, setTrip, dayIndex }) {
@@ -130,6 +131,18 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         notes: "",
       });
     });
+  };
+
+  // 處理導航跳轉
+  const handleNavigation = (e, address, title) => {
+    e.stopPropagation(); // 防止觸發卡片滑動或其它點擊事件
+    if (!address && !title) return;
+    
+    // 優先使用地址，沒有地址則搜尋店名/標題
+    const query = encodeURIComponent(address || title);
+    // 使用 Google Maps 導航連結格式
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${query}`;
+    window.open(url, "_blank");
   };
 
   const deleteItem = (id) => {
@@ -515,10 +528,26 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                             
                             {/* 地址/營業/電話 */}
                             <div className="space-y-1.5 text-sm text-[#5A4636] mt-3">
+                              {/* 地址/導航區塊 */}
                               {item.address && (
-                                <div className="flex items-start gap-2">
-                                  <MapPin className="w-4 h-4 text-[#C6A087] mt-[1px]" />
-                                  <span>{item.address}</span>
+                                <div className="flex items-center justify-between gap-3 mt-3">
+                                  {/* 左側：地址文字 */}
+                                  <div 
+                                    className="flex items-start gap-2 text-sm text-[#5A4636] flex-1 min-w-0 cursor-pointer hover:opacity-70 transition-opacity"
+                                    onClick={(e) => handleNavigation(e, item.address, item.title)}
+                                  >
+                                    <MapPin className="w-4 h-4 text-[#C6A087] mt-[1px] shrink-0" />
+                                    <span className="truncate">{item.address}</span>
+                                  </div>
+
+                                  {/* 右側：方案二 - 使用 Lucide Icon 的導航按鈕 */}
+                                  <button
+                                    onClick={(e) => handleNavigation(e, item.address, item.title)}
+                                    className="p-2 rounded-full bg-[#F7F1EB] text-[#C6A087] hover:bg-[#C6A087] hover:text-white transition-all shadow-sm shrink-0 flex items-center justify-center"
+                                    title="開啟地圖導航"
+                                  >
+                                    <MapPinned className="w-4 h-4" strokeWidth={2.5} />
+                                  </button>
                                 </div>
                               )}
 
@@ -611,11 +640,11 @@ export default function Plan({ trip, setTrip, dayIndex }) {
       {editingItem && !isViewer && (
         <EditItemModal
           item={editingItem}
-          trip={trip} // ⭐ 一定要加
-          tickets={trip.tickets || []} // ⭐ 關鍵
+          trip={trip}
+          tickets={trip.tickets || []}
           onClose={() => setEditingItem(null)}
           onSave={(updated) => {
-            // ✅ 票券結構正規化（防白畫面）
+            // 1. 票券結構正規化
             const normalized = {
               ...updated,
               ticketIds: Array.isArray(updated.ticketIds)
@@ -625,18 +654,27 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                 : [],
             };
 
-            const newDays = [...days];
-            const list = [...newDays[activeDayIndex].items];
-            const idx = list.findIndex((i) => i.id === normalized.id);
-            if (idx !== -1) list[idx] = normalized;
+            // 2. 更新 trip 資料 (這是唯一的資料來源)
+            setTrip((prev) => {
+              // 使用深拷貝確保 React 能偵測到變化
+              const nextTrip = structuredClone(prev);
+              const day = nextTrip.days[activeDayIndex];
 
-            newDays[activeDayIndex].items = list;
-            setDays(newDays);
-            setTrip((p) => ({ ...p, days: newDays }));
+              if (day) {
+                const list = day.items;
+                const idx = list.findIndex((i) => i.id === normalized.id);
+                if (idx !== -1) {
+                  list[idx] = normalized; // 替換更新後的項目
+                }
+              }
+              return nextTrip;
+            });
+
+            // 3. 關閉編輯視窗
             setEditingItem(null);
           }}
-          />
-        )}
+        />
+      )}
 
       {/* Modal：編輯 HERO */}
       {editingHero && !isViewer && (
