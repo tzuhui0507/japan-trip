@@ -540,13 +540,28 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                     <span className="truncate">{item.address}</span>
                                   </div>
 
-                                  {/* 右側：方案二 - 使用 Lucide Icon 的導航按鈕 */}
+                                  {/* 右側：最終微調 - 鼠尾草綠與亮寶石紅 */}
                                   <button
                                     onClick={(e) => handleNavigation(e, item.address, item.title)}
-                                    className="p-2 rounded-full bg-[#F7F1EB] text-[#C6A087] hover:bg-[#C6A087] hover:text-white transition-all shadow-sm shrink-0 flex items-center justify-center"
+                                    className="
+                                      p-2 rounded-full 
+                                      bg-[#b5c4b5]           /* 稍微加深的鼠尾草綠 (底色) */
+                                      text-[#bf4236]         /* 亮寶石紅 Icon */
+                                      hover:bg-[#99a899]     /* 滑過時：綠色底再深一點點 */
+                                      hover:shadow-none      /* 滑過時取消陰影，模擬下壓感 */
+                                      active:scale-90        /* 點擊縮放 */
+                                      transition-all 
+                                      duration-200           /* 讓顏色轉換更平滑 */
+                                      shadow-sm shrink-0 
+                                      flex items-center justify-center
+                                      group                  /* 加上 group 方便控制內部 icon */
+                                    "
                                     title="開啟地圖導航"
                                   >
-                                    <MapPinned className="w-4 h-4" strokeWidth={2.5} />
+                                    <MapPinned 
+                                      className="w-4 h-4 group-hover:scale-110 transition-transform" 
+                                      strokeWidth={3} 
+                                    />
                                   </button>
                                 </div>
                               )}
