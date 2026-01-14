@@ -545,9 +545,9 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                     onClick={(e) => handleNavigation(e, item.address, item.title)}
                                     className="
                                       p-2 rounded-full 
-                                      bg-[#b5c4b5]           /* 稍微加深的鼠尾草綠 (底色) */
-                                      text-[#bf4236]         /* 亮寶石紅 Icon */
-                                      hover:bg-[#99a899]     /* 滑過時：綠色底再深一點點 */
+                                      bg-[#e3d5c3]           /* 稍微加深的鼠尾草綠 (底色) */
+                                      text-[#cf5151]         /* 亮寶石紅 Icon */
+                                      hover:bg-[#c7b9a7]     /* 滑過時：綠色底再深一點點 */
                                       hover:shadow-none      /* 滑過時取消陰影，模擬下壓感 */
                                       active:scale-90        /* 點擊縮放 */
                                       transition-all 
