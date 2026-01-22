@@ -303,49 +303,53 @@ export default function TripDetail() {
       )}
 
       <div className="pb-20">
-        {/* DayTab */}
+        {/* DayTab: 支援滾動且少天數自動置中版本 */}
         {tab === "PLAN" && (
           <div className="sticky top-[96px] z-40 bg-[#F8F5F1] border-b border-[#E8E1DA]">
-            <div className="flex justify-between px-6 py-3">
-              {(trip.days || []).map((day, index) => {
-                const active = index === currentDayIndex;
-                return (
-                  <button
-                    key={day.id}
-                    onClick={() => {
-                      if (isViewer) {
-                        setViewerDayIndex(index);
-                      } else {
-                        setTrip((p) => ({
-                          ...p,
-                          activeDayIndex: index,
-                        }));
-                      }
-                    }}
-                    className="flex-1 flex flex-col items-center"
-                  >
-                    <span
-                      className={`text-[11px] tracking-[0.3em] ${
-                        active ? "text-[#5A4636]" : "text-[#D1C2B3]"
-                      }`}
+            {/* 外層負責滾動 */}
+            <div className="overflow-x-auto scrollbar-none px-6">
+              {/* 內層負責置中：使用 min-w-full 與 justify-center */}
+              <div className="flex gap-6 py-3 min-w-full justify-center w-max">
+                {(trip.days || []).map((day, index) => {
+                  const active = index === currentDayIndex;
+                  return (
+                    <button
+                      key={day.id}
+                      onClick={() => {
+                        if (isViewer) {
+                          setViewerDayIndex(index);
+                        } else {
+                          setTrip((p) => ({
+                            ...p,
+                            activeDayIndex: index,
+                          }));
+                        }
+                      }}
+                      className="flex-none flex flex-col items-center min-w-[40px] shrink-0"
                     >
-                      {day.weekday}
-                    </span>
-                    <span
-                      className={`mt-1 text-xl ${
-                        active ? "text-[#5A4636]" : "text-[#D1C2B3]"
-                      }`}
-                    >
-                      {day.dayNumber}
-                    </span>
-                    <span
-                      className={`mt-1 w-1.5 h-1.5 rounded-full bg-[#C22929] ${
-                        active ? "opacity-100" : "opacity-0"
-                      }`}
-                    />
-                  </button>
-                );
-              })}
+                      <span
+                        className={`text-[11px] tracking-[0.2em] font-medium transition-colors ${
+                          active ? "text-[#5A4636]" : "text-[#D1C2B3]"
+                        }`}
+                      >
+                        {day.weekday}
+                      </span>
+                      <span
+                        className={`mt-1 text-xl font-semibold transition-colors ${
+                          active ? "text-[#5A4636]" : "text-[#D1C2B3]"
+                        }`}
+                      >
+                        {day.dayNumber}
+                      </span>
+                      <span
+                        className={`mt-1 w-1.5 h-1.5 rounded-full bg-[#C22929] transition-all duration-300 ${
+                          active ? "opacity-100 scale-100" : "opacity-0 scale-50"
+                        }`}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
@@ -355,9 +359,10 @@ export default function TripDetail() {
         </div>
       </div>
 
-      {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-[#E5D5C5]">
-        <div className="grid grid-cols-8 h-14">
+      {/* Bottom Nav - 優化高度與點選舒適度版本 */}
+      <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-[#E5D5C5] z-[100] pb-[env(safe-area-inset-bottom)]">
+        {/* h-16 (64px) 提供更多垂直空間，避免誤觸 iPhone 底部的線 */}
+        <div className="grid grid-cols-8 h-16 items-center">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.key;
@@ -365,20 +370,24 @@ export default function TripDetail() {
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className="flex flex-col items-center justify-center"
+                className="flex flex-col items-center justify-center transition-all active:scale-95"
               >
+                {/* 使用 18px (w-[18px]) 作為 8 選項排版下的黃金比例 */}
                 <Icon
-                  className={`w-4 h-4 ${
+                  className={`w-[18px] h-[18px] ${
                     active ? "text-[#8C6A4F]" : "text-[#8C6A4F]/40"
                   }`}
                 />
                 <span
-                  className={`text-[10px] mt-1 ${
+                  className={`text-[9px] mt-1.5 font-medium tracking-tighter ${
                     active ? "text-[#5A4636]" : "text-[#8C6A4F]/60"
                   }`}
                 >
                   {t.short}
                 </span>
+                
+                {/* 選中狀態的小提示點 (選配，若覺得太擠可以刪除這行) */}
+                <span className={`w-1 h-1 rounded-full bg-[#C6A087] mt-1 transition-opacity ${active ? 'opacity-100' : 'opacity-0'}`} />
               </button>
             );
           })}
