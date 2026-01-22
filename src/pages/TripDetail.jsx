@@ -359,10 +359,10 @@ export default function TripDetail() {
         </div>
       </div>
 
-      {/* Bottom Nav - 優化高度與點選舒適度版本 */}
+      {/* Bottom Nav - 兼顧纖細美感與 iPhone 安全區版本 */}
       <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-[#E5D5C5] z-[100] pb-[env(safe-area-inset-bottom)]">
-        {/* h-16 (64px) 提供更多垂直空間，避免誤觸 iPhone 底部的線 */}
-        <div className="grid grid-cols-8 h-15 items-center">
+        {/* 高度恢復為 h-14，保持纖細感 */}
+        <div className="grid grid-cols-8 h-14 items-center">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.key;
@@ -370,24 +370,21 @@ export default function TripDetail() {
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className="flex flex-col items-center justify-center transition-all active:scale-95"
+                className="flex flex-col items-center justify-center transition-opacity active:opacity-60"
               >
-                {/* 使用 18px (w-[18px]) 作為 8 選項排版下的黃金比例 */}
+                {/* 圖標維持 18px，比原本大一點點增加好點度 */}
                 <Icon
                   className={`w-[18px] h-[18px] ${
                     active ? "text-[#8C6A4F]" : "text-[#8C6A4F]/40"
                   }`}
                 />
                 <span
-                  className={`text-[9px] mt-1.5 font-medium tracking-tighter ${
+                  className={`text-[9px] mt-1 font-medium tracking-tight ${
                     active ? "text-[#5A4636]" : "text-[#8C6A4F]/60"
                   }`}
                 >
                   {t.short}
                 </span>
-                
-                {/* 選中狀態的小提示點 (選配，若覺得太擠可以刪除這行) */}
-                <span className={`w-1 h-1 rounded-full bg-[#C6A087] mt-1 transition-opacity ${active ? 'opacity-100' : 'opacity-0'}`} />
               </button>
             );
           })}
