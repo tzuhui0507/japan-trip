@@ -362,7 +362,7 @@ export default function TripDetail() {
       {/* Bottom Nav - 優化高度與點選舒適度版本 */}
       <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-[#E5D5C5] z-[100] pb-[env(safe-area-inset-bottom)]">
         {/* h-16 (64px) 提供更多垂直空間，避免誤觸 iPhone 底部的線 */}
-        <div className="grid grid-cols-8 h-16 items-center">
+        <div className="grid grid-cols-8 h-15 items-center">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.key;
