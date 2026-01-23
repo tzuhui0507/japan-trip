@@ -382,12 +382,13 @@ export default function ListTab({ trip, setTrip }) {
                   </span>
                 </button>
 
+                {/* 移除垃圾桶外圈 */}
                 <button
                   type="button"
                   onClick={() => deleteOtherItem(item.id)}
-                  className="w-7 h-7 rounded-full bg-white/80 border border-[#E0D1C3] flex items-center justify-center"
+                  className="w-5 h-5 flex items-center justify-center"
                 >
-                  <Trash2 className="w-3 h-3 text-[#C06C5A]" />
+                  <Trash2 className="w-3.5 h-3.5 text-[#C06C5A]" />
                 </button>
               </div>
             ))
@@ -395,7 +396,7 @@ export default function ListTab({ trip, setTrip }) {
         </div>
 
         <div className="mt-auto pt-2 border-t border-[#F0E4D8]">
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-1 flex items-center gap-2">
             <input
               type="text"
               value={otherInput}
@@ -404,27 +405,27 @@ export default function ListTab({ trip, setTrip }) {
               placeholder="輸入項目..."
               className="
                 flex-1 min-w-0
-                rounded-xl
+                rounded-lg
                 border border-[#E5D5C5]
                 bg-[#FFFDFA]
-                px-3 py-2
-                text-sm
+                px-2 py-1.5
+                text-xs
               "
             />
 
             <button
               onClick={addOtherItem}
               className="
-                w-9 h-9
+                w-7 h-7
                 shrink-0
-                rounded-xl
+                rounded-lg
                 bg-[#9c7f6d]
                 flex items-center justify-center
                 text-white
                 shadow-sm
               "
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
