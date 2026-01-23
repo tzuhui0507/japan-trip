@@ -12,7 +12,6 @@ import {
   JapaneseYen,
 } from "lucide-react";
 
-// 🟫 奶茶色系（基底）
 const COLORS = {
   tea: "#C6A087",
   milk: "#F7F1EB",
@@ -40,7 +39,7 @@ const SHINKANSEN_COLORS = {
   東海道: "#0068B7", 山陽: "#0068B7", 東北: "#00A95C", 北海道: "#00A95C", 九州: "#E6006E", 北陸: "#1B3FAB",
 };
 
-const ShinkansenIcon = ({ className = "w-3.5 h-3.5", stroke = "#8C6A4F" }) => (
+const ShinkansenIcon = ({ className = "w-4 h-4", stroke = "#8C6A4F" }) => (
   <svg className={className} viewBox="0 0 64 64" fill="none" stroke={stroke} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 40 L20 20 Q32 10 44 20 L52 40 Z" />
     <ellipse cx="24" cy="46" rx="4" ry="4" />
@@ -48,7 +47,7 @@ const ShinkansenIcon = ({ className = "w-3.5 h-3.5", stroke = "#8C6A4F" }) => (
     <path d="M20 28 Q32 18 44 28" />
   </svg>
 );
- 
+
 function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
   const [legs, setLegs] = useState(() => {
     if (defaultData?.legs) return defaultData.legs;
@@ -57,8 +56,6 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
 
   const [isExpanded, setIsExpanded] = useState(false);
   const hasInitRef = useRef(false);
-  const summaryRef = useRef(null);
-  const [summaryHeight, setSummaryHeight] = useState(40);
 
   useEffect(() => {
     if (hasInitRef.current) return;
@@ -66,12 +63,6 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
     setLegs(defaultData.legs);
     hasInitRef.current = true;
   }, [defaultData]);
-
-  useEffect(() => {
-    if (summaryRef.current) {
-      setSummaryHeight(summaryRef.current.clientHeight);
-    }
-  }, [legs]);
 
   const commitUpdate = () => {
     if (isViewer) return;
@@ -91,14 +82,13 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
   };
 
   const getIcon = (mode, color) => {
-    const iconClass = "w-3.5 h-3.5";
     switch (mode) {
-      case "walk": return <Footprints className={iconClass} stroke={color} />;
-      case "taxi": return <Car className={iconClass} stroke={color} />;
-      case "bus": return <Bus className={iconClass} stroke={color} />;
-      case "plane": return <Plane className={iconClass} stroke={color} />;
-      case "shinkansen": return <ShinkansenIcon stroke={color} className={iconClass} />;
-      default: return <Train className={iconClass} stroke={color} />;
+      case "walk": return <Footprints className="w-4 h-4" stroke={color} />;
+      case "taxi": return <Car className="w-4 h-4" stroke={color} />;
+      case "bus": return <Bus className="w-4 h-4" stroke={color} />;
+      case "plane": return <Plane className="w-4 h-4" stroke={color} />;
+      case "shinkansen": return <ShinkansenIcon stroke={color} className="w-4 h-4" />;
+      default: return <Train className="w-4 h-4" stroke={color} />;
     }
   };
 
@@ -127,26 +117,25 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
   const totalPrice = legs.reduce((sum, l) => sum + (parseInt(l.price || "0") || 0), 0);
 
   const renderSummary = () => (
-    <div ref={summaryRef} className="flex flex-col text-[9px] font-bold leading-[1.4]">
+    <div className="flex flex-col text-[10px] font-bold leading-snug justify-center">
       {legs.map((leg) => {
         const color = detectColor(leg);
         return (
-          <div key={leg.id} className="mb-1.5 last:mb-0">
-            {/* 名稱列：限制寬度，長度過長時截斷 */}
-            <div className="flex items-center gap-1 w-full overflow-hidden" style={{ color }}>
+          <div key={leg.id} className="mb-2 last:mb-0">
+            <div className="flex items-center gap-1" style={{ color }}>
               {getIcon(leg.mode, color)}
-              <span className="truncate flex-1 max-w-[150px]">
-                {leg.lineName || "未命名路線"}
-              </span>
-              <span className="opacity-60 font-medium">· {leg.duration}m</span>
-              {leg.price && <span className="opacity-60 font-medium">· ¥{leg.price}</span>}
+              <span className="font-semibold truncate max-w-[180px]">{leg.lineName || "未命名路線"}</span>
             </div>
-
-            {/* 起訖站列：更小的字體與更緊湊的佈局 */}
-            <div className="flex items-center gap-1 pl-4.5 opacity-80" style={{ color, paddingLeft: '17px' }}>
-              <span className="truncate max-w-[80px]">{leg.fromStation || "—"}</span>
-              <ArrowRight className="w-2 h-2 opacity-50" />
-              <span className="truncate max-w-[80px]">{leg.toStation || "—"}</span>
+            <div className="flex items-center gap-1 pl-5" style={{ color }}>
+              <span className="truncate max-w-[120px]">{(leg.fromStation || "—") + " → " + (leg.toStation || "—")}</span>
+              <span>✦</span>
+              <span>{leg.duration}m</span>
+              {leg.price && (
+                <>
+                  <span>｜</span>
+                  <span>¥{leg.price}</span>
+                </>
+              )}
             </div>
           </div>
         );
@@ -155,106 +144,110 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
   );
 
   return (
-    <div className="relative flex flex-col my-2 pl-3">
-      {/* 外框＋摘要列 */}
+    <div className="relative flex flex-col my-3 pl-3">
+      {/* 外框＋摘要列 - 強制垂直置中佈局 */}
       <div
         onClick={() => {
           if (!isViewer && isExpanded) commitUpdate();
           setIsExpanded((v) => !v);
         }}
-        className="flex bg-white/80 border border-[#E5D5C5] rounded-md px-2.5 py-2 shadow-sm cursor-pointer w-full items-center"
+        className="flex items-center bg-white border border-[#E5D5C5] rounded-lg px-3 py-2 shadow-sm cursor-pointer w-full min-h-[54px]"
       >
-        <div className="flex-1 min-w-0">{renderSummary()}</div>
+        <div className="flex-1 flex flex-col justify-center">
+          {renderSummary()}
+        </div>
 
-        <div
-          style={{
-            height: Math.max(20, summaryHeight - 10),
-            borderLeft: "1px dashed #D7C9BD",
-            margin: "0 10px",
-          }}
-        />
+        {/* 垂直虛線 - 改用 self-stretch 自動長高 */}
+        <div className="self-stretch border-l border-dashed border-[#D7C9BD] mx-3 my-1" />
 
-        <div className="flex flex-col items-end text-[10px] font-bold text-[#8C6A4F] whitespace-nowrap leading-tight shrink-0">
+        <div className="flex flex-col items-center justify-center min-w-[54px] text-[11px] font-bold text-[#8C6A4F] whitespace-nowrap">
           <span>{totalMin}分</span>
-          {totalPrice > 0 && <span className="text-[9px] opacity-70">¥{totalPrice}</span>}
+          {totalMin > 0 && totalPrice > 0 && <div className="w-6 border-t border-[#D7C9BD] my-1" />}
+          {totalPrice > 0 && <span>¥{totalPrice}</span>}
         </div>
       </div>
 
-      {/* 展開版編輯區 */}
+      {/* 展開版編輯區 - 寬度同步與字體優化 */}
       {isExpanded && !isViewer && (
-        <div className="mt-2 ml-1 bg-white border border-[#E5D5C5] rounded-xl p-3 shadow-lg w-full max-w-[320px] z-10">
+        <div className="mt-2 bg-white border border-[#E5D5C5] rounded-xl p-4 shadow-lg w-full">
           <h4 className="text-[10px] font-bold text-[#8C6A4F]/70 tracking-widest mb-3 uppercase">
-            Edit Transit
+            編輯交通方式
           </h4>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             {legs.map((leg) => {
               const color = detectColor(leg);
               return (
-                <div key={leg.id} className="rounded-lg border border-[#E5D5C5]/50 bg-[#F7F1EB]/50 p-2.5 shadow-sm">
-                  {/* Row 1：類型 + 時間 */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <button onClick={() => toggleMode(leg.id)} className="w-7 h-7 rounded bg-white border border-[#E5D5C5] flex items-center justify-center shadow-xs">
+                <div key={leg.id} className="rounded-xl border border-[#E5D5C5] bg-[#F7F1EB] p-3 shadow-sm">
+                  <div className="flex items-center gap-3 mb-3">
+                    <button onClick={() => toggleMode(leg.id)} className="w-9 h-9 rounded-lg bg-white border border-[#E5D5C5] flex items-center justify-center">
                       {getIcon(leg.mode, color)}
                     </button>
 
-                    <div className="relative flex-1">
+                    <div className="relative">
                       <input
                         type="number"
                         value={leg.duration}
                         onChange={(e) => updateLeg(leg.id, "duration", e.target.value)}
-                        className="w-full bg-white border border-[#E5D5C5] rounded px-2 py-1 text-[10px] font-bold text-[#5A4636] outline-none"
+                        className="w-20 bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[13px] text-center text-[#5A4636] outline-none"
                       />
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-[#8C6A4F] opacity-60">min</span>
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#8C6A4F]">分</span>
                     </div>
 
                     {legs.length > 1 && (
-                      <button onClick={() => removeLeg(leg.id)} className="p-1 text-[#8C6A4F]/40 hover:text-red-400">
-                        <X className="w-3 h-3" />
+                      <button onClick={() => removeLeg(leg.id)} className="ml-auto text-[#8C6A4F]/60 hover:text-red-400">
+                        <X className="w-4 h-4" />
                       </button>
                     )}
                   </div>
 
-                  {/* Row 2：路線名稱 */}
                   <div className="mb-2">
+                    <label className="text-[10px] font-bold text-[#8C6A4F]/60 mb-1 block uppercase tracking-tight">路線名稱</label>
                     <input
                       type="text"
                       value={leg.lineName || ""}
                       onChange={(e) => updateLeg(leg.id, "lineName", e.target.value)}
-                      className="w-full bg-white border border-[#E5D5C5] rounded px-2 py-1 text-[10px] outline-none"
-                      placeholder="路線名稱 (如: SKYLINER)"
+                      className="w-full bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[13px] text-[#5A4636] outline-none"
+                      placeholder="如：山手線、SKYLINER"
                     />
                   </div>
 
-                  {/* Row 3：起訖站 */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={leg.fromStation || ""}
-                      onChange={(e) => updateLeg(leg.id, "fromStation", e.target.value)}
-                      className="flex-1 bg-white border border-[#E5D5C5] rounded px-2 py-1 text-[10px] outline-none"
-                      placeholder="起點"
-                    />
-                    <ArrowRight className="w-3 h-3 text-[#8C6A4F]/30" />
-                    <input
-                      type="text"
-                      value={leg.toStation || ""}
-                      onChange={(e) => updateLeg(leg.id, "toStation", e.target.value)}
-                      className="flex-1 bg-white border border-[#E5D5C5] rounded px-2 py-1 text-[10px] outline-none"
-                      placeholder="終點"
-                    />
+                  <div className="mb-2">
+                    <label className="text-[10px] font-bold text-[#8C6A4F]/60 mb-1 block uppercase tracking-tight">起訖站</label>
+                    <div className="flex items-center gap-2 w-full">
+                      {/* 移除固定寬度，使用 flex-1 讓它隨螢幕縮放 */}
+                      <input
+                        type="text"
+                        value={leg.fromStation || ""}
+                        onChange={(e) => updateLeg(leg.id, "fromStation", e.target.value)}
+                        className="flex-1 bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[13px] text-[#5A4636] outline-none min-w-0"
+                        placeholder="出發"
+                      />
+                      {/* 加入 shrink-0 防止箭頭被擠扁消失 */}
+                      <ArrowRight className="w-4 h-4 text-[#8C6A4F]/60 shrink-0" />
+                      <input
+                        type="text"
+                        value={leg.toStation || ""}
+                        onChange={(e) => updateLeg(leg.id, "toStation", e.target.value)}
+                        className="flex-1 bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[13px] text-[#5A4636] outline-none min-w-0"
+                        placeholder="抵達"
+                      />
+                    </div>
                   </div>
 
-                  {/* Row 4：價格 */}
-                  <div className="relative">
-                    <input
-                      type="number"
-                      value={leg.price || ""}
-                      onChange={(e) => updateLeg(leg.id, "price", e.target.value)}
-                      className="w-full bg-white border border-[#E5D5C5] rounded px-2 py-1 text-[10px] outline-none pl-5"
-                      placeholder="價格"
-                    />
-                    <JapaneseYen className="absolute left-1.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 text-[#8C6A4F]/50" />
+                  <div>
+                    <label className="text-[10px] font-bold text-[#8C6A4F]/60 mb-1 block uppercase tracking-tight">預估價格</label>
+                    <div className="relative flex items-center">
+                      {/* 將單位符號移到最前方 */}
+                      <JapaneseYen className="absolute left-2 w-3.5 h-3.5 text-[#8C6A4F]/70" />
+                      <input
+                        type="number"
+                        value={leg.price || ""}
+                        onChange={(e) => updateLeg(leg.id, "price", e.target.value)}
+                        className="w-32 bg-white border border-[#E5D5C5] rounded-md pl-7 pr-3 py-1.5 text-[13px] text-[#5A4636] outline-none"
+                        placeholder="210"
+                      />
+                    </div>
                   </div>
                 </div>
               );
@@ -263,9 +256,9 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
 
           <button
             onClick={addLeg}
-            className="w-full mt-3 py-1.5 border border-dashed border-[#C6A087]/50 rounded text-[9px] text-[#C6A087] font-bold flex items-center justify-center gap-1 hover:bg-[#F7F1EB]"
+            className="w-full mt-4 py-2 border border-dashed border-[#C6A087] rounded-lg text-[11px] text-[#C6A087] font-bold flex items-center justify-center gap-1 hover:bg-[#F7F1EB]"
           >
-            <Plus className="w-2.5 h-2.5" /> ADD LEG
+            <Plus className="w-3 h-3" /> 新增段落
           </button>
         </div>
       )}
