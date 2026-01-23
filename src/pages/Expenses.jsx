@@ -391,9 +391,9 @@ export default function Expenses({ trip, setTrip }) {
         ))}
       </div>
 
-      {/* ----------------- 新增 / 編輯 Modal (優化外框) ----------------- */}
+      {/* ----------------- 新增 / 編輯 Modal (優化外框與佈局) ----------------- */}
       {expenseModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-12">
           <div className="w-full max-w-lg bg-[#FFF9F2] rounded-[32px] border border-[#E5D5C5] shadow-xl overflow-hidden flex flex-col">
             <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/50">
               <div>
@@ -410,20 +410,20 @@ export default function Expenses({ trip, setTrip }) {
               </div>
             </div>
 
-            <div className="p-6 space-y-5 overflow-y-auto max-h-[70vh]">
+            <div className="p-6 space-y-4 overflow-y-auto max-h-[75vh] scrollbar-hide">
               <div>
-                <label className="block text-xs font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-wider">日期</label>
-                <input type="date" value={form.date} onChange={(e) => updateForm({ date: e.target.value })} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white" />
+                <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">日期</label>
+                <input type="date" value={form.date} onChange={(e) => updateForm({ date: e.target.value })} className="w-full h-10 border border-[#E5D5C5] rounded-xl px-3 text-[13px] bg-white outline-none focus:ring-1 focus:ring-[#C6A087] appearance-none" />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-wider">類別</label>
-                <div className="flex gap-2 flex-wrap">
+                <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">類別</label>
+                <div className="grid grid-cols-4 gap-1.5">
                   {CATEGORY_ORDER.map((c) => {
                     const Icon = CATEGORY_MAP[c].icon;
                     const active = form.category === c;
                     return (
-                      <button key={c} onClick={() => updateForm({ category: c })} className={`px-4 py-2 rounded-full text-xs flex items-center gap-1.5 border transition-all ${active ? "bg-[#C6A087] border-[#C6A087] text-white shadow-sm" : "bg-white border-[#E5D5C5] text-[#5A4636]"}`}>
+                      <button key={c} onClick={() => updateForm({ category: c })} className={`py-2 rounded-xl text-[11px] flex flex-col items-center gap-1 border transition-all ${active ? "bg-[#C6A087] border-[#C6A087] text-white shadow-sm" : "bg-white border-[#E5D5C5] text-[#5A4636]"}`}>
                         <Icon className="w-3.5 h-3.5" />{CATEGORY_MAP[c].label}
                       </button>
                     );
@@ -433,20 +433,20 @@ export default function Expenses({ trip, setTrip }) {
 
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-2">
-                  <label className="block text-xs font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-wider">項目</label>
-                  <input type="text" value={form.title} onChange={(e) => updateForm({ title: e.target.value })} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white" placeholder="例如：Sky Liner" />
+                  <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">項目</label>
+                  <input type="text" value={form.title} onChange={(e) => updateForm({ title: e.target.value })} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-[13px] bg-white outline-none" placeholder="例如：Sky Liner" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-wider">金額</label>
-                  <input type="number" value={form.amount} onChange={(e) => updateForm({ amount: e.target.value })} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white" placeholder="0" />
+                  <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">金額</label>
+                  <input type="number" value={form.amount} onChange={(e) => updateForm({ amount: e.target.value })} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-[13px] bg-white outline-none" placeholder="0" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-wider">類型</label>
+                <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">類型</label>
                 <div className="flex gap-2">
                   {["PERSONAL", "ADVANCE"].map((m) => (
-                    <button key={m} onClick={() => updateForm({ mode: m })} className={`flex-1 py-2 rounded-xl text-xs border transition-all ${form.mode === m ? "bg-[#C6A087] border-[#C6A087] text-white shadow-sm" : "bg-white border-[#E5D5C5] text-[#5A4636]"}`}>
+                    <button key={m} onClick={() => updateForm({ mode: m })} className={`flex-1 py-2 rounded-xl text-[13px] border transition-all ${form.mode === m ? "bg-[#C6A087] border-[#C6A087] text-white shadow-sm" : "bg-white border-[#E5D5C5] text-[#5A4636]"}`}>
                       {m === "PERSONAL" ? "個人" : "代墊"}
                     </button>
                   ))}
@@ -454,35 +454,35 @@ export default function Expenses({ trip, setTrip }) {
               </div>
 
               {form.mode === "ADVANCE" && (
-                <div className="bg-white/50 border border-[#E5D5C5] rounded-2xl p-4">
-                  <label className="text-xs font-bold text-[#8C6A4F] mb-2 block uppercase tracking-wider">為誰代墊</label>
-                  <div className="flex flex-wrap gap-2">
+                <div className="bg-[#FDF9F5] border border-[#E5D5C5] rounded-2xl p-3 animate-in fade-in zoom-in-95 duration-200">
+                  <label className="text-[10px] font-bold text-[#8C6A4F] mb-2 block uppercase tracking-widest">為誰代墊</label>
+                  <div className="flex flex-wrap gap-1.5">
                     {members.map((m) => (
-                      <button key={m.id} onClick={() => toggleAdvance(m.id)} className={`px-4 py-1.5 rounded-full text-xs border transition-all ${form.advanceFor.includes(m.id) ? "bg-[#F3C075] border-[#F3C075] text-[#5A4636] shadow-sm" : "bg-white border-[#E5D5C5] text-[#5A4636]"}`}>
+                      <button key={m.id} onClick={() => toggleAdvance(m.id)} className={`px-3 py-1.5 rounded-full text-[11px] border transition-all ${form.advanceFor.includes(m.id) ? "bg-[#F3C075] border-[#F3C075] text-[#5A4636] shadow-sm" : "bg-white border-[#E5D5C5] text-[#5A4636]"}`}>
                         {m.name}
                       </button>
                     ))}
-                    {members.length === 0 && <p className="text-xs text-[#8C6A4F]/60">請先點擊首頁「成員」新增對象</p>}
+                    {members.length === 0 && <p className="text-[11px] text-[#8C6A4F]/60">請先新增成員</p>}
                   </div>
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-[#8C6A4F] mb-1.5 block uppercase tracking-wider">誰付款</label>
+                  <label className="text-[10px] font-bold text-[#8C6A4F] mb-1.5 block uppercase tracking-widest">誰付款</label>
                   <div className="flex gap-2">
                     {["ME", "THEM"].map((p) => (
-                      <button key={p} onClick={() => updateForm({ payer: p })} className={`flex-1 py-2 rounded-xl text-xs border transition-all ${form.payer === p ? "bg-[#C6A087] border-[#C6A087] text-white shadow-sm" : "bg-white border-[#E5D5C5] text-[#5A4636]"}`}>
+                      <button key={p} onClick={() => updateForm({ payer: p })} className={`flex-1 py-2 rounded-xl text-[13px] border transition-all ${form.payer === p ? "bg-[#C6A087] border-[#C6A087] text-white shadow-sm" : "bg-white border-[#E5D5C5] text-[#5A4636]"}`}>
                         {p === "ME" ? "我付" : "他付"}
                       </button>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-[#8C6A4F] mb-1.5 block uppercase tracking-wider">付款方式</label>
+                  <label className="text-[10px] font-bold text-[#8C6A4F] mb-1.5 block uppercase tracking-widest">付款方式</label>
                   <div className="flex gap-2">
                     {["CASH", "CARD"].map((m) => (
-                      <button key={m} onClick={() => updateForm({ payMethod: m })} className={`flex-1 py-2 rounded-xl text-xs border transition-all ${form.payMethod === m ? "bg-[#C6A087] border-[#C6A087] text-white shadow-sm" : "bg-white border-[#E5D5C5] text-[#5A4636]"}`}>
+                      <button key={m} onClick={() => updateForm({ payMethod: m })} className={`flex-1 py-2 rounded-xl text-[13px] border transition-all ${form.payMethod === m ? "bg-[#C6A087] border-[#C6A087] text-white shadow-sm" : "bg-white border-[#E5D5C5] text-[#5A4636]"}`}>
                         {m === "CASH" ? "現金" : "刷卡"}
                       </button>
                     ))}
@@ -494,9 +494,9 @@ export default function Expenses({ trip, setTrip }) {
         </div>
       )}
 
-      {/* ----------------- 成員管理 Modal (優化外框) ----------------- */}
+      {/* ----------------- 成員管理 Modal (修正刪除按鈕位置與外框) ----------------- */}
       {memberModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-12">
           <div className="w-full max-w-lg bg-[#FFF9F2] rounded-[32px] border border-[#E5D5C5] shadow-xl overflow-hidden flex flex-col">
             <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/50">
               <div>
@@ -508,16 +508,16 @@ export default function Expenses({ trip, setTrip }) {
               </button>
             </div>
 
-            <div className="p-6 space-y-4 overflow-y-auto max-h-[60vh]">
+            <div className="p-6 space-y-3 overflow-y-auto max-h-[60vh] scrollbar-hide">
               {members.map((m) => (
-                <div key={m.id} className="flex items-center gap-3 bg-white border border-[#E5D5C5] rounded-2xl px-4 py-3 shadow-sm">
+                <div key={m.id} className="flex items-center gap-2 bg-white border border-[#E5D5C5] rounded-2xl px-4 py-2.5 shadow-sm">
                   <input
                     value={m.name}
                     onChange={(e) => setMembers((prev) => prev.map((x) => (x.id === m.id ? { ...x, name: e.target.value } : x)))}
-                    className="flex-1 outline-none text-sm bg-transparent"
+                    className="flex-1 min-w-0 outline-none text-[13px] bg-transparent"
                     placeholder="成員名稱"
                   />
-                  <button onClick={() => setMembers((prev) => prev.filter((x) => x.id !== m.id))} className="p-1.5 rounded-full hover:bg-red-50 text-red-500">
+                  <button onClick={() => setMembers((prev) => prev.filter((x) => x.id !== m.id))} className="p-1.5 rounded-full hover:bg-red-50 text-red-500 shrink-0">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -525,7 +525,7 @@ export default function Expenses({ trip, setTrip }) {
 
               <button
                 onClick={() => setMembers((prev) => [...prev, { id: `m-${Date.now()}`, name: "" }])}
-                className="w-full py-3 border-2 border-dashed border-[#E5D5C5] rounded-2xl text-xs text-[#8C6A4F] font-medium hover:bg-white/50 transition-colors"
+                className="w-full py-3 border-2 border-dashed border-[#E5D5C5] rounded-2xl text-[11px] text-[#8C6A4F] font-medium hover:bg-white/50 transition-colors"
               >
                 + 新增成員
               </button>
