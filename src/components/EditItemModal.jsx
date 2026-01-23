@@ -78,11 +78,11 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      {/* 縮小 max-w 並調整 rounded 弧度 */}
+    // 修改 items-start 並增加 pt-12 使位置上移
+    <div className="fixed inset-0 z-[100] flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-12">
       <div className="w-full max-w-lg bg-[#FFF9F2] rounded-[2rem] border border-[#E5D5C5] shadow-2xl overflow-hidden flex flex-col">
         
-        {/* Header - 縮小高度與 padding */}
+        {/* Header */}
         <div className="px-5 py-4 flex items-center justify-between border-b border-[#E5D5C5]/50 bg-white/50">
           <div className="flex-1 min-w-0">
             <p className="text-[10px] tracking-[0.2em] text-[#C6A087] uppercase font-bold mb-0.5">編輯行程</p>
@@ -105,23 +105,23 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
           </div>
         </div>
 
-        {/* Body - 調整 max-height 確保不超出螢幕 */}
+        {/* Body - 文字大小調整為 text-[13px] */}
         <div className="px-5 py-4 space-y-4 max-h-[65vh] overflow-y-auto overflow-x-hidden scrollbar-none">
           
           {/* 時間 */}
           <div>
-            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-wider">時間</label>
+            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-widest">時間</label>
             <input
               type="time"
               value={form.time}
               onChange={(e) => update({ time: e.target.value })}
-              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white outline-none focus:ring-1 focus:ring-[#C6A087]"
+              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] bg-white outline-none focus:ring-1 focus:ring-[#C6A087]"
             />
           </div>
 
           {/* 類型 */}
           <div>
-            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-wider">類型</label>
+            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-widest">類型</label>
             <div className="flex flex-wrap gap-1.5">
               {Object.values(TYPE_OPTIONS).map((t) => {
                 const Icon = t.icon;
@@ -147,30 +147,30 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
 
           {/* 標題 */}
           <div>
-            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-wider">標題</label>
+            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-widest">標題</label>
             <input
               value={form.title}
               onChange={(e) => update({ title: e.target.value })}
-              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white outline-none focus:ring-1 focus:ring-[#C6A087]"
+              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] bg-white outline-none focus:ring-1 focus:ring-[#C6A087]"
               placeholder="輸入地點名稱"
             />
           </div>
 
           {/* 副標題 */}
           <div>
-            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-wider">副標題</label>
+            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-widest">副標題</label>
             <input
               type="text"
               value={form.subtitle}
               onChange={(e) => update({ subtitle: e.target.value })}
-              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white outline-none"
+              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] bg-white outline-none"
               placeholder="選填細節說明"
             />
           </div>
 
           {/* 票券 */}
           <div className="bg-[#FDF9F5] border border-[#E5D5C5]/50 rounded-2xl p-3">
-            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-2 uppercase tracking-wider">已綁定票券</label>
+            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-2 uppercase tracking-widest">已綁定票券</label>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {(!form.ticketIds || form.ticketIds.length === 0) && (
                 <span className="text-[11px] text-[#8C6A4F]/50">尚未綁定</span>
@@ -199,23 +199,23 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
 
           {/* 地址 */}
           <div>
-            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-wider">地址</label>
+            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-widest">地址</label>
             <input
               type="text"
               value={form.address}
               onChange={(e) => update({ address: e.target.value })}
-              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white outline-none"
+              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] bg-white outline-none"
             />
           </div>
 
           {/* 備註 */}
           <div>
-            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-wider">備註</label>
+            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-widest">備註</label>
             <textarea
               rows={2}
               value={form.notes}
               onChange={(e) => update({ notes: e.target.value })}
-              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white resize-none outline-none"
+              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] bg-white resize-none outline-none"
               placeholder="備註資訊..."
             />
           </div>
