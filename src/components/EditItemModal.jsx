@@ -78,7 +78,6 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
   };
 
   return (
-    // 修改 items-start 並增加 pt-12 使位置上移
     <div className="fixed inset-0 z-[100] flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-12">
       <div className="w-full max-w-lg bg-[#FFF9F2] rounded-[2rem] border border-[#E5D5C5] shadow-2xl overflow-hidden flex flex-col">
         
@@ -105,18 +104,20 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
           </div>
         </div>
 
-        {/* Body - 文字大小調整為 text-[13px] */}
+        {/* Body */}
         <div className="px-5 py-4 space-y-4 max-h-[65vh] overflow-y-auto overflow-x-hidden scrollbar-none">
           
-          {/* 時間 */}
+          {/* 時間 - 修正切除問題：使用外層包裹容器控制邊框 */}
           <div>
             <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-widest">時間</label>
-            <input
-              type="time"
-              value={form.time}
-              onChange={(e) => update({ time: e.target.value })}
-              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] bg-white outline-none focus:ring-1 focus:ring-[#C6A087]"
-            />
+            <div className="w-full border border-[#E5D5C5] rounded-xl bg-white overflow-hidden focus-within:ring-1 focus-within:ring-[#C6A087]">
+              <input
+                type="time"
+                value={form.time}
+                onChange={(e) => update({ time: e.target.value })}
+                className="w-full px-3 py-1.5 text-[13px] bg-transparent outline-none border-none"
+              />
+            </div>
           </div>
 
           {/* 類型 */}
@@ -145,27 +146,31 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
             </div>
           </div>
 
-          {/* 標題 */}
+          {/* 標題 - 修正切除問題 */}
           <div>
             <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-widest">標題</label>
-            <input
-              value={form.title}
-              onChange={(e) => update({ title: e.target.value })}
-              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] bg-white outline-none focus:ring-1 focus:ring-[#C6A087]"
-              placeholder="輸入地點名稱"
-            />
+            <div className="w-full border border-[#E5D5C5] rounded-xl bg-white overflow-hidden focus-within:ring-1 focus-within:ring-[#C6A087]">
+              <input
+                value={form.title}
+                onChange={(e) => update({ title: e.target.value })}
+                className="w-full px-3 py-1.5 text-[13px] bg-transparent outline-none border-none"
+                placeholder="輸入地點名稱"
+              />
+            </div>
           </div>
 
-          {/* 副標題 */}
+          {/* 副標題 - 修正切除問題 */}
           <div>
             <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-widest">副標題</label>
-            <input
-              type="text"
-              value={form.subtitle}
-              onChange={(e) => update({ subtitle: e.target.value })}
-              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] bg-white outline-none"
-              placeholder="選填細節說明"
-            />
+            <div className="w-full border border-[#E5D5C5] rounded-xl bg-white overflow-hidden focus-within:ring-1 focus-within:ring-[#C6A087]">
+              <input
+                type="text"
+                value={form.subtitle}
+                onChange={(e) => update({ subtitle: e.target.value })}
+                className="w-full px-3 py-1.5 text-[13px] bg-transparent outline-none border-none"
+                placeholder="選填細節說明"
+              />
+            </div>
           </div>
 
           {/* 票券 */}
@@ -197,27 +202,32 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
             )}
           </div>
 
-          {/* 地址 */}
+          {/* 地址 - 修正切除問題 */}
           <div>
             <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-widest">地址</label>
-            <input
-              type="text"
-              value={form.address}
-              onChange={(e) => update({ address: e.target.value })}
-              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] bg-white outline-none"
-            />
+            <div className="w-full border border-[#E5D5C5] rounded-xl bg-white overflow-hidden focus-within:ring-1 focus-within:ring-[#C6A087]">
+              <input
+                type="text"
+                value={form.address}
+                onChange={(e) => update({ address: e.target.value })}
+                className="w-full px-3 py-1.5 text-[13px] bg-transparent outline-none border-none"
+                placeholder="輸入詳細地址"
+              />
+            </div>
           </div>
 
-          {/* 備註 */}
+          {/* 備註 - 修正切除問題 */}
           <div>
             <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-widest">備註</label>
-            <textarea
-              rows={2}
-              value={form.notes}
-              onChange={(e) => update({ notes: e.target.value })}
-              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] bg-white resize-none outline-none"
-              placeholder="備註資訊..."
-            />
+            <div className="w-full border border-[#E5D5C5] rounded-xl bg-white overflow-hidden focus-within:ring-1 focus-within:ring-[#C6A087]">
+              <textarea
+                rows={2}
+                value={form.notes}
+                onChange={(e) => update({ notes: e.target.value })}
+                className="w-full px-3 py-1.5 text-[13px] bg-transparent resize-none outline-none border-none"
+                placeholder="備註資訊..."
+              />
+            </div>
           </div>
         </div>
       </div>
