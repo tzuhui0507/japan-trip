@@ -206,7 +206,7 @@ export default function Info({ trip, setTrip }) {
     </div>
     
     {/* 右側圖示顏色微調以匹配整體視覺 */}
-    <ExternalLink className="w-5 h-5 text-[#C6A087] ml-4 shrink-0" />
+    <ExternalLink className="w-5 h-5 text-[#364D6E] ml-4 shrink-0" />
   </button>
 </section>
 
