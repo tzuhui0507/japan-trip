@@ -18,24 +18,17 @@ const TYPE_OPTIONS = {
 };
 
 export default function EditItemModal({ item, trip, tickets = [], onSave, onClose }) {
-  // ✅ 票券來源（兼容你傳 tickets 或用 trip.tickets）
   const ticketList = tickets?.length ? tickets : trip?.tickets || [];
 
-  // ✅ 從 item 讀取已綁定的票券 ID（兼容舊欄位）
   const initialTicketIds = useMemo(() => {
-    // 新版：ticketIds / tickets(id array) / ticket(單一 id)
     if (Array.isArray(item.ticketIds)) return item.ticketIds.filter(Boolean);
-
     if (Array.isArray(item.tickets)) {
-      // 兼容舊資料：可能是 ["id"] 或 [{id,...}]
       return item.tickets
         .map((t) => (typeof t === "string" ? t : t?.id))
         .filter(Boolean);
     }
-
     if (item.ticket && typeof item.ticket === "string") return [item.ticket];
     if (item.ticket && typeof item.ticket === "object" && item.ticket?.id) return [item.ticket.id];
-
     return [];
   }, [item]);
 
@@ -48,14 +41,11 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
     openingHours: item.openingHours || "",
     phone: item.phone || "",
     notes: item.notes || "",
-
-    // ✅ 只存 ID
     ticketIds: initialTicketIds,
   });
 
   const update = (patch) => setForm((f) => ({ ...f, ...patch }));
 
-  // ✅ 用 ticketIds 映射出已選票券（只拿來顯示）
   const selectedTickets = useMemo(() => {
     const map = new Map(ticketList.map((t) => [t.id, t]));
     return (form.ticketIds || [])
@@ -64,15 +54,10 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
   }, [form.ticketIds, ticketList]);
 
   const handleSave = () => {
-    // ✅ 最重要：只回傳 ticketIds，不要把票券物件塞回去
     onSave({
       ...item,
       ...form,
-
-      // 防呆：確保是 array of string
       ticketIds: (form.ticketIds || []).filter((x) => typeof x === "string" && x.trim() !== ""),
-
-      // ✅ 兼容：不要再輸出 tickets 物件（避免舊欄位污染）
       tickets: undefined,
       ticket: undefined,
     });
@@ -93,47 +78,51 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div className="w-full max-w-2xl mx-4 bg-[#FFF9F2] rounded-3xl border border-[#E5D5C5] shadow-xl overflow-hidden">
-        {/* Header */}
-        <div className="px-6 pt-5 pb-3 flex items-start justify-between">
-          <div>
-            <p className="text-xs tracking-[0.25em] text-[#C6A087] mb-1">編輯行程</p>
-            <h2 className="text-xl font-bold text-[#5A4636]">{form.title || "新的行程"}</h2>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      {/* 縮小 max-w 並調整 rounded 弧度 */}
+      <div className="w-full max-w-lg bg-[#FFF9F2] rounded-[2rem] border border-[#E5D5C5] shadow-2xl overflow-hidden flex flex-col">
+        
+        {/* Header - 縮小高度與 padding */}
+        <div className="px-5 py-4 flex items-center justify-between border-b border-[#E5D5C5]/50 bg-white/50">
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] tracking-[0.2em] text-[#C6A087] uppercase font-bold mb-0.5">編輯行程</p>
+            <h2 className="text-base font-bold text-[#5A4636] truncate">{form.title || "新的行程"}</h2>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-3">
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full border border-[#E5D5C5] flex items-center justify-center bg-white"
+              className="w-8 h-8 rounded-full border border-[#E5D5C5] flex items-center justify-center bg-white active:scale-90 transition-transform"
             >
               <X className="w-4 h-4 text-[#8C6A4F]" />
             </button>
             <button
               onClick={handleSave}
-              className="w-9 h-9 rounded-full bg-[#C6A087] flex items-center justify-center"
+              className="w-8 h-8 rounded-full bg-[#C6A087] flex items-center justify-center shadow-md active:scale-90 transition-transform"
             >
               <Check className="w-4 h-4 text-white" />
             </button>
           </div>
         </div>
 
-        <div className="px-6 pb-6 pt-1 space-y-5 max-h-[75vh] overflow-y-auto">
+        {/* Body - 調整 max-height 確保不超出螢幕 */}
+        <div className="px-5 py-4 space-y-4 max-h-[65vh] overflow-y-auto overflow-x-hidden scrollbar-none">
+          
           {/* 時間 */}
           <div>
-            <label className="block text-xs text-[#8C6A4F] mb-1">時間</label>
+            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-wider">時間</label>
             <input
               type="time"
               value={form.time}
               onChange={(e) => update({ time: e.target.value })}
-              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white"
+              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white outline-none focus:ring-1 focus:ring-[#C6A087]"
             />
           </div>
 
           {/* 類型 */}
           <div>
-            <label className="block text-xs text-[#8C6A4F] mb-1">類型</label>
-            <div className="flex flex-wrap gap-2">
+            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-wider">類型</label>
+            <div className="flex flex-wrap gap-1.5">
               {Object.values(TYPE_OPTIONS).map((t) => {
                 const Icon = t.icon;
                 const active = form.type === t.key;
@@ -142,9 +131,9 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
                     key={t.key}
                     type="button"
                     onClick={() => update({ type: t.key })}
-                    className={`px-3 py-1.5 rounded-full text-xs flex items-center gap-1 border ${
+                    className={`px-3 py-1.5 rounded-full text-[11px] flex items-center gap-1 border transition-colors ${
                       active
-                        ? "bg-[#6A8A55] border-[#6A8A55] text-white"
+                        ? "bg-[#6A8A55] border-[#6A8A55] text-white shadow-sm"
                         : "bg-white border-[#E5D5C5] text-[#5A4636]"
                     }`}
                   >
@@ -158,68 +147,49 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
 
           {/* 標題 */}
           <div>
-            <label className="block text-xs text-[#8C6A4F] mb-1">標題</label>
+            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-wider">標題</label>
             <input
               value={form.title}
               onChange={(e) => update({ title: e.target.value })}
-              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white"
+              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white outline-none focus:ring-1 focus:ring-[#C6A087]"
+              placeholder="輸入地點名稱"
             />
           </div>
 
           {/* 副標題 */}
           <div>
-            <label className="block text-xs text-[#8C6A4F] mb-1">副標題</label>
+            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-wider">副標題</label>
             <input
               type="text"
               value={form.subtitle}
               onChange={(e) => update({ subtitle: e.target.value })}
-              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white"
+              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white outline-none"
+              placeholder="選填細節說明"
             />
           </div>
 
-          {/* ==================== 票券綁定（修正版：只存 ID） ==================== */}
-          <div>
-            <label className="block text-xs text-[#8C6A4F] mb-2">已綁定票券</label>
-
-            {/* 已選票券（顯示用） */}
-            <div className="flex flex-wrap gap-2 mb-2">
+          {/* 票券 */}
+          <div className="bg-[#FDF9F5] border border-[#E5D5C5]/50 rounded-2xl p-3">
+            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-2 uppercase tracking-wider">已綁定票券</label>
+            <div className="flex flex-wrap gap-1.5 mb-2">
               {(!form.ticketIds || form.ticketIds.length === 0) && (
-                <span className="text-xs text-[#8C6A4F]/60">尚未綁定票券</span>
+                <span className="text-[11px] text-[#8C6A4F]/50">尚未綁定</span>
               )}
-
               {selectedTickets.map((t) => (
-                <span
-                  key={t.id}
-                  className="flex items-center gap-1 px-3 py-1 rounded-full text-xs bg-[#F7F1EB] border border-[#E5D5C5]"
-                >
-                  <Ticket className="w-3 h-3" />
-                  {t.title || "未命名票券"}
-                  <button
-                    type="button"
-                    onClick={() => removeTicket(t.id)}
-                    className="ml-1 text-[#C65353]"
-                  >
-                    ×
-                  </button>
+                <span key={t.id} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] bg-[#F7F1EB] border border-[#E5D5C5] text-[#5A4636]">
+                  <Ticket className="w-3 h-3 text-[#C6A087]" />
+                  {t.title}
+                  <button type="button" onClick={() => removeTicket(t.id)} className="ml-1 text-[#C65353] font-bold px-0.5">×</button>
                 </span>
               ))}
             </div>
-
-            {/* 可選票券 */}
             {ticketList.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[#E5D5C5]/30">
                 {ticketList.map((t) => {
-                  const selected = (form.ticketIds || []).includes(t.id);
-                  if (selected) return null;
-
+                  if ((form.ticketIds || []).includes(t.id)) return null;
                   return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => addTicket(t.id)}
-                      className="px-3 py-1 rounded-full text-xs border border-dashed border-[#C6A087] text-[#8C6A4F]"
-                    >
-                      ＋ {t.title || "未命名票券"}
+                    <button key={t.id} type="button" onClick={() => addTicket(t.id)} className="px-2 py-1 rounded-lg text-[10px] border border-dashed border-[#C6A087] text-[#8C6A4F] bg-white">
+                      ＋ {t.title}
                     </button>
                   );
                 })}
@@ -229,45 +199,24 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
 
           {/* 地址 */}
           <div>
-            <label className="block text-xs text-[#8C6A4F] mb-1">地址</label>
+            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-wider">地址</label>
             <input
               type="text"
               value={form.address}
               onChange={(e) => update({ address: e.target.value })}
-              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white"
-            />
-          </div>
-
-          {/* 營業時間 */}
-          <div>
-            <label className="block text-xs text-[#8C6A4F] mb-1">營業時間</label>
-            <input
-              type="text"
-              value={form.openingHours}
-              onChange={(e) => update({ openingHours: e.target.value })}
-              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white"
-            />
-          </div>
-
-          {/* 電話 */}
-          <div>
-            <label className="block text-xs text-[#8C6A4F] mb-1">電話</label>
-            <input
-              type="text"
-              value={form.phone}
-              onChange={(e) => update({ phone: e.target.value })}
-              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white"
+              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white outline-none"
             />
           </div>
 
           {/* 備註 */}
           <div>
-            <label className="block text-xs text-[#8C6A4F] mb-1">備註</label>
+            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-wider">備註</label>
             <textarea
-              rows={3}
+              rows={2}
               value={form.notes}
               onChange={(e) => update({ notes: e.target.value })}
-              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white resize-none"
+              className="w-full border border-[#E5D5C5] rounded-xl px-3 py-2 text-sm bg-white resize-none outline-none"
+              placeholder="備註資訊..."
             />
           </div>
         </div>
