@@ -22,7 +22,6 @@ import {
   Train,
   BedDouble,
   Ticket,
-  MapPinned,
 } from "lucide-react";
 
 export default function Plan({ trip, setTrip, dayIndex }) {
@@ -252,9 +251,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                     <MapPin className="w-3.5 h-3.5 text-[#C6A087] shrink-0 mt-0.5" />
                                     <span className="truncate">{item.address}</span>
                                   </div>
-                                  <button onClick={(e) => handleNavigation(e, item.address, item.title)} className="p-1.5 rounded-full bg-[#e3d5c3] text-[#cf5151] active:scale-90 transition-all flex items-center justify-center shrink-0">
-                                    <MapPinned className="w-3.5 h-3.5" strokeWidth={2.5} />
-                                  </button>
                                 </div>
                               )}
                               {item.openingHours && (
