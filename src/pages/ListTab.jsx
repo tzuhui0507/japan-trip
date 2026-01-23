@@ -361,21 +361,21 @@ export default function ListTab({ trip, setTrip }) {
                   className="flex items-center gap-3 flex-1 text-left"
                 >
                   <span
-                    className={`w-5 h-5 rounded-md border flex items-center justify-center ${
+                    className={`w-4 h-4 rounded-md border flex items-center justify-center ${
                       item.checked
                         ? "bg-[#91867A] border-[#D5C7B8]"
                         : "bg-white border-[#D5C7B8]"
                     }`}
                   >
                     {item.checked && (
-                      <Check className="w-3 h-3 text-white stroke-[3]" />
+                      <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
                     )}
                   </span>
                   <span
                     className={
                       item.checked
-                        ? "text-[15px] text-[#B3A496] line-through"
-                        : "text-[15px] text-[#4F3B2B]"
+                        ? "text-[13px] text-[#B3A496] line-through"
+                        : "text-[13px] text-[#4F3B2B]"
                     }
                   >
                     {item.label}
@@ -395,38 +395,38 @@ export default function ListTab({ trip, setTrip }) {
         </div>
 
         <div className="mt-auto pt-2 border-t border-[#F0E4D8]">
-        <div className="mt-2 flex items-center gap-2">
-          <input
-            type="text"
-            value={otherInput}
-            onChange={(e) => setOtherInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addOtherItem()}
-            placeholder="輸入項目..."
-            className="
-              flex-1 min-w-0
-              rounded-xl
-              border border-[#E5D5C5]
-              bg-[#FFFDFA]
-              px-3 py-2
-              text-sm
-            "
-          />
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              type="text"
+              value={otherInput}
+              onChange={(e) => setOtherInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addOtherItem()}
+              placeholder="輸入項目..."
+              className="
+                flex-1 min-w-0
+                rounded-xl
+                border border-[#E5D5C5]
+                bg-[#FFFDFA]
+                px-3 py-2
+                text-sm
+              "
+            />
 
-          <button
-            onClick={addOtherItem}
-            className="
-              w-9 h-9
-              shrink-0
-              rounded-xl
-              bg-[#9c7f6d]
-              flex items-center justify-center
-              text-white
-              shadow-sm
-            "
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
+            <button
+              onClick={addOtherItem}
+              className="
+                w-9 h-9
+                shrink-0
+                rounded-xl
+                bg-[#9c7f6d]
+                flex items-center justify-center
+                text-white
+                shadow-sm
+              "
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -437,26 +437,26 @@ export default function ListTab({ trip, setTrip }) {
 
     return (
       <div key={bag.id} className="relative">
-      {!isViewer && (
-        <div
-          className={`absolute top-1/2 right-4 -translate-y-1/2 flex gap-2 transition-all ${
-            isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
-        >
-          <button
-            onClick={() => openEditBag(bag)}
-            className="w-9 h-9 rounded-full bg-[#F7C85C] flex items-center justify-center shadow-sm"
+        {!isViewer && (
+          <div
+            className={`absolute top-1/2 right-4 -translate-y-1/2 flex gap-2 transition-all ${
+              isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
           >
-            <Pencil className="w-4 h-4 text-[#5A4636]" />
-          </button>
-          <button
-            onClick={() => deleteBag(bag.id)}
-            className="w-9 h-9 rounded-full bg-[#E35B5B] flex items-center justify-center shadow-sm"
-          >
-            <Trash2 className="w-4 h-4 text-white" />
-          </button>
-        </div>
-      )}
+            <button
+              onClick={() => openEditBag(bag)}
+              className="w-9 h-9 rounded-full bg-[#F7C85C] flex items-center justify-center shadow-sm"
+            >
+              <Pencil className="w-4 h-4 text-[#5A4636]" />
+            </button>
+            <button
+              onClick={() => deleteBag(bag.id)}
+              className="w-9 h-9 rounded-full bg-[#E35B5B] flex items-center justify-center shadow-sm"
+            >
+              <Trash2 className="w-4 h-4 text-white" />
+            </button>
+          </div>
+        )}
 
         <div
           onClick={() => {
