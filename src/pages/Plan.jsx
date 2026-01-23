@@ -48,6 +48,14 @@ export default function Plan({ trip, setTrip, dayIndex }) {
   const [viewTicket, setViewTicket] = useState(null);
   const [weatherHourly, setWeatherHourly] = useState([]);
 
+  // 統一的類別樣式配置
+  const TYPE_META = {
+    ATTRACTION: { label: "景點", pillBg: "#E7EEF9", pillText: "#4A607F", icon: Landmark },
+    RESTAURANT: { label: "餐廳", pillBg: "#FBE7DF", pillText: "#8C4A2F", icon: UtensilsCrossed },
+    TRANSPORT: { label: "交通", pillBg: "#E4F1E3", pillText: "#4E6B48", icon: Train },
+    HOTEL: { label: "住宿", pillBg: "#F3E3F0", pillText: "#7A4D6E", icon: BedDouble },
+  };
+
   const saveHero = (updatedHeroData) => {
     if (isViewer) return;
     setTrip((prev) => {
@@ -135,13 +143,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
       items.splice(result.destination.index, 0, moved);
       return next;
     });
-  };
-
-  const TYPE_META = {
-    ATTRACTION: { label: "景點", pillBg: "#E7EEF9", pillText: "#4A607F", icon: Landmark },
-    RESTAURANT: { label: "餐廳", pillBg: "#FBE7DF", pillText: "#8C4A2F", icon: UtensilsCrossed },
-    TRANSPORT: { label: "交通", pillBg: "#E4F1E3", pillText: "#4E6B48", icon: Train },
-    HOTEL: { label: "住宿", pillBg: "#F3E3F0", pillText: "#7A4D6E", icon: BedDouble },
   };
 
   if (!currentDay) return <div className="pt-24 text-center text-sm text-[#8C6A4F]">行程資料載入中…</div>;
@@ -241,16 +242,37 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                               <span className="text-[11px] text-[#8C6A4F] font-medium">{item.time}</span>
                             </div>
                             <h3 className="text-base font-bold text-[#5A4636] leading-snug">{item.title}</h3>
-                            {item.subtitle && <p className="text-[13px] text-[#A8937C] mt-0.5 leading-relaxed">{item.subtitle}</p>}
+                            
+                            {/* 英文地址/副標題：備註化處理 */}
+                            {item.subtitle && <p className="text-[11px] text-[#8C6A4F]/70 mt-0.5 leading-relaxed">{item.subtitle}</p>}
 
-                            {/* 卡片詳細內容：地址、電話、營業時間 */}
+                            {/* 票券：移至地址上方並按類別換色 */}
+                            {item.ticketIds?.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mt-3">
+                                {item.ticketIds.map((id) => {
+                                  const ticket = typeof id === "object" ? id : trip.tickets?.find((t) => t.id === id);
+                                  if (!ticket) return null;
+                                  const styleConfig = TYPE_META[ticket.type] || { pillBg: "#F7F1EB", pillText: "#8C6A4F" };
+                                  return (
+                                    <button 
+                                      key={ticket.id} 
+                                      onClick={(e) => { e.stopPropagation(); setViewTicket(ticket); }} 
+                                      style={{ backgroundColor: styleConfig.pillBg, color: styleConfig.pillText, borderColor: `${styleConfig.pillText}20` }}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border font-bold active:scale-95 transition-all"
+                                    >
+                                      <Ticket className="w-3 h-3" /> <span>{ticket.title}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {/* 詳細內容：地址圖示固定不縮小 */}
                             <div className="space-y-1.5 mt-2.5">
                               {item.address && (
-                                <div className="flex items-center justify-between gap-2">
-                                  <div onClick={(e) => handleNavigation(e, item.address, item.title)} className="flex items-start gap-1.5 text-xs text-[#5A4636] flex-1 truncate cursor-pointer hover:opacity-70">
-                                    <MapPin className="w-3.5 h-3.5 text-[#C6A087] shrink-0 mt-0.5" />
-                                    <span className="truncate">{item.address}</span>
-                                  </div>
+                                <div onClick={(e) => handleNavigation(e, item.address, item.title)} className="flex items-start gap-1.5 text-xs text-[#5A4636] cursor-pointer hover:opacity-70">
+                                  <MapPin className="w-3.5 h-3.5 text-[#C6A087] shrink-0 mt-0.5" />
+                                  <span className="truncate flex-1">{item.address}</span>
                                 </div>
                               )}
                               {item.openingHours && (
@@ -266,21 +288,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                 </div>
                               )}
                             </div>
-
-                            {/* 票券 */}
-                            {item.ticketIds?.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5 mt-3">
-                                {item.ticketIds.map((id) => {
-                                  const ticket = typeof id === "object" ? id : trip.tickets?.find((t) => t.id === id);
-                                  if (!ticket) return null;
-                                  return (
-                                    <button key={ticket.id} onClick={(e) => { e.stopPropagation(); setViewTicket(ticket); }} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border border-[#E5D5C5] bg-[#F7F1EB] text-[#8C6A4F] font-bold">
-                                      <Ticket className="w-3 h-3" /> <span>{ticket.title}</span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            )}
 
                             {/* 備註 */}
                             {item.notes && (
