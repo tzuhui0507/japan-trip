@@ -5,7 +5,6 @@ import {
   Plane,
   BedDouble,
   Shield,
-  PhoneCall,
   ExternalLink,
   Pencil,
   Trash2,
@@ -14,6 +13,7 @@ import {
   MapPin,
   Info as InfoIcon,
   Check,
+  BookUser
 } from "lucide-react";
 
 /* =========================
@@ -303,13 +303,18 @@ export default function Info({ trip, setTrip }) {
         </div>
       </section>
 
-      {/* Visit Japan Web */}
-      <section className="space-y-3 px-4">
+      {/* Visit Japan Web - 🆕 已補上圓形圖示框與 BookUser Icon */}
+      <section className="px-4 space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-[#5A4636]">Visit Japan Web</h2>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-[#F7F1EB] flex items-center justify-center">
+              <BookUser className="w-4 h-4 text-[#8C6A4F]" />
+            </div>
+            <h2 className="text-base font-semibold text-[#5A4636]">Visit Japan Web</h2>
+          </div>
           {!isReadOnly && <button onClick={openVisitModal} className="flex items-center gap-1 text-xs text-[#8C6A4F] px-2 py-1 rounded-full border border-[#E5D5C5] bg-white"><Pencil className="w-3 h-3" />編輯</button>}
         </div>
-        <button onClick={() => window.open(visitJapan.url, "_blank")} className="w-full text-left bg-[#EFE2D4] rounded-2xl px-4 py-4 flex items-center justify-between shadow-sm">
+        <button onClick={() => window.open(visitJapan.url, "_blank")} className="w-full text-left bg-[#EFE2D4] rounded-2xl p-4 flex items-center justify-between shadow-sm">
           <div>
             <div className="inline-flex px-3 py-1 rounded-full bg-[#C96C4E] text-[10px] tracking-[0.15em] text-white mb-3">MUST HAVE</div>
             <h3 className="text-lg font-semibold text-[#5A4636]">{visitJapan.title}</h3>
