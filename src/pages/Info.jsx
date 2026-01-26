@@ -92,6 +92,13 @@ export default function Info({ trip, setTrip }) {
   const saveFlight = () => { if (isReadOnly) return; updateInfo({ flights: flights.some((f) => f.id === editingFlight.id) ? flights.map((f) => (f.id === editingFlight.id ? editingFlight : f)) : [...flights, editingFlight] }); setEditingFlight(null); };
   const saveHotel = () => { if (isReadOnly) return; updateInfo({ hotels: hotels.some((h) => h.id === editingHotel.id) ? hotels.map((h) => (h.id === editingHotel.id ? editingHotel : h)) : [...hotels, editingHotel] }); setEditingHotel(null); };
 
+  const handleNavigation = (e, address) => {
+    e.stopPropagation();
+    if (!address) return;
+    const query = encodeURIComponent(address);
+    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank");
+  };
+
   const telHref = (phone) => `tel:${phone.replace(/\s+/g, "").replace(/[^0-9+]/g, "")}`;
 
   return (
@@ -121,7 +128,6 @@ export default function Info({ trip, setTrip }) {
                   <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#F7F1EB] text-xs text-[#8C6A4F] font-bold">{f.direction}</div>
                   <span className="text-xs text-[#8C6A4F] font-medium">{f.flightNo}</span>
                 </div>
-                {/* 飛機圖示置中容器 */}
                 <div className="flex items-center justify-between pl-3 mb-2 relative">
                   <span className="text-2xl font-bold text-[#5A4636] z-10">{f.from}</span>
                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -161,8 +167,20 @@ export default function Info({ trip, setTrip }) {
                 </div>
                 <h3 className="text-xl font-bold text-[#5A4636] mb-3 leading-snug">{h.name}</h3>
                 <div className="border-t border-[#F0E3D5] pt-3 mt-1 space-y-2 text-[13px] text-[#5A4636]">
-                  <div className="flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 text-[#C6A087] shrink-0" /><div className="flex-1"><p className="font-medium">{h.addressLine1}</p><p className="text-[11px] text-[#8C6A4F] mt-0.5 opacity-80 leading-relaxed">{h.addressLine2}</p></div></div>
-                  <div className="flex items-center gap-2 text-sm"><span className="text-[#8C6A4F]">電話：</span><a href={telHref(h.phone)} className="font-bold text-[#5A4636] underline">{h.phone}</a></div>
+                  {/* 地址：點擊導航功能與樣式優化 */}
+                  <div 
+                    onClick={(e) => handleNavigation(e, h.addressLine1)} 
+                    className="flex items-start gap-2 cursor-pointer hover:opacity-70 transition-opacity"
+                  >
+                    <MapPin className="w-4 h-4 mt-0.5 text-[#C6A087] shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-medium underline underline-offset-2">{h.addressLine1}</p>
+                      <p className="text-[11px] text-[#8C6A4F]/70 mt-0.5 leading-relaxed">{h.addressLine2}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm pt-1">
+                    <span className="text-[#8C6A4F]">電話：</span><a href={telHref(h.phone)} className="font-bold text-[#5A4636] underline">{h.phone}</a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -203,7 +221,7 @@ export default function Info({ trip, setTrip }) {
         <div className="bg-white rounded-2xl border border-[#F0E3D5] p-4 shadow-sm"><div className="flex items-center gap-2 mb-3"><div className="inline-flex px-2.5 py-0.5 rounded-full bg-[#F7F1EB] text-[12px] text-[#8C6A4F] font-bold shrink-0">{taipei.badge}</div><p className="text-[14px] font-bold text-[#5A4636] truncate">{taipei.title}</p></div><div className="space-y-2 text-[14px]"><div className="flex items-center justify-between font-medium"><a href={telHref(taipei.officePhone)} className="font-bold text-[#5A4636] underline">{taipei.officePhone}</a><span className="text-[14px] text-[#5A4636]">{taipei.officeNote}</span></div><div className="flex items-center justify-between font-medium"><a href={telHref(taipei.emergencyPhone)} className="font-bold text-[#B43737] underline">{taipei.emergencyPhone}</a><span className="text-[14px] text-[#B43737]">{taipei.emergencyNote}</span></div></div></div>
       </section>
 
-      {/* --- Modals (位置上移、不再貼邊) --- */}
+      {/* --- Modals --- */}
       {(editingFlight || editingHotel || visitModalOpen || emergencyModalOpen) && (
         <div className="fixed inset-0 z-[200] flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-6 overflow-y-auto">
           <div className="w-full max-w-lg bg-[#FFF9F2] rounded-[2.5rem] border border-[#E5D5C5] shadow-2xl overflow-hidden mb-10 transition-all mx-auto">
@@ -231,7 +249,7 @@ export default function Info({ trip, setTrip }) {
                 <>
                   <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">名稱</label><input type="text" value={editingHotel.name} onChange={(e) => setEditingHotel({...editingHotel, name: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none bg-white shadow-inner" /></div>
                   <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">日期範圍</label><input type="text" value={editingHotel.dateRange} onChange={(e) => setEditingHotel({...editingHotel, dateRange: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" /></div>
-                  <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">地址</label><input type="text" value={editingHotel.addressLine1} onChange={(e) => setEditingHotel({...editingHotel, addressLine1: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none mb-2 shadow-inner" /><input type="text" value={editingHotel.addressLine2} onChange={(e) => setEditingHotel({...editingHotel, addressLine2: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" /></div>
+                  <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">地址（第一行）</label><input type="text" value={editingHotel.addressLine1} onChange={(e) => setEditingHotel({...editingHotel, addressLine1: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none mb-2 shadow-inner" /><input type="text" value={editingHotel.addressLine2} onChange={(e) => setEditingHotel({...editingHotel, addressLine2: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" /></div>
                   <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">電話</label><input type="text" value={editingHotel.phone} onChange={(e) => setEditingHotel({...editingHotel, phone: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" /></div>
                   <div className="pt-2 flex gap-3"><button onClick={() => setEditingHotel(null)} className="flex-1 py-3 rounded-2xl border border-[#E5D5C5] text-sm text-[#8C6A4F] font-bold bg-white active:scale-95 transition-all">取消</button><button onClick={saveHotel} className="flex-1 py-3 rounded-2xl bg-[#C6A087] text-white text-sm font-bold shadow-md active:scale-95 transition-all">儲存</button></div>
                 </>
