@@ -22,6 +22,7 @@ import {
   Train,
   BedDouble,
   Ticket,
+  Link, // 🆕 引入外部連結圖示
 } from "lucide-react";
 
 export default function Plan({ trip, setTrip, dayIndex }) {
@@ -48,12 +49,19 @@ export default function Plan({ trip, setTrip, dayIndex }) {
   const [viewTicket, setViewTicket] = useState(null);
   const [weatherHourly, setWeatherHourly] = useState([]);
 
-  // 統一的類別樣式配置
   const TYPE_META = {
     ATTRACTION: { label: "景點", pillBg: "#E7EEF9", pillText: "#4A607F", icon: Landmark },
     RESTAURANT: { label: "餐廳", pillBg: "#FBE7DF", pillText: "#8C4A2F", icon: UtensilsCrossed },
     TRANSPORT: { label: "交通", pillBg: "#E4F1E3", pillText: "#4E6B48", icon: Train },
     HOTEL: { label: "住宿", pillBg: "#F3E3F0", pillText: "#7A4D6E", icon: BedDouble },
+  };
+
+  // 🆕 解析連結標題與網址的輔助函式
+  const getLinkDisplay = (text) => {
+    if (!text) return null;
+    const mdMatch = text.match(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/);
+    if (mdMatch) return { label: mdMatch[1], url: mdMatch[2] };
+    return { label: "查看連結", url: text };
   };
 
   const saveHero = (updatedHeroData) => {
@@ -112,6 +120,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         openingHours: "",
         phone: "",
         notes: "",
+        link: "", // 🆕 確保有 link 欄位
       });
       return next;
     });
@@ -212,6 +221,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                 const meta = TYPE_META[item.type] || TYPE_META.ATTRACTION;
                 const TypeIcon = meta.icon;
                 const isOpen = slideOpenId === item.id;
+                const linkData = getLinkDisplay(item.link); // 🆕 解析連結
 
                 return (
                   <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={isViewer}>
@@ -219,7 +229,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                       <div ref={drag.innerRef} {...drag.draggableProps} {...drag.dragHandleProps} className="relative pl-6">
                         <div className="absolute -left-[7.5px] top-5 w-3 h-3 bg-[#F7F1EB] border-2 border-[#C6A087] rounded-full" />
                         <div className="relative">
-                          {/* 側滑按鈕 */}
                           <div className={`absolute top-1/2 -translate-y-1/2 right-2 flex gap-2 transition-all ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
                             {!isViewer && (
                               <>
@@ -229,7 +238,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                             )}
                           </div>
 
-                          {/* 行程卡片 */}
                           <div
                             onClick={() => !isViewer && setSlideOpenId(isOpen ? null : item.id)}
                             style={{ transform: isOpen ? "translateX(-90px)" : "translateX(0)", transition: "transform 0.3s ease" }}
@@ -242,11 +250,9 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                               <span className="text-[11px] text-[#8C6A4F] font-medium">{item.time}</span>
                             </div>
                             <h3 className="text-base font-bold text-[#5A4636] leading-snug">{item.title}</h3>
-                            
-                            {/* 英文地址/副標題：備註化處理 */}
                             {item.subtitle && <p className="text-[11px] text-[#8C6A4F]/70 mt-0.5 leading-relaxed">{item.subtitle}</p>}
 
-                            {/* 票券：移至地址上方並按類別換色 */}
+                            {/* 票券 */}
                             {item.ticketIds?.length > 0 && (
                               <div className="flex flex-wrap gap-1.5 mt-3">
                                 {item.ticketIds.map((id) => {
@@ -254,12 +260,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                   if (!ticket) return null;
                                   const styleConfig = TYPE_META[ticket.type] || { pillBg: "#F7F1EB", pillText: "#8C6A4F" };
                                   return (
-                                    <button 
-                                      key={ticket.id} 
-                                      onClick={(e) => { e.stopPropagation(); setViewTicket(ticket); }} 
-                                      style={{ backgroundColor: styleConfig.pillBg, color: styleConfig.pillText, borderColor: `${styleConfig.pillText}20` }}
-                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border font-bold active:scale-95 transition-all"
-                                    >
+                                    <button key={ticket.id} onClick={(e) => { e.stopPropagation(); setViewTicket(ticket); }} style={{ backgroundColor: styleConfig.pillBg, color: styleConfig.pillText, borderColor: `${styleConfig.pillText}20` }} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border font-bold active:scale-95 transition-all">
                                       <Ticket className="w-3 h-3" /> <span>{ticket.title}</span>
                                     </button>
                                   );
@@ -267,7 +268,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                               </div>
                             )}
 
-                            {/* 詳細內容：地址圖示固定不縮小 */}
+                            {/* 詳細內容 */}
                             <div className="space-y-1.5 mt-2.5">
                               {item.address && (
                                 <div onClick={(e) => handleNavigation(e, item.address, item.title)} className="flex items-start gap-1.5 text-xs text-[#5A4636] cursor-pointer hover:opacity-70">
@@ -287,19 +288,25 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                   <span>{item.phone}</span>
                                 </div>
                               )}
+                              {/* 🆕 獨立連結區塊：放在電話下方，有連結才顯示 */}
+                              {linkData && (
+                                <div onClick={(e) => { e.stopPropagation(); window.open(linkData.url, "_blank"); }} className="flex items-start gap-1.5 text-xs text-blue-500 font-medium cursor-pointer hover:underline">
+                                  <Link className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
+                                  <span className="truncate flex-1">{linkData.label}</span>
+                                </div>
+                              )}
                             </div>
 
                             {/* 備註 */}
                             {item.notes && (
                               <div className="mt-3 rounded-xl bg-[#F7F1EB] px-3 py-2 flex gap-2 text-[12px] text-[#8C6A4F] leading-relaxed">
                                 <StickyNote className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                                <p>{item.notes}</p>
+                                <p className="whitespace-pre-wrap">{item.notes}</p>
                               </div>
                             )}
                           </div>
                         </div>
 
-                        {/* 交通卡片 */}
                         {index < currentItems.length - 1 && (
                           <TransitCard
                             id={`transit-${item.id}`}
@@ -327,7 +334,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </Droppable>
       </DragDropContext>
 
-      {/* 新增按鈕 */}
       {!isViewer && (
         <div className="flex justify-center mt-4">
           <button onClick={addItem} className="px-4 py-2 rounded-full border border-dashed border-[#C6A087] bg-white text-xs text-[#8C6A4F] font-bold hover:bg-[#F7F1EB]">
@@ -336,7 +342,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       )}
 
-      {/* 各種彈窗 */}
       {editingItem && !isViewer && (
         <EditItemModal
           item={editingItem} trip={trip} tickets={trip.tickets || []}

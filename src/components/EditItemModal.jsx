@@ -10,6 +10,7 @@ import {
   Ticket,
   Clock,
   Phone,
+  Link, // 🆕 引入連結圖示
 } from "lucide-react";
 
 const TYPE_OPTIONS = {
@@ -43,6 +44,7 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
     openingHours: item.openingHours || "",
     phone: item.phone || "",
     notes: item.notes || "",
+    link: item.link || "", // 🆕 初始化連結欄位
     ticketIds: initialTicketIds,
   });
 
@@ -204,7 +206,7 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
             )}
           </div>
 
-          {/* 營業時間與電話 - 新增回補 */}
+          {/* 營業時間與電話 */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-widest">營業時間</label>
@@ -215,7 +217,7 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
                   value={form.openingHours}
                   onChange={(e) => update({ openingHours: e.target.value })}
                   className="w-full px-2 py-1.5 text-[13px] bg-transparent outline-none border-none"
-                  placeholder="例如 09:00 - 18:00"
+                  placeholder="09:00 - 18:00"
                 />
               </div>
             </div>
@@ -231,6 +233,21 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
                   placeholder="聯絡電話"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* 連結 - 🆕 新增外部連結欄位 */}
+          <div>
+            <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1 uppercase tracking-widest">外部連結</label>
+            <div className="w-full border border-[#E5D5C5] rounded-xl bg-white overflow-hidden focus-within:ring-1 focus-within:ring-[#C6A087] flex items-center">
+              <Link className="w-3.5 h-3.5 text-[#C6A087] ml-3 shrink-0" />
+              <input
+                type="text"
+                value={form.link}
+                onChange={(e) => update({ link: e.target.value })}
+                className="w-full px-2 py-1.5 text-[13px] bg-transparent outline-none border-none"
+                placeholder="[標題](網址) 或 直接貼網址"
+              />
             </div>
           </div>
 
