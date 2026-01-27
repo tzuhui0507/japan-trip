@@ -30,34 +30,22 @@ const MODE_COLORS = {
 };
 
 const JAPAN_LINE_COLORS = {
-  // 東京區域
   山手線: "#80C342", 中央線: "#FF8800", 京浜東北線: "#00A0E9", 総武線: "#FFD700",
   東西線: "#009BBF", 半蔵門線: "#8F76D6", 千代田線: "#009B7D", 銀座線: "#FF9500",
   丸ノ内線: "#E6002C", 小田急: "#1C82D4", 京王: "#BB0066", SKYLINER: "#0047AB",
   "成田エクスプレス": "#E32636", "N'EX": "#E32636", 東武東上線: "#004A99", 日比谷線: "#B5B5AC",
-
-  // 🆕 北海道區域 - 札幌地下鐵
-  南北線: "#00AF44", // 綠色
-  // 東西線: "#FF7300", // 橘色 (與東京東西線重複時會優先比對)
-  札幌東西線: "#FF7300",
-  東豐線: "#007DC5", // 藍色
-  札幌市電: "#1B5E20", // 深綠色
-
-  // 🆕 北海道區域 - JR 路線
-  JR北海道: "#00AA3C", // JR北海道標誌綠
-  函館本線: "#ED1C24", // 常用紅色代表
-  千歲線: "#0072BC", // 常用藍色代表
-  石勝線: "#7AC143", // 淺綠
-  室蘭本線: "#F58220", // 橘
-  "エアポート": "#0072BC", // 快速 Airport
+  南北線: "#00AF44", 札幌東西線: "#FF7300", 東豐線: "#007DC5", 札幌市電: "#1B5E20",
+  JR北海道: "#00AA3C", 函館本線: "#ED1C24", 千歲線: "#0072BC", 石勝線: "#7AC143",
+  室蘭本線: "#F58220", "エアポート": "#0072BC",
 };
 
 const SHINKANSEN_COLORS = {
   東海道: "#0068B7", 山陽: "#0068B7", 東北: "#00A95C", 北海道: "#00A95C", 九州: "#E6006E", 北陸: "#1B3FAB",
 };
 
-
-function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
+function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex = 0 }) {
+  // 🆕 branchIndex 由 Plan.jsx 傳入，達成行程與交通連動切換
+  
   const [legs, setLegs] = useState(() => {
     if (defaultData?.legs) return defaultData.legs;
     return [{ id: "1", mode: "train", duration: "10" }];
@@ -78,14 +66,21 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
     onUpdate && onUpdate(id, { legs });
   };
 
+  // 🆕 輔助解析 A/B 內容
+  const parseBranchText = (text) => {
+    if (!text) return "";
+    const parts = text.split("---");
+    return parts[branchIndex] || parts[0];
+  };
+
   const detectColor = (leg) => {
+    const lineName = parseBranchText(leg.lineName); // 使用解析後的名稱判斷顏色
     if (leg.mode === "shinkansen") {
-      const key = Object.keys(SHINKANSEN_COLORS).find((k) => leg.lineName?.includes(k)) || "東海道";
+      const key = Object.keys(SHINKANSEN_COLORS).find((k) => lineName?.includes(k)) || "東海道";
       return SHINKANSEN_COLORS[key];
     }
-    if (leg.lineName) {
-      // 優先比對北海道專屬前綴，防止重複名稱（如東西線）
-      const key = Object.keys(JAPAN_LINE_COLORS).find((k) => leg.lineName?.includes(k)) || "";
+    if (lineName) {
+      const key = Object.keys(JAPAN_LINE_COLORS).find((k) => lineName?.includes(k)) || "";
       if (key) return JAPAN_LINE_COLORS[key];
     }
     return MODE_COLORS[leg.mode] || COLORS.mocha;
@@ -123,27 +118,42 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
     setLegs((prev) => prev.map((l) => l.id === legId ? { ...l, mode: MODES[(MODES.indexOf(l.mode) + 1) % MODES.length] } : l));
   };
 
-  const totalMin = legs.reduce((sum, l) => sum + (parseInt(l.duration) || 0), 0);
-  const totalPrice = legs.reduce((sum, l) => sum + (parseInt(l.price || "0") || 0), 0);
+  const calculateTotal = () => {
+    let totalTime = 0;
+    let totalPrice = 0;
+    legs.forEach(leg => {
+      totalTime += parseInt(parseBranchText(leg.duration)) || 0;
+      totalPrice += parseInt(parseBranchText(leg.price)) || 0;
+    });
+    return { totalTime, totalPrice };
+  };
+
+  const { totalTime, totalPrice } = calculateTotal();
 
   const renderSummary = () => (
-    <div className="flex flex-col text-[10px] font-bold leading-snug justify-center">
+    <div className="flex flex-col text-[10px] font-bold leading-snug justify-center transition-all duration-300">
       {legs.map((leg) => {
         const color = detectColor(leg);
+        const lineName = parseBranchText(leg.lineName);
+        const from = parseBranchText(leg.fromStation);
+        const to = parseBranchText(leg.toStation);
+        const duration = parseBranchText(leg.duration);
+        const price = parseBranchText(leg.price);
+
         return (
           <div key={leg.id} className="mb-2 last:mb-0">
             <div className="flex items-center gap-1" style={{ color }}>
               {getIcon(leg.mode, color)}
-              <span className="font-semibold truncate max-w-[180px]">{leg.lineName || "未命名路線"}</span>
+              <span className="font-semibold truncate max-w-[180px]">{lineName || "未命名路線"}</span>
             </div>
             <div className="flex items-center gap-1 pl-5" style={{ color }}>
-              <span className="truncate max-w-[120px]">{(leg.fromStation || "—") + " → " + (leg.toStation || "—")}</span>
+              <span className="truncate max-w-[120px]">{(from || "—") + " → " + (to || "—")}</span>
               <span>✦</span>
-              <span>{leg.duration}m</span>
-              {leg.price && (
+              <span>{duration}m</span>
+              {price && (
                 <>
                   <span>｜</span>
-                  <span>¥{leg.price}</span>
+                  <span>¥{price}</span>
                 </>
               )}
             </div>
@@ -154,13 +164,13 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
   );
 
   return (
-    <div className="relative flex flex-col my-3 pl-3">
+    <div className="relative flex flex-col my-3 pl-3 animate-in fade-in duration-500">
       <div
         onClick={() => {
           if (!isViewer && isExpanded) commitUpdate();
           setIsExpanded((v) => !v);
         }}
-        className="flex items-center bg-white border border-[#E5D5C5] rounded-lg px-3 py-2 shadow-sm cursor-pointer w-full min-h-[54px]"
+        className={`flex items-center bg-white border rounded-lg px-3 py-2 shadow-sm cursor-pointer w-full min-h-[54px] transition-colors ${branchIndex === 1 ? 'border-[#C6A087]/50 bg-[#FDF9F5]' : 'border-[#E5D5C5]'}`}
       >
         <div className="flex-1 flex flex-col justify-center">
           {renderSummary()}
@@ -169,17 +179,18 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
         <div className="self-stretch border-l border-dashed border-[#D7C9BD] mx-3 my-1" />
 
         <div className="flex flex-col items-center justify-center min-w-[54px] text-[11px] font-bold text-[#8C6A4F] whitespace-nowrap">
-          <span>{totalMin}分</span>
-          {totalMin > 0 && totalPrice > 0 && <div className="w-6 border-t border-[#D7C9BD] my-1" />}
+          <span>{totalTime}分</span>
+          {totalTime > 0 && totalPrice > 0 && <div className="w-6 border-t border-[#D7C9BD] my-1" />}
           {totalPrice > 0 && <span>¥{totalPrice}</span>}
         </div>
       </div>
 
       {isExpanded && !isViewer && (
         <div className="mt-2 bg-white border border-[#E5D5C5] rounded-xl p-4 shadow-lg w-full z-10">
-          <h4 className="text-[10px] font-bold text-[#8C6A4F]/70 tracking-widest mb-3 uppercase">
+          <h4 className="text-[10px] font-bold text-[#8C6A4F]/70 tracking-widest mb-1 uppercase">
             編輯交通方式
           </h4>
+          <p className="text-[9px] text-[#C6A087] mb-3 font-medium">支援二選一語法：方案A --- 方案B</p>
 
           <div className="space-y-4">
             {legs.map((leg) => {
@@ -193,12 +204,13 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
 
                     <div className="relative">
                       <input
-                        type="number"
+                        type="text"
                         value={leg.duration}
                         onChange={(e) => updateLeg(leg.id, "duration", e.target.value)}
-                        className="w-20 bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[13px] text-center text-[#5A4636] outline-none"
+                        className="w-24 bg-white border border-[#E5D5C5] rounded-md px-2 py-1.5 text-[12px] text-center text-[#5A4636] outline-none"
+                        placeholder="10 --- 20"
                       />
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#8C6A4F]">分</span>
+                      <span className="absolute -right-4 top-1/2 -translate-y-1/2 text-[10px] text-[#8C6A4F]">分</span>
                     </div>
 
                     {legs.length > 1 && (
@@ -214,8 +226,8 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
                       type="text"
                       value={leg.lineName || ""}
                       onChange={(e) => updateLeg(leg.id, "lineName", e.target.value)}
-                      className="w-full bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[13px] text-[#5A4636] outline-none"
-                      placeholder="如：南北線、東豐線、エアポート"
+                      className="w-full bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[12px] text-[#5A4636] outline-none"
+                      placeholder="路線 A --- 路線 B"
                     />
                   </div>
 
@@ -226,16 +238,16 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
                         type="text"
                         value={leg.fromStation || ""}
                         onChange={(e) => updateLeg(leg.id, "fromStation", e.target.value)}
-                        className="flex-1 bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[13px] text-[#5A4636] outline-none min-w-0"
-                        placeholder="出發站"
+                        className="flex-1 bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[12px] text-[#5A4636] outline-none min-w-0"
+                        placeholder="出發 A --- B"
                       />
                       <ArrowRight className="w-4 h-4 text-[#8C6A4F]/60 shrink-0" />
                       <input
                         type="text"
                         value={leg.toStation || ""}
                         onChange={(e) => updateLeg(leg.id, "toStation", e.target.value)}
-                        className="flex-1 bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[13px] text-[#5A4636] outline-none min-w-0"
-                        placeholder="抵達站"
+                        className="flex-1 bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[12px] text-[#5A4636] outline-none min-w-0"
+                        placeholder="抵達 A --- B"
                       />
                     </div>
                   </div>
@@ -245,11 +257,11 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
                     <div className="relative flex items-center">
                       <JapaneseYen className="absolute left-2 w-3.5 h-3.5 text-[#8C6A4F]/70" />
                       <input
-                        type="number"
+                        type="text"
                         value={leg.price || ""}
                         onChange={(e) => updateLeg(leg.id, "price", e.target.value)}
-                        className="w-32 bg-white border border-[#E5D5C5] rounded-md pl-7 pr-3 py-1.5 text-[13px] text-[#5A4636] outline-none"
-                        placeholder="價格"
+                        className="w-full bg-white border border-[#E5D5C5] rounded-md pl-7 pr-3 py-1.5 text-[12px] text-[#5A4636] outline-none"
+                        placeholder="210 --- 550"
                       />
                     </div>
                   </div>
