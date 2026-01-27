@@ -10,6 +10,7 @@ import {
   X,
   ArrowRight,
   JapaneseYen,
+  TrainFront,
 } from "lucide-react";
 
 const COLORS = {
@@ -55,14 +56,6 @@ const SHINKANSEN_COLORS = {
   東海道: "#0068B7", 山陽: "#0068B7", 東北: "#00A95C", 北海道: "#00A95C", 九州: "#E6006E", 北陸: "#1B3FAB",
 };
 
-const ShinkansenIcon = ({ className = "w-4 h-4", stroke = "#8C6A4F" }) => (
-  <svg className={className} viewBox="0 0 64 64" fill="none" stroke={stroke} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 40 L20 20 Q32 10 44 20 L52 40 Z" />
-    <ellipse cx="24" cy="46" rx="4" ry="4" />
-    <ellipse cx="40" cy="46" rx="4" ry="4" />
-    <path d="M20 28 Q32 18 44 28" />
-  </svg>
-);
 
 function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
   const [legs, setLegs] = useState(() => {
@@ -104,7 +97,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
       case "taxi": return <Car className="w-4 h-4" stroke={color} />;
       case "bus": return <Bus className="w-4 h-4" stroke={color} />;
       case "plane": return <Plane className="w-4 h-4" stroke={color} />;
-      case "shinkansen": return <ShinkansenIcon stroke={color} className="w-4 h-4" />;
+      case "shinkansen": return <TrainFront stroke={color} className="w-4 h-4" />;
       default: return <Train className="w-4 h-4" stroke={color} />;
     }
   };
