@@ -29,10 +29,26 @@ const MODE_COLORS = {
 };
 
 const JAPAN_LINE_COLORS = {
+  // 東京區域
   山手線: "#80C342", 中央線: "#FF8800", 京浜東北線: "#00A0E9", 総武線: "#FFD700",
   東西線: "#009BBF", 半蔵門線: "#8F76D6", 千代田線: "#009B7D", 銀座線: "#FF9500",
   丸ノ内線: "#E6002C", 小田急: "#1C82D4", 京王: "#BB0066", SKYLINER: "#0047AB",
   "成田エクスプレス": "#E32636", "N'EX": "#E32636", 東武東上線: "#004A99", 日比谷線: "#B5B5AC",
+
+  // 🆕 北海道區域 - 札幌地下鐵
+  南北線: "#00AF44", // 綠色
+  // 東西線: "#FF7300", // 橘色 (與東京東西線重複時會優先比對)
+  札幌東西線: "#FF7300",
+  東豐線: "#007DC5", // 藍色
+  札幌市電: "#1B5E20", // 深綠色
+
+  // 🆕 北海道區域 - JR 路線
+  JR北海道: "#00AA3C", // JR北海道標誌綠
+  函館本線: "#ED1C24", // 常用紅色代表
+  千歲線: "#0072BC", // 常用藍色代表
+  石勝線: "#7AC143", // 淺綠
+  室蘭本線: "#F58220", // 橘
+  "エアポート": "#0072BC", // 快速 Airport
 };
 
 const SHINKANSEN_COLORS = {
@@ -75,6 +91,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
       return SHINKANSEN_COLORS[key];
     }
     if (leg.lineName) {
+      // 優先比對北海道專屬前綴，防止重複名稱（如東西線）
       const key = Object.keys(JAPAN_LINE_COLORS).find((k) => leg.lineName?.includes(k)) || "";
       if (key) return JAPAN_LINE_COLORS[key];
     }
@@ -145,7 +162,6 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
 
   return (
     <div className="relative flex flex-col my-3 pl-3">
-      {/* 外框＋摘要列 - 強制垂直置中佈局 */}
       <div
         onClick={() => {
           if (!isViewer && isExpanded) commitUpdate();
@@ -157,7 +173,6 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
           {renderSummary()}
         </div>
 
-        {/* 垂直虛線 - 改用 self-stretch 自動長高 */}
         <div className="self-stretch border-l border-dashed border-[#D7C9BD] mx-3 my-1" />
 
         <div className="flex flex-col items-center justify-center min-w-[54px] text-[11px] font-bold text-[#8C6A4F] whitespace-nowrap">
@@ -167,9 +182,8 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
         </div>
       </div>
 
-      {/* 展開版編輯區 - 寬度同步與字體優化 */}
       {isExpanded && !isViewer && (
-        <div className="mt-2 bg-white border border-[#E5D5C5] rounded-xl p-4 shadow-lg w-full">
+        <div className="mt-2 bg-white border border-[#E5D5C5] rounded-xl p-4 shadow-lg w-full z-10">
           <h4 className="text-[10px] font-bold text-[#8C6A4F]/70 tracking-widest mb-3 uppercase">
             編輯交通方式
           </h4>
@@ -208,29 +222,27 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
                       value={leg.lineName || ""}
                       onChange={(e) => updateLeg(leg.id, "lineName", e.target.value)}
                       className="w-full bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[13px] text-[#5A4636] outline-none"
-                      placeholder="如：山手線、SKYLINER"
+                      placeholder="如：南北線、東豐線、エアポート"
                     />
                   </div>
 
                   <div className="mb-2">
                     <label className="text-[10px] font-bold text-[#8C6A4F]/60 mb-1 block uppercase tracking-tight">起訖站</label>
                     <div className="flex items-center gap-2 w-full">
-                      {/* 移除固定寬度，使用 flex-1 讓它隨螢幕縮放 */}
                       <input
                         type="text"
                         value={leg.fromStation || ""}
                         onChange={(e) => updateLeg(leg.id, "fromStation", e.target.value)}
                         className="flex-1 bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[13px] text-[#5A4636] outline-none min-w-0"
-                        placeholder="出發"
+                        placeholder="出發站"
                       />
-                      {/* 加入 shrink-0 防止箭頭被擠扁消失 */}
                       <ArrowRight className="w-4 h-4 text-[#8C6A4F]/60 shrink-0" />
                       <input
                         type="text"
                         value={leg.toStation || ""}
                         onChange={(e) => updateLeg(leg.id, "toStation", e.target.value)}
                         className="flex-1 bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[13px] text-[#5A4636] outline-none min-w-0"
-                        placeholder="抵達"
+                        placeholder="抵達站"
                       />
                     </div>
                   </div>
@@ -238,14 +250,13 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false }) {
                   <div>
                     <label className="text-[10px] font-bold text-[#8C6A4F]/60 mb-1 block uppercase tracking-tight">預估價格</label>
                     <div className="relative flex items-center">
-                      {/* 將單位符號移到最前方 */}
                       <JapaneseYen className="absolute left-2 w-3.5 h-3.5 text-[#8C6A4F]/70" />
                       <input
                         type="number"
                         value={leg.price || ""}
                         onChange={(e) => updateLeg(leg.id, "price", e.target.value)}
                         className="w-32 bg-white border border-[#E5D5C5] rounded-md pl-7 pr-3 py-1.5 text-[13px] text-[#5A4636] outline-none"
-                        placeholder="210"
+                        placeholder="價格"
                       />
                     </div>
                   </div>
