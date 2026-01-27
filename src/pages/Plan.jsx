@@ -50,6 +50,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
   const [viewTicket, setViewTicket] = useState(null);
   const [weatherHourly, setWeatherHourly] = useState([]);
 
+  // 支線索引狀態 (0=A, 1=B)
   const [branchIndexMap, setBranchIndexMap] = useState({});
 
   const TYPE_META = {
@@ -67,32 +68,39 @@ export default function Plan({ trip, setTrip, dayIndex }) {
   };
 
   const getBranchData = (item) => {
-    const split = (val) => {
-      if (Array.isArray(val)) return [val]; 
-      return typeof val === "string" ? val.split("---") : [val];
+    const checkIsBranch = (val) => {
+      if (typeof val !== "string" || !val.includes("---")) return false;
+      const parts = val.split("---");
+      return parts.length > 1 && parts[1].trim() !== "";
     };
-    
-    const titles = split(item.title);
-    const subtitles = split(item.subtitle);
-    const notes = split(item.notes);
-    const addresses = split(item.address);
-    const links = split(item.link);
-    const hours = split(item.openingHours);
-    const phones = split(item.phone);
 
+    const hasBranch = 
+      checkIsBranch(item.title) || 
+      checkIsBranch(item.address) || 
+      checkIsBranch(item.notes) || 
+      checkIsBranch(item.subtitle) ||
+      checkIsBranch(item.openingHours) ||
+      checkIsBranch(item.phone) ||
+      checkIsBranch(item.link) ||
+      (typeof item.ticketIds === "string" && item.ticketIds.includes("---") && item.ticketIds.split("---")[1]?.trim() !== "");
+
+    const split = (val) => (typeof val === "string" ? val.split("---") : [val]);
     const currentIndex = branchIndexMap[item.id] || 0;
 
-    let currentTicketIds = item.ticketIds || [];
-    let hasTicketBranch = false;
-    if (typeof item.ticketIds === "string" && item.ticketIds.includes("---")) {
+    const titles = split(item.title);
+    const notes = split(item.notes);
+    const addresses = split(item.address);
+    const subtitles = split(item.subtitle);
+    const hours = split(item.openingHours);
+    const phones = split(item.phone);
+    const links = split(item.link);
+
+    let currentTicketIds = Array.isArray(item.ticketIds) ? item.ticketIds : [];
+    if (typeof item.ticketIds === "string") {
       const ticketParts = item.ticketIds.split("---");
-      hasTicketBranch = true;
       const part = ticketParts[currentIndex] || ticketParts[0];
       currentTicketIds = part.split(",").filter(Boolean);
     }
-
-    const hasBranch = titles.length > 1 || notes.length > 1 || addresses.length > 1 || hours.length > 1 || phones.length > 1 || hasTicketBranch;
-    const altTitle = titles.length > 1 ? titles[currentIndex === 0 ? 1 : 0] : "另一個方案";
 
     return {
       hasBranch,
@@ -101,11 +109,11 @@ export default function Plan({ trip, setTrip, dayIndex }) {
       subtitle: subtitles[currentIndex] || subtitles[0],
       note: notes[currentIndex] || notes[0],
       address: addresses[currentIndex] || addresses[0],
-      link: links[currentIndex] || links[0],
       openingHours: hours[currentIndex] || hours[0],
       phone: phones[currentIndex] || phones[0],
+      link: links[currentIndex] || links[0],
       ticketIds: currentTicketIds,
-      altTitle
+      altTitle: titles.length > 1 ? titles[currentIndex === 0 ? 1 : 0] : "方案"
     };
   };
 
@@ -199,12 +207,10 @@ export default function Plan({ trip, setTrip, dayIndex }) {
     });
   };
 
-  if (!currentDay) return <div className="pt-24 text-center text-sm text-[#8C6A4F]">行程資料載入中…</div>;
-
   return (
-    <div className="pt-4 pb-24">
+    <div className="pt-4 pb-24 px-4">
       {/* 封面區域 */}
-      <div className="mb-6 relative flex gap-4 items-stretch px-4" style={{ height: 240 }}>
+      <div className="mb-6 relative flex gap-4 items-stretch" style={{ height: 240 }}>
         <div className="w-12 flex flex-col items-center h-full">
           <span className="w-2 h-2 rounded-full bg-[#C6A087] mb-2 shrink-0" />
           <span className="w-px flex-1 bg-[#D8CFC4]" />
@@ -215,7 +221,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         <div
           className="flex-1 rounded-[18px] overflow-hidden relative shadow cursor-pointer"
           onClick={() => !isViewer && setShowHeroEdit(!showHeroEdit)}
-          style={{ backgroundImage: `url(${currentDay.heroImage || "/placeholder.jpg"})`, backgroundSize: "cover", backgroundPosition: "center" }}
+          style={{ backgroundImage: `url(${currentDay?.heroImage || "/placeholder.jpg"})`, backgroundSize: "cover", backgroundPosition: "center" }}
         >
           {showHeroEdit && !isViewer && (
             <button onClick={(e) => { e.stopPropagation(); setEditingHero(currentDay); }} className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center bg-white/25 backdrop-blur-xl border border-white/50 shadow-lg">
@@ -224,22 +230,22 @@ export default function Plan({ trip, setTrip, dayIndex }) {
           )}
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/50 to-transparent" />
           <div className="absolute bottom-6 left-6 text-white drop-shadow-lg">
-            {currentDay.heroLocation && (
+            {currentDay?.heroLocation && (
               <div className="flex items-center gap-1 mb-1">
                 <MapPin className="w-3.5 h-3.5 text-[#CDA581]" />
                 <span className="text-xs font-medium text-white">{currentDay.heroLocation}</span>
               </div>
             )}
-            <div className="text-lg font-bold leading-tight">{currentDay.heroTitle || "未設定標題"}</div>
+            <div className="text-lg font-bold leading-tight">{currentDay?.heroTitle || "未設定標題"}</div>
           </div>
         </div>
       </div>
 
       {/* 天氣預報 */}
-      <section className="mb-6 px-4">
+      <section className="mb-6">
         <div className="flex items-center justify-between mb-2 px-1">
           <div>
-            <p className="text-sm font-semibold text-[#5A4636]">{currentDay.weatherLocation || "未設定地點"}</p>
+            <p className="text-sm font-semibold text-[#5A4636]">{currentDay?.weatherLocation || "未設定地點"}</p>
             <p className="text-[10px] text-[#8C6A4F]/80">未來 24 小時預報</p>
           </div>
           <span className="text-[10px] text-[#C6A087] border border-[#E5D5C5] rounded-full px-2.5 py-0.5 bg-white">Open-Meteo</span>
@@ -266,21 +272,17 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                 const meta = TYPE_META[item.type] || TYPE_META.ATTRACTION;
                 const TypeIcon = meta.icon;
                 const isOpen = slideOpenId === item.id;
-                
                 const branch = getBranchData(item);
                 const linkData = getLinkDisplay(branch.link);
-
                 const nextItem = currentItems[index + 1];
-                const nextBranchIndex = nextItem ? (branchIndexMap[nextItem.id] || 0) : 0;
+                const nextBranchIndex = nextItem ? (getBranchData(nextItem).currentIndex) : 0;
 
                 return (
                   <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={isViewer}>
                     {(drag) => (
                       <div ref={drag.innerRef} {...drag.draggableProps} {...drag.dragHandleProps} className="relative pl-6">
                         <div className="absolute -left-[7.5px] top-5 w-3 h-3 bg-[#F7F1EB] border-2 border-[#C6A087] rounded-full z-10" />
-                        
                         <div className="relative">
-                          {/* 側滑按鈕 */}
                           <div className={`absolute top-1/2 -translate-y-1/2 right-2 flex gap-2 transition-all ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
                             {!isViewer && (
                               <>
@@ -290,12 +292,10 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                             )}
                           </div>
 
-                          {/* 支線堆疊視覺暗示層 */}
                           {branch.hasBranch && (
                             <div className="absolute inset-0 bg-[#E5D5C5]/40 rounded-xl translate-x-2 translate-y-2 -z-10 border border-[#D8CFC4] shadow-sm" />
                           )}
 
-                          {/* 行程卡片 */}
                           <div
                             onClick={() => !isViewer && setSlideOpenId(isOpen ? null : item.id)}
                             style={{ 
@@ -305,10 +305,9 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                             }}
                             className="bg-white border border-[#E5D5C5] rounded-xl px-4 py-3 shadow-sm relative overflow-hidden"
                           >
-                            {/* 支線切換 UI (圖示前置優化) */}
                             {branch.hasBranch && (
                               <div className="flex items-center justify-between mb-2 pb-2 border-b border-dashed border-[#F0E3D5]">
-                                <div className="text-[10px] font-bold text-[#8C6A4F] flex items-center gap-1">
+                                <div className="text-[10px] font-bold text-[#C6A087] flex items-center gap-1">
                                   ✦ 方案 {branch.currentIndex === 0 ? "1" : "2"}
                                 </div>
                                 <button 
@@ -321,7 +320,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                   }}
                                   className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F7F1EB] hover:bg-[#E5D5C5] active:scale-95 transition-all shadow-sm"
                                 >
-                                  {/* 🆕 圖示前移 */}
                                   <ArrowLeftRight className="w-3 h-3 text-[#8C6A4F]" />
                                   <span className="text-[10px] text-[#8C6A4F] font-bold">
                                     方案 {branch.currentIndex === 0 ? "2" : "1"}：<span className="text-[#C6A087] font-semibold truncate max-w-[120px] inline-block align-bottom">{branch.altTitle}</span>
@@ -347,16 +345,14 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                               </p>
                             )}
 
-                            {/* 票券 */}
                             {branch.ticketIds?.length > 0 && (
                               <div className="flex flex-wrap gap-1.5 mt-3">
-                                {branch.ticketIds.map((idOrObj) => {
-                                  const ticketId = typeof idOrObj === "object" ? idOrObj.id : idOrObj;
+                                {branch.ticketIds.map((ticketId) => {
                                   const ticket = trip.tickets?.find((t) => t.id === ticketId);
                                   if (!ticket) return null;
                                   const styleConfig = TYPE_META[ticket.type] || { pillBg: "#F7F1EB", pillText: "#8C6A4F" };
                                   return (
-                                    <button key={ticket.id} onClick={(e) => { e.stopPropagation(); setViewTicket(ticket); }} style={{ backgroundColor: styleConfig.pillBg, color: styleConfig.pillText, borderColor: `${styleConfig.pillText}20` }} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border font-bold active:scale-95 transition-all">
+                                    <button key={ticketId} onClick={(e) => { e.stopPropagation(); setViewTicket(ticket); }} style={{ backgroundColor: styleConfig.pillBg, color: styleConfig.pillText, borderColor: `${styleConfig.pillText}20` }} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border font-bold active:scale-95 transition-all">
                                       <Ticket className="w-3 h-3" /> <span>{ticket.title}</span>
                                     </button>
                                   );
@@ -391,7 +387,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                               )}
                             </div>
 
-                            {/* 備註 */}
                             {branch.note && (
                               <div className="mt-3 rounded-xl bg-[#F7F1EB] px-3 py-2 flex gap-2 text-[12px] text-[#8C6A4F] leading-relaxed transition-all duration-300">
                                 <StickyNote className="w-3.5 h-3.5 mt-0.5 shrink-0" />
@@ -401,7 +396,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                           </div>
                         </div>
 
-                        {/* 交通卡片：連動下一個行程的支線索引 */}
                         {index < currentItems.length - 1 && (
                           <TransitCard
                             id={`transit-${item.id}`}
@@ -440,7 +434,9 @@ export default function Plan({ trip, setTrip, dayIndex }) {
 
       {editingItem && !isViewer && (
         <EditItemModal
-          item={editingItem} trip={trip} tickets={trip.tickets || []}
+          item={editingItem}
+          trip={trip}
+          tickets={trip.tickets || []}
           onClose={() => setEditingItem(null)}
           onSave={(updated) => {
             setTrip((prev) => {
