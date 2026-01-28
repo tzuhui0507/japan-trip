@@ -50,7 +50,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
   const [viewTicket, setViewTicket] = useState(null);
   const [weatherHourly, setWeatherHourly] = useState([]);
 
-  // 支線索引狀態 (0=A, 1=B)
   const [branchIndexMap, setBranchIndexMap] = useState({});
 
   const TYPE_META = {
@@ -208,9 +207,9 @@ export default function Plan({ trip, setTrip, dayIndex }) {
   };
 
   return (
-    <div className="pt-4 pb-24 px-4">
-      {/* 封面區域 */}
-      <div className="mb-6 relative flex gap-4 items-stretch" style={{ height: 240 }}>
+    <div className="pt-4 pb-24">
+      {/* 封面區域 - 確保全寬度 */}
+      <div className="mb-6 relative flex gap-4 items-stretch px-4" style={{ height: 240 }}>
         <div className="w-12 flex flex-col items-center h-full">
           <span className="w-2 h-2 rounded-full bg-[#C6A087] mb-2 shrink-0" />
           <span className="w-px flex-1 bg-[#D8CFC4]" />
@@ -241,8 +240,8 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       </div>
 
-      {/* 天氣預報 */}
-      <section className="mb-6">
+      {/* 天氣預報 - 保持 px-4 內縮與大圖對齊 */}
+      <section className="mb-6 px-4">
         <div className="flex items-center justify-between mb-2 px-1">
           <div>
             <p className="text-sm font-semibold text-[#5A4636]">{currentDay?.weatherLocation || "未設定地點"}</p>
@@ -267,7 +266,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
       <DragDropContext onDragEnd={isViewer ? () => {} : onDragEnd}>
         <Droppable droppableId="day-items">
           {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps} className="relative border-l border-[#E5D5C5] mt-2 space-y-4 pb-10 ml-6">
+            <div ref={provided.innerRef} {...provided.droppableProps} className="relative border-l border-[#E5D5C5] mt-2 space-y-4 pb-10 ml-6 mr-4">
               {currentItems.map((item, index) => {
                 const meta = TYPE_META[item.type] || TYPE_META.ATTRACTION;
                 const TypeIcon = meta.icon;
@@ -307,16 +306,13 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                           >
                             {branch.hasBranch && (
                               <div className="flex items-center justify-between mb-2 pb-2 border-b border-dashed border-[#F0E3D5]">
-                                <div className="text-[10px] font-bold text-[#C6A087] flex items-center gap-1">
+                                <div className="text-[10px] font-bold text-[#8C6A4F] flex items-center gap-1">
                                   ✦ 方案 {branch.currentIndex === 0 ? "1" : "2"}
                                 </div>
                                 <button 
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setBranchIndexMap(prev => ({
-                                      ...prev,
-                                      [item.id]: prev[item.id] === 1 ? 0 : 1
-                                    }));
+                                    setBranchIndexMap(prev => ({ ...prev, [item.id]: prev[item.id] === 1 ? 0 : 1 }));
                                   }}
                                   className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F7F1EB] hover:bg-[#E5D5C5] active:scale-95 transition-all shadow-sm"
                                 >
@@ -335,15 +331,8 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                               <span className="text-[11px] text-[#8C6A4F] font-medium">{item.time}</span>
                             </div>
                             
-                            <h3 className="text-base font-bold text-[#5A4636] leading-snug transition-all duration-300">
-                              {branch.title}
-                            </h3>
-                            
-                            {branch.subtitle && (
-                              <p className="text-[11px] text-[#8C6A4F]/70 mt-0.5 leading-relaxed">
-                                {branch.subtitle}
-                              </p>
-                            )}
+                            <h3 className="text-base font-bold text-[#5A4636] leading-snug">{branch.title}</h3>
+                            {branch.subtitle && <p className="text-[11px] text-[#8C6A4F]/70 mt-0.5">{branch.subtitle}</p>}
 
                             {branch.ticketIds?.length > 0 && (
                               <div className="flex flex-wrap gap-1.5 mt-3">
@@ -388,7 +377,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                             </div>
 
                             {branch.note && (
-                              <div className="mt-3 rounded-xl bg-[#F7F1EB] px-3 py-2 flex gap-2 text-[12px] text-[#8C6A4F] leading-relaxed transition-all duration-300">
+                              <div className="mt-3 rounded-xl bg-[#F7F1EB] px-3 py-2 flex gap-2 text-[12px] text-[#8C6A4F] leading-relaxed">
                                 <StickyNote className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                                 <p className="whitespace-pre-wrap">{branch.note}</p>
                               </div>
@@ -434,9 +423,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
 
       {editingItem && !isViewer && (
         <EditItemModal
-          item={editingItem}
-          trip={trip}
-          tickets={trip.tickets || []}
+          item={editingItem} trip={trip} tickets={trip.tickets || []}
           onClose={() => setEditingItem(null)}
           onSave={(updated) => {
             setTrip((prev) => {
