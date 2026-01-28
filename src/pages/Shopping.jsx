@@ -47,8 +47,8 @@ export default function Shopping({ trip, setTrip }) {
   const [previewImage, setPreviewImage] = useState(null);
   const [menuOpenId, setMenuOpenId] = useState(null);
 
-  const [editingItem, setEditingItem] = useState(null); // { catId, item }
-  const [editingField, setEditingField] = useState(null); // "name" | "price" | "quantity"
+  const [editingItem, setEditingItem] = useState(null); 
+  const [editingField, setEditingField] = useState(null); 
   const [draftValue, setDraftValue] = useState("");
 
   /* ---------- init ---------- */
@@ -142,15 +142,6 @@ export default function Shopping({ trip, setTrip }) {
 
   const handleImageUpload = (file, catId, itemId) => {
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      alert("請選擇圖片檔案");
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      alert("圖片太大，請選擇 2MB 以下的照片");
-      return;
-    }
-
     const reader = new FileReader();
     reader.onload = () => {
       updateItem(catId, itemId, { image: reader.result });
@@ -159,7 +150,7 @@ export default function Shopping({ trip, setTrip }) {
   };
 
   return (
-    <div className="pt-4 pb-24 space-y-4">
+    <div className="pt-2 pb-24 space-y-4 px-3"> {/* 減少內縮，貼近邊緣 */}
       <PageHeader
         icon={ShoppingBag}
         title="購物清單"
@@ -182,14 +173,14 @@ export default function Shopping({ trip, setTrip }) {
               </div>
               <button
                 onClick={() => addItem(cat.id)}
-                className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center active:scale-90 transition-transform"
+                className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center active:scale-90 transition-transform shadow-sm"
               >
                 <Plus className="w-4 h-4 text-[#5A4636]" />
               </button>
             </div>
 
             <div
-              className="p-4 space-y-2 bg-[#FFF9F2] rounded-b-2xl border border-[#EDE3D8] border-t-0"
+              className="p-3 space-y-2 bg-[#FFF9F2] rounded-b-2xl border border-[#EDE3D8] border-t-0"
               style={dottedBg}
             >
               {[...cat.items]
@@ -200,15 +191,15 @@ export default function Shopping({ trip, setTrip }) {
                   return (
                     <React.Fragment key={item.id}>
                       <div
-                        className={`relative flex items-center h-[52px] px-4 rounded-xl transition ${
+                        className={`relative flex items-center h-[52px] px-3 rounded-xl transition ${
                           item.checked
                             ? "bg-[#F7F1EB] border border-[#E8DCCF]"
-                            : "bg-white border border-[#F0E3D5]"
+                            : "bg-white border border-[#F0E3D5] shadow-sm"
                         }`}
                       >
                         <input
                           type="checkbox"
-                          className="shrink-0 w-4 h-4 accent-[#D8C2AE]"
+                          className="shrink-0 w-4.5 h-4.5 accent-[#D8C2AE] cursor-pointer"
                           checked={item.checked}
                           onChange={(e) =>
                             updateItem(cat.id, item.id, { checked: e.target.checked })
@@ -216,8 +207,8 @@ export default function Shopping({ trip, setTrip }) {
                         />
 
                         <span
-                          className={`ml-3 flex-1 text-sm truncate transition ${
-                            item.checked ? "line-through text-[#A8937C]" : "text-[#5A4636]"
+                          className={`ml-3 flex-1 text-[13px] truncate transition ${
+                            item.checked ? "line-through text-[#A8937C]" : "text-[#5A4636] font-medium"
                           }`}
                         >
                           {item.name}
@@ -226,35 +217,40 @@ export default function Shopping({ trip, setTrip }) {
                         {typeof item.price === "number" &&
                           typeof item.quantity === "number" &&
                           item.quantity > 0 && (
-                            <div className={`mr-2 text-right leading-snug tabular-nums transition ${item.checked ? "opacity-60" : ""}`}>
-                              <div className="text-[12px] font-medium text-[#5A4636]">
+                            <div className={`mr-2 text-right leading-tight tabular-nums transition ${item.checked ? "opacity-60" : ""}`}>
+                              <div className="text-[11px] font-bold text-[#5A4636]">
                                 ¥ {(item.price * item.quantity).toLocaleString()}
                               </div>
                               <div className="text-[9px] text-[#A8937C]">
-                                ¥ {item.price.toLocaleString()} × {item.quantity}
+                                ¥{item.price.toLocaleString()} × {item.quantity}
                               </div>
                             </div>
                           )}
 
-                        {item.image && (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewImage(item.image)}
-                            className={`p-1.5 rounded-full hover:bg-[#F7F1EB] transition ${item.checked ? "opacity-50" : "opacity-100"}`}
-                          >
-                            <ImageIcon className="w-5 h-5 text-[#A8937C]" />
-                          </button>
-                        )}
-
-                        <button onClick={() => setMenuOpenId(menuOpenId === item.id ? null : item.id)}>
-                          <MoreHorizontal className="w-5 h-5 text-[#8C6A4F]" />
-                        </button>
-
-                        {/* menu */}
-                        {menuOpenId === item.id && (
-                          <div className="absolute right-2 top-[56px] z-50 w-40 bg-white border border-[#E5D5C5] rounded-lg shadow-lg py-1">
+                        <div className="flex items-center gap-1">
+                          {item.image && (
                             <button
-                              className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#F7F1EB] w-full"
+                              type="button"
+                              onClick={() => setPreviewImage(item.image)}
+                              className={`p-1.5 rounded-full hover:bg-[#F7F1EB] transition ${item.checked ? "opacity-50" : "opacity-100"}`}
+                            >
+                              <ImageIcon className="w-4.5 h-4.5 text-[#A8937C]" />
+                            </button>
+                          )}
+
+                          <button 
+                            className="p-1.5"
+                            onClick={() => setMenuOpenId(menuOpenId === item.id ? null : item.id)}
+                          >
+                            <MoreHorizontal className="w-5 h-5 text-[#8C6A4F]" />
+                          </button>
+                        </div>
+
+                        {/* 優化後的選單：向上彈出，避免被遮擋 */}
+                        {menuOpenId === item.id && (
+                          <div className="absolute right-0 bottom-[54px] z-[60] w-36 bg-white border border-[#E5D5C5] rounded-xl shadow-xl py-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                            <button
+                              className="flex items-center gap-2 px-3 py-2 text-[12px] hover:bg-[#F7F1EB] w-full text-[#5A4636]"
                               onClick={() => {
                                 setEditingItem({ catId: cat.id, item });
                                 setEditingField("name");
@@ -262,10 +258,10 @@ export default function Shopping({ trip, setTrip }) {
                                 setMenuOpenId(null);
                               }}
                             >
-                              <Pencil className="w-4 h-4" /> 編輯名稱
+                              <Pencil className="w-4 h-4 text-[#C6A087]" /> 編輯名稱
                             </button>
                             <button
-                              className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#F7F1EB] w-full"
+                              className="flex items-center gap-2 px-3 py-2 text-[12px] hover:bg-[#F7F1EB] w-full text-[#5A4636]"
                               onClick={() => {
                                 setEditingItem({ catId: cat.id, item });
                                 setEditingField("price");
@@ -273,10 +269,10 @@ export default function Shopping({ trip, setTrip }) {
                                 setMenuOpenId(null);
                               }}
                             >
-                              <CircleDollarSign className="w-4 h-4" /> 編輯單價
+                              <CircleDollarSign className="w-4 h-4 text-[#C6A087]" /> 編輯單價
                             </button>
                             <button
-                              className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#F7F1EB] w-full"
+                              className="flex items-center gap-2 px-3 py-2 text-[12px] hover:bg-[#F7F1EB] w-full text-[#5A4636]"
                               onClick={() => {
                                 setEditingItem({ catId: cat.id, item });
                                 setEditingField("quantity");
@@ -284,10 +280,10 @@ export default function Shopping({ trip, setTrip }) {
                                 setMenuOpenId(null);
                               }}
                             >
-                              <ShoppingBasket className="w-4 h-4" /> 編輯數量
+                              <ShoppingBasket className="w-4 h-4 text-[#C6A087]" /> 編輯數量
                             </button>
-                            <label className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#F7F1EB] cursor-pointer">
-                              <ImageIcon className="w-4 h-4" /> 編輯照片
+                            <label className="flex items-center gap-2 px-3 py-2 text-[12px] hover:bg-[#F7F1EB] w-full text-[#5A4636] cursor-pointer">
+                              <ImageIcon className="w-4 h-4 text-[#C6A087]" /> 編輯照片
                               <input
                                 type="file"
                                 accept="image/*"
@@ -299,18 +295,22 @@ export default function Shopping({ trip, setTrip }) {
                                 }}
                               />
                             </label>
+                            <div className="h-px bg-[#F0E3D5] my-1 mx-2" />
                             <button
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-[#F7F1EB] w-full"
-                              onClick={() => deleteItem(cat.id, item.id)}
+                              className="flex items-center gap-2 px-3 py-2 text-[12px] text-red-500 font-bold hover:bg-red-50 w-full"
+                              onClick={() => {
+                                deleteItem(cat.id, item.id);
+                                setMenuOpenId(null);
+                              }}
                             >
-                              <Trash2 className="w-4 h-4" /> 刪除
+                              <Trash2 className="w-4 h-4" /> 刪除項目
                             </button>
                           </div>
                         )}
                       </div>
 
                       {!item.checked && nextItem?.checked && (
-                        <div className="my-3 h-[3px] rounded-full bg-[#ADA69E]" />
+                        <div className="my-2 h-[2px] rounded-full bg-[#E5D5C5]" />
                       )}
                     </React.Fragment>
                   );
@@ -320,33 +320,28 @@ export default function Shopping({ trip, setTrip }) {
         );
       })}
 
-      {/* ===== 優化後的編輯浮層 ===== */}
+      {/* 編輯浮層 */}
       {editingItem && (
-        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-start justify-center p-4 pt-32 transition-all">
-          <div className="bg-[#FFF9F2] rounded-[2rem] border border-[#E5D5C5] shadow-2xl p-6 w-full max-w-[300px] animate-in zoom-in-95 duration-200">
-            <h3 className="text-[13px] font-bold mb-4 text-[#5A4636] uppercase tracking-widest text-center">
-              {editingField === "name"
-                ? "編輯項目名稱"
-                : editingField === "price"
-                ? "編輯單價 (JPY)"
-                : "編輯項目數量"}
+        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#FFF9F2] rounded-[2.5rem] border border-[#E5D5C5] shadow-2xl p-7 w-full max-w-[320px] animate-in zoom-in-95 duration-200">
+            <h3 className="text-[14px] font-bold mb-5 text-[#5A4636] uppercase tracking-widest text-center">
+              {editingField === "name" ? "編輯名稱" : editingField === "price" ? "編輯單價" : "編輯數量"}
             </h3>
 
-            <div className="flex items-center gap-2 bg-white rounded-xl border border-[#E5D5C5] px-3 py-2.5 focus-within:ring-1 focus-within:ring-[#C6A087] transition-all">
-              {editingField === "price" && <span className="text-[#8C6A4F] font-bold text-sm">¥</span>}
+            <div className="bg-white rounded-2xl border border-[#E5D5C5] px-4 py-3.5 shadow-inner">
               <input
                 autoFocus
+                type={editingField === "name" ? "text" : "number"}
                 value={draftValue}
                 onChange={(e) => setDraftValue(e.target.value)}
-                className="flex-1 text-[13px] bg-transparent outline-none text-[#5A4636] placeholder-[#A8937C]"
-                placeholder={editingField === "price" ? "0" : editingField === "quantity" ? "1" : "輸入名稱"}
+                className="w-full text-center text-[18px] font-bold bg-transparent outline-none text-[#5A4636]"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mt-6">
+            <div className="grid grid-cols-2 gap-3 mt-8">
               <button
                 onClick={() => setEditingItem(null)}
-                className="py-2.5 rounded-xl border border-[#E5D5C5] text-xs font-medium text-[#8C6A4F] bg-white active:scale-95 transition-all"
+                className="py-3 rounded-2xl border border-[#E5D5C5] text-[13px] font-bold text-[#8C6A4F] bg-white active:scale-95 transition-all"
               >
                 取消
               </button>
@@ -354,41 +349,32 @@ export default function Shopping({ trip, setTrip }) {
                 onClick={() => {
                   if (editingField === "price") {
                     const num = Number(draftValue);
-                    if (Number.isNaN(num) || num < 0) return;
                     updateItem(editingItem.catId, editingItem.item.id, { price: num });
                   } else if (editingField === "quantity") {
                     const qty = Number(draftValue);
-                    if (!Number.isInteger(qty) || qty <= 0) return;
                     updateItem(editingItem.catId, editingItem.item.id, { quantity: qty });
                   } else {
                     updateItem(editingItem.catId, editingItem.item.id, { name: draftValue });
                   }
                   setEditingItem(null);
                 }}
-                className="py-2.5 bg-[#C6A087] text-white rounded-xl flex items-center justify-center gap-1 text-xs font-bold shadow-md active:scale-95 transition-all"
+                className="py-3 bg-[#C6A087] text-white rounded-2xl flex items-center justify-center gap-1 text-[13px] font-bold shadow-md active:scale-95 transition-all"
               >
-                <Check className="w-4 h-4" /> 確定
+                確定
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* image preview */}
+      {/* 圖片預覽 */}
       {previewImage && (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setPreviewImage(null)}>
-          <div className="relative bg-white rounded-3xl p-2 shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <button
-              onClick={() => setPreviewImage(null)}
-              className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center border border-[#E5D5C5]"
-            >
-              <X className="w-5 h-5 text-[#8C6A4F]" />
-            </button>
-            <img
-              src={previewImage}
-              alt=""
-              className="max-w-[85vw] max-h-[75vh] rounded-2xl object-contain"
-            />
+        <div className="fixed inset-0 z-[150] bg-black/70 backdrop-blur-xl flex items-center justify-center p-4" onClick={() => setPreviewImage(null)}>
+          <div className="relative max-w-full" onClick={e => e.stopPropagation()}>
+             <button onClick={() => setPreviewImage(null)} className="absolute -top-12 right-0 text-white flex items-center gap-1 text-sm font-bold">
+               關閉 <X className="w-5 h-5" />
+             </button>
+             <img src={previewImage} alt="" className="max-w-[90vw] max-h-[80vh] rounded-3xl shadow-2xl border-4 border-white/20" />
           </div>
         </div>
       )}

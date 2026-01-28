@@ -62,51 +62,61 @@ export default function EditHeroModal({ dayData, onSave, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="w-full max-w-xl mx-4 bg-[#FFF9F2] rounded-3xl border border-[#E5D5C5] shadow-xl overflow-hidden">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-md p-3">
+      {/* 寬度優化：使用 w-full 並微調最大寬度，確保內容飽滿 */}
+      <div className="w-full max-w-lg bg-[#FFF9F2] rounded-[2.5rem] border border-[#E5D5C5] shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="px-6 pt-5 pb-3 flex items-start justify-between">
-          <div>
-            <p className="text-xs tracking-[0.25em] text-[#C6A087] mb-1 uppercase">編輯模式</p>
-            <h2 className="text-xl font-bold text-[#5A4636]">
+        <div className="px-6 pt-6 pb-4 flex items-start justify-between">
+          <div className="flex-1 min-w-0 pr-4">
+            <p className="text-[10px] tracking-[0.25em] text-[#C6A087] mb-1 uppercase font-bold">編輯模式</p>
+            <h2 className="text-xl font-bold text-[#5A4636] truncate">
               {form.heroTitle || "未命名標題"}
             </h2>
           </div>
-          <div className="flex gap-2">
-            <button onClick={onClose} className="w-8 h-8 rounded-full border border-[#E5D5C5] flex items-center justify-center bg-white hover:bg-[#F7F1EB] transition-colors">
+          <div className="flex gap-2 shrink-0">
+            <button onClick={onClose} className="w-9 h-9 rounded-full border border-[#E5D5C5] flex items-center justify-center bg-white hover:bg-[#F7F1EB] transition-all active:scale-90 shadow-sm">
               <X className="w-4 h-4 text-[#8C6A4F]" />
             </button>
             <button
               onClick={handleSave}
               disabled={loading}
-              className="w-9 h-9 rounded-full bg-[#C6A087] flex items-center justify-center shadow-sm disabled:opacity-50 hover:bg-[#B59178] transition-colors"
+              className="w-10 h-10 rounded-full bg-[#C6A087] flex items-center justify-center shadow-md disabled:opacity-50 hover:bg-[#B59178] transition-all active:scale-90"
             >
-              {loading ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Check className="w-4 h-4 text-white" />}
+              {loading ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <Check className="w-5 h-5 text-white" />}
             </button>
           </div>
         </div>
 
         {/* Body */}
-        <div className="px-6 pb-6 pt-1 space-y-5">
+        <div className="px-6 pb-8 space-y-5">
           <div>
-            <label className="block text-[10px] font-bold text-[#A8937C] mb-1 uppercase tracking-wider">標題</label>
-            <div className="flex items-center gap-3 border border-[#E5D5C5] rounded-xl px-3 py-2.5 bg-white focus-within:ring-1 focus-within:ring-[#C6A087]">
-              <Type className="w-4 h-4 text-[#C6A087]" />
+            <label className="block text-[10px] font-bold text-[#A8937C] mb-1.5 uppercase tracking-widest px-1">標題</label>
+            <div className="flex items-center gap-3 border border-[#E5D5C5] rounded-2xl px-4 py-3 bg-white focus-within:ring-1 focus-within:ring-[#C6A087] shadow-sm">
+              <Type className="w-4 h-4 text-[#C6A087] shrink-0" />
               <input type="text" value={form.heroTitle} onChange={(e) => update({ heroTitle: e.target.value })} placeholder="例如：成田國際機場" className="flex-1 text-sm outline-none bg-transparent" />
             </div>
           </div>
+
           <div>
-            <label className="block text-[10px] font-bold text-[#A8937C] mb-1 uppercase tracking-wider">地點 (輸入地名自動抓取天氣)</label>
-            <div className="flex items-center gap-3 border border-[#E5D5C5] rounded-xl px-3 py-2.5 bg-white focus-within:ring-1 focus-within:ring-[#C6A087]">
-              <MapPin className="w-4 h-4 text-[#C6A087]" />
+            <label className="block text-[10px] font-bold text-[#A8937C] mb-1.5 uppercase tracking-widest px-1">地點 (地名自動抓取天氣)</label>
+            <div className="flex items-center gap-3 border border-[#E5D5C5] rounded-2xl px-4 py-3 bg-white focus-within:ring-1 focus-within:ring-[#C6A087] shadow-sm">
+              <MapPin className="w-4 h-4 text-[#C6A087] shrink-0" />
               <input type="text" value={form.heroLocation} onChange={(e) => update({ heroLocation: e.target.value })} placeholder="例如：輕井澤" className="flex-1 text-sm outline-none bg-transparent" />
             </div>
           </div>
+
           <div>
-            <label className="block text-[10px] font-bold text-[#A8937C] mb-1 uppercase tracking-wider">封面圖片網址</label>
-            <div className="flex items-center gap-3 border border-[#E5D5C5] rounded-xl px-3 py-2.5 bg-white focus-within:ring-1 focus-within:ring-[#C6A087]">
-              <ImageIcon className="w-4 h-4 text-[#C6A087]" />
-              <input type="url" value={form.heroImage} onChange={(e) => update({ heroImage: e.target.value })} placeholder="貼上圖片網址" className="flex-1 text-sm outline-none bg-transparent" />
+            <label className="block text-[10px] font-bold text-[#A8937C] mb-1.5 uppercase tracking-widest px-1">封面圖片網址</label>
+            {/* 關鍵：加入 min-w-0 解決網址溢出 */}
+            <div className="flex items-center gap-3 border border-[#E5D5C5] rounded-2xl px-4 py-3 bg-white focus-within:ring-1 focus-within:ring-[#C6A087] shadow-sm min-w-0">
+              <ImageIcon className="w-4 h-4 text-[#C6A087] shrink-0" />
+              <input 
+                type="url" 
+                value={form.heroImage} 
+                onChange={(e) => update({ heroImage: e.target.value })} 
+                placeholder="貼上圖片網址" 
+                className="flex-1 text-sm outline-none bg-transparent min-w-0 overflow-hidden" 
+              />
             </div>
           </div>
         </div>

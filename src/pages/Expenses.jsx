@@ -24,25 +24,29 @@ const CATEGORY_MAP = {
     key: "TRANSPORT",
     label: "交通",
     icon: Train,
-    color: "#6B8EAE",
+    pillBg: "#E4F1E3", // 淺綠
+    pillText: "#4E6B48", // 深綠
   },
   FOOD: {
     key: "FOOD",
     label: "餐飲",
     icon: UtensilsCrossed,
-    color: "#C58B4B",
+    pillBg: "#FBE7DF", // 淺橙
+    pillText: "#8C4A2F", // 深褐
   },
   SIGHT: {
     key: "SIGHT",
     label: "景點",
     icon: Landmark,
-    color: "#8A7CC2",
+    pillBg: "#E7EEF9", // 淺藍
+    pillText: "#4A607F", // 深藍
   },
   SHOP: {
     key: "SHOP",
     label: "購物",
     icon: ShoppingBag,
-    color: "#5F8F6B",
+    pillBg: "#F3E3F0", // 淺紫
+    pillText: "#7A4D6E", // 深紫
   },
 };
 
@@ -295,21 +299,14 @@ export default function Expenses({ trip, setTrip }) {
 
         <div className="md:col-span-2 grid grid-cols-2 gap-3">
           {CATEGORY_ORDER.map((c) => {
-            const Icon = CATEGORY_MAP[c].icon;
-            const style = {
-              TRANSPORT: { bg: "#E4F1E3", color: "#4E6B48" },
-              FOOD: { bg: "#FBE7DF", color: "#8C4A2F" },
-              SIGHT: { bg: "#E7EEF9", color: "#4A607F" },
-              SHOP: { bg: "#F3E3F0", color: "#7A4D6E" },
-            }[c];
-
+            const cat = CATEGORY_MAP[c];
             return (
               <div key={c} className="bg-white rounded-2xl border border-[#E5D5C5] px-4 py-3 flex items-center gap-3 shadow-sm">
-                <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: style.bg }}>
-                  <Icon className="w-4 h-4" style={{ color: style.color }} />
+                <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: cat.pillBg }}>
+                  <cat.icon className="w-4 h-4" style={{ color: cat.pillText }} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs text-[#8C6A4F]/70 truncate">{CATEGORY_MAP[c].label}</p>
+                  <p className="text-xs text-[#8C6A4F]/70 truncate">{cat.label}</p>
                   <p className="text-sm font-semibold truncate">{formatYen(categoryTotals[c])}</p>
                 </div>
               </div>
@@ -358,6 +355,7 @@ export default function Expenses({ trip, setTrip }) {
             </div>
             {group.items.map((e) => {
               const isCard = e.payMethod === "CARD";
+              const cat = CATEGORY_MAP[e.category];
               return (
                 <div key={e.id} className="bg-white rounded-2xl border border-[#F0E3D5] px-4 py-3 flex items-center justify-between shadow-sm">
                   <div className="flex items-start gap-3 min-w-0">
@@ -367,7 +365,7 @@ export default function Expenses({ trip, setTrip }) {
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-[#5A4636] truncate">{e.title}</p>
                       <div className="flex flex-wrap gap-1 text-[11px] text-[#8C6A4F] mt-1">
-                        <span className="bg-[#F5EEE6] px-2 py-0.5 rounded-full">{CATEGORY_MAP[e.category].label}</span>
+                        <span className="bg-[#F5EEE6] px-2 py-0.5 rounded-full">{cat.label}</span>
                         {e.mode === "ADVANCE" && <span className="bg-[#F5EEE6] px-2 py-0.5 rounded-full">代墊</span>}
                         <span className="bg-[#F5EEE6] px-2 py-0.5 rounded-full">{e.payMethod === "CARD" ? "刷卡" : "現金"}</span>
                       </div>
@@ -391,7 +389,7 @@ export default function Expenses({ trip, setTrip }) {
         ))}
       </div>
 
-      {/* ----------------- 新增 / 編輯 Modal (優化外框與佈局) ----------------- */}
+      {/* ----------------- 新增 / 編輯 Modal ----------------- */}
       {expenseModalOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-12">
           <div className="w-full max-w-lg bg-[#FFF9F2] rounded-[32px] border border-[#E5D5C5] shadow-xl overflow-hidden flex flex-col">
@@ -420,11 +418,20 @@ export default function Expenses({ trip, setTrip }) {
                 <label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">類別</label>
                 <div className="grid grid-cols-4 gap-1.5">
                   {CATEGORY_ORDER.map((c) => {
-                    const Icon = CATEGORY_MAP[c].icon;
+                    const cat = CATEGORY_MAP[c];
                     const active = form.category === c;
                     return (
-                      <button key={c} onClick={() => updateForm({ category: c })} className={`py-2 rounded-xl text-[11px] flex flex-col items-center gap-1 border transition-all ${active ? "bg-[#C6A087] border-[#C6A087] text-white shadow-sm" : "bg-white border-[#E5D5C5] text-[#5A4636]"}`}>
-                        <Icon className="w-3.5 h-3.5" />{CATEGORY_MAP[c].label}
+                      <button 
+                        key={c} 
+                        onClick={() => updateForm({ category: c })} 
+                        style={{ 
+                          backgroundColor: active ? cat.pillBg : 'white', 
+                          color: active ? cat.pillText : '#5A4636',
+                          borderColor: active ? cat.pillText : '#E5D5C5'
+                        }}
+                        className={`py-2 rounded-xl text-[11px] flex flex-col items-center gap-1 border transition-all ${active ? "shadow-sm" : ""}`}
+                      >
+                        <cat.icon className="w-3.5 h-3.5" />{cat.label}
                       </button>
                     );
                   })}
@@ -494,7 +501,7 @@ export default function Expenses({ trip, setTrip }) {
         </div>
       )}
 
-      {/* ----------------- 成員管理 Modal (修正刪除按鈕位置與外框) ----------------- */}
+      {/* ----------------- 成員管理 Modal ----------------- */}
       {memberModalOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-12">
           <div className="w-full max-w-lg bg-[#FFF9F2] rounded-[32px] border border-[#E5D5C5] shadow-xl overflow-hidden flex flex-col">
