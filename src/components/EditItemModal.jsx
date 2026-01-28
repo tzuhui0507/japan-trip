@@ -1,6 +1,6 @@
 // src/components/EditItemModal.jsx
 import React, { useMemo, useState } from "react";
-import { X, Check, UtensilsCrossed, Landmark, Train, BedDouble, Ticket, Clock, Phone, Link, Layers, MapPin, StickyNote } from "lucide-react";
+import { X, Check, UtensilsCrossed, Landmark, Train, BedDouble, Ticket, Clock, Phone, Link, Layers, MapPin, StickyNote, Pin, Bookmark } from "lucide-react";
 
 const TYPE_OPTIONS = {
   ATTRACTION: { key: "ATTRACTION", label: "景點", icon: Landmark, pillBg: "#E7EEF9", pillText: "#4A607F" },
@@ -106,11 +106,11 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-md p-2 sm:p-4">
-      <div className="w-[98%] sm:max-w-2xl bg-[#FFF9F2] rounded-[2rem] border border-[#E5D5C5] shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="w-[98%] sm:max-w-2xl bg-[#FFF9F2] rounded-[2rem] border border-[#E5D5C5] shadow-2xl overflow-hidden flex flex-col max-h-[88vh]">
         {/* Header */}
         <div className="px-4 sm:px-6 py-4 flex items-center justify-between border-b border-[#E5D5C5]/50 bg-white/70 backdrop-blur-sm sticky top-0 z-20">
           <div className="flex-1 min-w-0 pr-2">
-            <p className="text-[10px] tracking-[0.2em] text-[#C6A087] uppercase font-bold mb-0.5">行程細節編輯</p>
+            <p className="text-[10px] tracking-[0.2em] text-[#C6A087] uppercase font-bold mb-0.5">行程編輯</p>
             <h2 className="text-base font-bold text-[#5A4636] truncate">{formA.title || "新的行程"}</h2>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
@@ -120,24 +120,28 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
         </div>
 
         {/* Body */}
-        <div className="px-3 sm:px-6 py-6 space-y-8 overflow-y-auto scrollbar-none pb-12 flex-1">
+        <div className="px-3 sm:px-6 py-6 space-y-8 overflow-y-auto scrollbar-none pb-20 flex-1">
           <div className="flex flex-col gap-8">
             {/* 時間區塊 */}
             <div className="w-full">
-              <label className="block text-[11px] font-bold text-[#8C6A4F] mb-2 uppercase tracking-widest px-1">抵達時間</label>
-              <div className="relative">
+              <label className="flex items-center gap-1.5 text-[11px] font-bold text-[#8C6A4F] mb-2 uppercase tracking-widest px-1">
+                <Clock className="w-3.5 h-3.5" /> 抵達時間
+              </label>
+              <div className="flex items-center justify-center border border-[#E5D5C5] rounded-xl bg-white shadow-sm focus-within:ring-1 focus-within:ring-[#C6A087] transition-all overflow-hidden h-14">
                 <input 
                   type="time" 
                   value={baseForm.time} 
                   onChange={(e) => setBaseForm(prev => ({ ...prev, time: e.target.value }))} 
-                  className="w-full border border-[#E5D5C5] rounded-xl px-4 py-3.5 text-[16px] outline-none bg-white shadow-sm focus:ring-1 focus:ring-[#C6A087] transition-all" 
+                  className="w-full h-full text-center text-[16px] outline-none bg-transparent appearance-none" 
                 />
               </div>
             </div>
 
-            {/* 類別區塊 - 解決電腦版擁擠問題 */}
+            {/* 類別區塊 */}
             <div className="w-full">
-              <label className="block text-[11px] font-bold text-[#8C6A4F] mb-3 uppercase tracking-widest px-1">類別選擇</label>
+              <label className="flex items-center gap-1.5 text-[11px] font-bold text-[#8C6A4F] mb-3 uppercase tracking-widest px-1">
+                <Layers className="w-3.5 h-3.5" /> 類別選擇
+              </label>
               <div className="flex flex-wrap sm:flex-nowrap gap-2 sm:gap-3">
                 {Object.values(TYPE_OPTIONS).map((t) => {
                   const active = baseForm.type === t.key;
@@ -164,15 +168,13 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
 
           <div className="w-full h-px bg-[#E5D5C5]/30" />
 
-          {/* 雙方案欄位群 */}
-          {renderField("地點名稱", "title", MapPin)}
-          {renderField("細節說明", "subtitle", Layers)}
+          {renderField("地點名稱", "title", Pin)}
+          {renderField("副標題", "subtitle", Bookmark)}
           {renderField("詳細地址", "address", MapPin)}
           {renderField("營業時間", "openingHours", Clock)}
           {renderField("聯絡電話", "phone", Phone)}
           {renderField("外部連結", "link", Link)}
           
-          {/* 票券區塊 */}
           <div className="bg-[#FDF9F5] border border-[#E5D5C5]/50 rounded-2xl p-4 space-y-4 shadow-sm">
             <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#8C6A4F] uppercase tracking-widest"><Ticket className="w-4 h-4" /> 票券方案綁定</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -214,7 +216,6 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
             </div>
           </div>
 
-          {/* 備註欄位 */}
           <div className="space-y-2">
             <label className="flex items-center gap-1.5 text-[11px] font-bold text-[#8C6A4F] uppercase px-1 tracking-widest">
               <StickyNote className="w-3.5 h-3.5" /> 補充備註
