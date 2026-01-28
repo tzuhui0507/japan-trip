@@ -208,12 +208,12 @@ export default function Plan({ trip, setTrip, dayIndex }) {
 
   return (
     <div className="pt-4 pb-24">
-      {/* 封面區域 - 恢復寬闊度 */}
-      <div className="mb-6 relative flex gap-2 items-stretch pr-3" style={{ height: 260 }}>
-        <div className="w-12 flex flex-col items-center h-full shrink-0">
+      {/* 封面區域 - 恢復寬闊度並減少左側距離 */}
+      <div className="mb-6 relative flex gap-1 items-stretch pr-2" style={{ height: 260 }}>
+        <div className="w-10 flex flex-col items-center h-full shrink-0">
           <span className="w-2.5 h-2.5 rounded-full bg-[#C6A087] mb-2 shrink-0" />
           <span className="w-px flex-1 bg-[#D8CFC4]" />
-          <div className="mt-3 text-[#5A4636] font-semibold tracking-[0.4em]" style={{ writingMode: "vertical-rl", fontSize: "18px", lineHeight: "1.4" }}>
+          <div className="mt-3 text-[#5A4636] font-semibold tracking-[0.3em]" style={{ writingMode: "vertical-rl", fontSize: "18px", lineHeight: "1.2" }}>
             第{numberToChinese(activeDayIndex + 1)}天
           </div>
         </div>
@@ -240,8 +240,8 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       </div>
 
-      {/* 天氣預報 - 貼近內容 */}
-      <section className="mb-8 pl-3 pr-3">
+      {/* 天氣預報 - 貼近螢幕邊緣 */}
+      <section className="mb-8 pl-2 pr-2">
         <div className="flex items-center justify-between mb-3 px-1">
           <div>
             <p className="text-sm font-bold text-[#5A4636]">{currentDay?.weatherLocation || "未設定地點"}</p>
@@ -249,24 +249,24 @@ export default function Plan({ trip, setTrip, dayIndex }) {
           </div>
           <span className="text-[10px] text-[#C6A087]/70 border border-[#E5D5C5] rounded-full px-2 py-0.5 bg-white/50">Open-Meteo</span>
         </div>
-        <div className="bg-[#F7F1EB]/80 rounded-[20px] px-3 py-4">
-          <div className="flex gap-5 overflow-x-auto scrollbar-none">
+        <div className="bg-[#F7F1EB]/80 rounded-[20px] px-2 py-4">
+          <div className="flex gap-4 overflow-x-auto scrollbar-none">
             {weatherHourly.length > 0 ? weatherHourly.slice(0, 24).map((h) => (
-              <div key={h.timeLabel} className="flex flex-col items-center min-w-[36px] shrink-0">
+              <div key={h.timeLabel} className="flex flex-col items-center min-w-[34px] shrink-0">
                 <span className="text-[10px] text-[#8C6A4F]/80">{h.timeLabel}</span>
                 <div className="mt-1.5 text-[#C6A087]">{weatherIcon(h.code)}</div>
                 <span className="mt-1.5 text-xs text-[#5A4636] font-bold">{h.temp}°</span>
               </div>
-            )) : <p className="text-xs text-[#8C6A4F] w-full text-center">載入預報中...</p>}
+            )) : <p className="text-xs text-[#8C6A4F] w-full text-center">載入中...</p>}
           </div>
         </div>
       </section>
 
-      {/* 行程列表 - 調整左側時間軸距離與卡片寬度 */}
+      {/* 行程列表 - 極小化左右間距 */}
       <DragDropContext onDragEnd={isViewer ? () => {} : onDragEnd}>
         <Droppable droppableId="day-items">
           {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps} className="relative border-l border-[#E5D5C5] mt-2 pb-10 ml-6 mr-1">
+            <div ref={provided.innerRef} {...provided.droppableProps} className="relative border-l border-[#E5D5C5] mt-2 pb-10 ml-5 mr-0">
               {currentItems.map((item, index) => {
                 const meta = TYPE_META[item.type] || TYPE_META.ATTRACTION;
                 const TypeIcon = meta.icon;
@@ -279,38 +279,35 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                 return (
                   <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={isViewer}>
                     {(drag) => (
-                      <div ref={drag.innerRef} {...drag.draggableProps} {...drag.dragHandleProps} className="relative pl-5 pr-2 mb-5">
+                      <div ref={drag.innerRef} {...drag.draggableProps} {...drag.dragHandleProps} className="relative pl-4 pr-2 mb-5">
                         {/* 固定圓點 */}
                         <div className="absolute -left-[6.5px] top-6 w-3 h-3 bg-[#F7F1EB] border-2 border-[#C6A087] rounded-full z-10" />
                         
-                        <div className="relative">
-                          {/* 側滑底層按鈕 */}
-                          <div className="absolute top-0 bottom-0 right-0 flex gap-2 items-center px-4 z-0">
+                        <div className="relative overflow-visible">
+                          <div className="absolute top-0 bottom-0 right-0 flex gap-2 items-center px-3 z-0">
                             {!isViewer && (
                               <>
-                                <button onClick={(e) => { e.stopPropagation(); setEditingItem(item); }} className="w-9 h-9 rounded-full bg-[#F7C85C] flex items-center justify-center shadow-sm active:scale-90 transition-transform"><Pencil className="w-4 h-4 text-[#5A4636]" /></button>
-                                <button onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }} className="w-9 h-9 rounded-full bg-[#E35B5B] flex items-center justify-center shadow-sm active:scale-90 transition-transform"><Trash2 className="w-4 h-4 text-white" /></button>
+                                <button onClick={(e) => { e.stopPropagation(); setEditingItem(item); }} className="w-8 h-8 rounded-full bg-[#F7C85C] flex items-center justify-center shadow-sm active:scale-90 transition-transform"><Pencil className="w-4 h-4 text-[#5A4636]" /></button>
+                                <button onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }} className="w-8 h-8 rounded-full bg-[#E35B5B] flex items-center justify-center shadow-sm active:scale-90 transition-transform"><Trash2 className="w-4 h-4 text-white" /></button>
                               </>
                             )}
                           </div>
 
-                          {/* 堆疊陰影層 */}
                           {branch.hasBranch && (
                             <div 
-                              style={{ transform: isOpen ? "translateX(-110px)" : "translateX(0)", transition: "transform 0.3s ease" }}
+                              style={{ transform: isOpen ? "translateX(-100px)" : "translateX(0)", transition: "transform 0.3s ease" }}
                               className="absolute inset-0 bg-[#E5D5C5]/30 rounded-xl translate-x-1.5 translate-y-1.5 -z-10 border border-[#D8CFC4]/50" 
                             />
                           )}
 
-                          {/* 行程主卡片 */}
                           <div
                             onClick={() => !isViewer && setSlideOpenId(isOpen ? null : item.id)}
                             style={{ 
-                              transform: isOpen ? "translateX(-110px)" : "translateX(0)", 
+                              transform: isOpen ? "translateX(-100px)" : "translateX(0)", 
                               transition: "transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)",
-                              borderLeft: branch.hasBranch ? "4px solid #C6A087" : "1.2px solid #E5D5C5" 
+                              borderLeft: branch.hasBranch ? "4px solid #C6A087" : "1px solid #E5D5C5" 
                             }}
-                            className="bg-white border border-[#E5D5C5] rounded-xl px-4 py-4 shadow-sm relative z-10 overflow-hidden"
+                            className="bg-white border border-[#E5D5C5] rounded-xl px-3 py-4 shadow-sm relative z-10 overflow-hidden"
                           >
                             {branch.hasBranch && (
                               <div className="flex items-center justify-between mb-3 pb-2 border-b border-dashed border-[#F0E3D5]">
@@ -320,7 +317,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                     e.stopPropagation();
                                     setBranchIndexMap(prev => ({ ...prev, [item.id]: prev[item.id] === 1 ? 0 : 1 }));
                                   }}
-                                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F7F1EB] hover:bg-[#E5D5C5] active:scale-95 transition-all shadow-sm"
+                                  className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-[#F7F1EB] hover:bg-[#E5D5C5] active:scale-95 transition-all shadow-sm"
                                 >
                                   <ArrowLeftRight className="w-3 h-3 text-[#8C6A4F]" />
                                   <span className="text-[10px] text-[#8C6A4F] font-bold">
@@ -331,7 +328,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                             )}
 
                             <div className="flex items-center justify-between mb-2">
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm" style={{ backgroundColor: meta.pillBg, color: meta.pillText }}>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm" style={{ backgroundColor: meta.pillBg, color: meta.pillText }}>
                                 <TypeIcon className="w-3 h-3" /> {meta.label}
                               </span>
                               <span className="text-[11px] text-[#8C6A4F] font-bold tracking-tight">{item.time}</span>
@@ -341,7 +338,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                             {branch.subtitle && <p className="text-[11px] text-[#8C6A4F]/70 mt-0.5">{branch.subtitle}</p>}
 
                             {branch.ticketIds?.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5 mt-3">
+                              <div className="flex flex-wrap gap-1 mt-3">
                                 {branch.ticketIds.map((ticketId) => {
                                   const ticket = trip.tickets?.find((t) => t.id === ticketId);
                                   if (!ticket) return null;
@@ -355,7 +352,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                               </div>
                             )}
 
-                            <div className="space-y-1.5 mt-3">
+                            <div className="space-y-1 mt-3">
                               {branch.address && (
                                 <div onClick={(e) => handleNavigation(e, branch.address, branch.title)} className="flex items-start gap-1.5 text-[11px] text-[#5A4636] cursor-pointer hover:opacity-70 transition-opacity">
                                   <MapPin className="w-3.5 h-3.5 text-[#C6A087] shrink-0 mt-0.5" />
@@ -420,8 +417,8 @@ export default function Plan({ trip, setTrip, dayIndex }) {
       </DragDropContext>
 
       {!isViewer && (
-        <div className="flex justify-center mt-4">
-          <button onClick={addItem} className="px-5 py-2.5 rounded-full border border-dashed border-[#C6A087] bg-white text-xs text-[#8C6A4F] font-bold hover:bg-[#F7F1EB] shadow-sm active:scale-95 transition-all">
+        <div className="flex justify-center mt-4 px-2">
+          <button onClick={addItem} className="w-full max-w-xs py-2.5 rounded-full border border-dashed border-[#C6A087] bg-white text-xs text-[#8C6A4F] font-bold hover:bg-[#F7F1EB] shadow-sm active:scale-95 transition-all">
             ＋ 新增行程
           </button>
         </div>
