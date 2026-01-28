@@ -206,11 +206,12 @@ export default function Plan({ trip, setTrip, dayIndex }) {
     });
   };
 
+  if (!currentDay) return <div className="pt-24 text-center text-sm text-[#8C6A4F]">行程資料載入中…</div>;
+
   return (
     <div className="pt-4 pb-24">
-      {/* 封面區域 - 確保全寬度 */}
       <div className="mb-6 relative flex gap-4 items-stretch px-4" style={{ height: 240 }}>
-        <div className="w-12 flex flex-col items-center h-full">
+        <div className="w-12 flex flex-col items-center h-full shrink-0">
           <span className="w-2 h-2 rounded-full bg-[#C6A087] mb-2 shrink-0" />
           <span className="w-px flex-1 bg-[#D8CFC4]" />
           <div className="mt-3 text-[#5A4636] font-semibold tracking-[0.4em]" style={{ writingMode: "vertical-rl", fontSize: "20px", lineHeight: "1.8" }}>
@@ -240,7 +241,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       </div>
 
-      {/* 天氣預報 - 保持 px-4 內縮與大圖對齊 */}
       <section className="mb-6 px-4">
         <div className="flex items-center justify-between mb-2 px-1">
           <div>
@@ -262,53 +262,60 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       </section>
 
-      {/* 行程列表 */}
       <DragDropContext onDragEnd={isViewer ? () => {} : onDragEnd}>
         <Droppable droppableId="day-items">
           {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps} className="relative border-l border-[#E5D5C5] mt-2 space-y-4 pb-10 ml-6 mr-4">
+            <div ref={provided.innerRef} {...provided.droppableProps} className="relative border-l border-[#E5D5C5] mt-2 pb-10 ml-6">
               {currentItems.map((item, index) => {
                 const meta = TYPE_META[item.type] || TYPE_META.ATTRACTION;
                 const TypeIcon = meta.icon;
                 const isOpen = slideOpenId === item.id;
                 const branch = getBranchData(item);
                 const linkData = getLinkDisplay(branch.link);
+
+                // 修正交通卡連動：獲取下一個行程的 currentIndex
                 const nextItem = currentItems[index + 1];
-                const nextBranchIndex = nextItem ? (getBranchData(nextItem).currentIndex) : 0;
+                const nextBranchIndex = nextItem ? (branchIndexMap[nextItem.id] || 0) : 0;
 
                 return (
                   <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={isViewer}>
                     {(drag) => (
-                      <div ref={drag.innerRef} {...drag.draggableProps} {...drag.dragHandleProps} className="relative pl-6">
+                      <div ref={drag.innerRef} {...drag.draggableProps} {...drag.dragHandleProps} className="relative pl-6 pr-4">
+                        {/* 固定圓點：放在位移容器之外 */}
                         <div className="absolute -left-[7.5px] top-5 w-3 h-3 bg-[#F7F1EB] border-2 border-[#C6A087] rounded-full z-10" />
-                        <div className="relative">
-                          <div className={`absolute top-1/2 -translate-y-1/2 right-2 flex gap-2 transition-all ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+                        
+                        <div className="relative overflow-hidden rounded-xl">
+                          {/* 側滑底層按鈕 */}
+                          <div className="absolute top-0 bottom-0 right-0 flex gap-2 items-center px-4 z-0">
                             {!isViewer && (
                               <>
-                                <button onClick={() => setEditingItem(item)} className="w-8 h-8 rounded-full bg-[#F7C85C] flex items-center justify-center shadow-sm"><Pencil className="w-4 h-4 text-[#5A4636]" /></button>
-                                <button onClick={() => deleteItem(item.id)} className="w-8 h-8 rounded-full bg-[#E35B5B] flex items-center justify-center shadow-sm"><Trash2 className="w-4 h-4 text-white" /></button>
+                                <button onClick={(e) => { e.stopPropagation(); setEditingItem(item); }} className="w-9 h-9 rounded-full bg-[#F7C85C] flex items-center justify-center shadow-md"><Pencil className="w-5 h-5 text-[#5A4636]" /></button>
+                                <button onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }} className="w-9 h-9 rounded-full bg-[#E35B5B] flex items-center justify-center shadow-md"><Trash2 className="w-5 h-5 text-white" /></button>
                               </>
                             )}
                           </div>
 
+                          {/* 堆疊陰影層：隨卡片一起位移 */}
                           {branch.hasBranch && (
-                            <div className="absolute inset-0 bg-[#E5D5C5]/40 rounded-xl translate-x-2 translate-y-2 -z-10 border border-[#D8CFC4] shadow-sm" />
+                            <div 
+                              style={{ transform: isOpen ? "translateX(-110px)" : "translateX(0)", transition: "transform 0.3s ease" }}
+                              className="absolute inset-0 bg-[#E5D5C5]/40 rounded-xl translate-x-2 translate-y-2 -z-10 border border-[#D8CFC4] shadow-sm" 
+                            />
                           )}
 
+                          {/* 行程主卡片：z-10 覆蓋在按鈕上方 */}
                           <div
                             onClick={() => !isViewer && setSlideOpenId(isOpen ? null : item.id)}
                             style={{ 
-                              transform: isOpen ? "translateX(-90px)" : "translateX(0)", 
-                              transition: "transform 0.3s ease",
+                              transform: isOpen ? "translateX(-110px)" : "translateX(0)", 
+                              transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                               borderLeft: branch.hasBranch ? "4px solid #C6A087" : "1px solid #E5D5C5" 
                             }}
-                            className="bg-white border border-[#E5D5C5] rounded-xl px-4 py-3 shadow-sm relative overflow-hidden"
+                            className="bg-white border border-[#E5D5C5] rounded-xl px-4 py-3 shadow-sm relative z-10 overflow-hidden"
                           >
                             {branch.hasBranch && (
                               <div className="flex items-center justify-between mb-2 pb-2 border-b border-dashed border-[#F0E3D5]">
-                                <div className="text-[10px] font-bold text-[#8C6A4F] flex items-center gap-1">
-                                  ✦ 方案 {branch.currentIndex === 0 ? "1" : "2"}
-                                </div>
+                                <div className="text-[10px] font-bold text-[#C6A087]">✦ 方案 {branch.currentIndex === 0 ? "1" : "2"}</div>
                                 <button 
                                   onClick={(e) => {
                                     e.stopPropagation();
