@@ -94,61 +94,64 @@ export default function Info({ trip, setTrip }) {
 
       {/* 航班資訊 */}
       <section>
-        <div className="flex items-center justify-between mb-3 px-4">
+        <div className="flex items-center justify-between mb-4 px-4">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-[#F7F1EB] flex items-center justify-center"><Plane className="w-3.5 h-3.5 text-[#5A4636]" /></div>
-            <h2 className="text-sm font-bold text-[#5A4636]">航班資訊</h2>
+            <div className="w-8 h-8 rounded-full bg-[#F7F1EB] flex items-center justify-center"><Plane className="w-4 h-4 text-[#8C6A4F]" /></div>
+            <h2 className="text-base font-semibold text-[#5A4636]">航班資訊</h2>
           </div>
-          {!isReadOnly && <button onClick={() => openEditFlight(null)} className="px-2.5 py-1 rounded-full text-[10px] bg-white border border-[#C6A087] text-[#5A4636] font-black shadow-sm">＋ 新增航班</button>}
+          {!isReadOnly && <button onClick={() => openEditFlight(null)} className="px-3 py-1.5 rounded-full text-xs bg-white border border-[#C6A087] text-[#5A4636] font-bold shadow-sm">＋ 新增航班</button>}
         </div>
         
-        <div className="space-y-5 px-4">
+        <div className="space-y-6 px-4">
           {flights.map((f) => (
             <div key={f.id} className="relative overflow-visible">
               {!isReadOnly && (
-                <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-2 z-0">
-                  <button onClick={(e) => { e.stopPropagation(); openEditFlight(f); }} className="w-8 h-8 rounded-full bg-[#F7C85C] flex items-center justify-center shadow active:scale-90 transition-transform"><Pencil className="w-4 h-4 text-[#5A4636]" /></button>
-                  <button onClick={(e) => { e.stopPropagation(); updateInfo({ flights: flights.filter(x => x.id !== f.id) }); }} className="w-8 h-8 rounded-full bg-[#E35B5B] flex items-center justify-center shadow active:scale-90 transition-transform"><Trash2 className="w-4 h-4 text-white" /></button>
+                <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-3 z-0">
+                  <button onClick={(e) => { e.stopPropagation(); openEditFlight(f); }} className="w-10 h-10 rounded-full bg-[#F7C85C] flex items-center justify-center shadow transition-transform active:scale-90"><Pencil className="w-5 h-5 text-[#5A4636]" /></button>
+                  <button onClick={(e) => { e.stopPropagation(); updateInfo({ flights: flights.filter(x => x.id !== f.id) }); }} className="w-10 h-10 rounded-full bg-[#E35B5B] flex items-center justify-center shadow transition-transform active:scale-90"><Trash2 className="w-5 h-5 text-white" /></button>
                 </div>
               )}
               
               <div 
                 onClick={() => !isReadOnly && setOpenFlightId(openFlightId === f.id ? null : f.id)} 
-                style={{ transform: !isReadOnly && openFlightId === f.id ? "translateX(-100px)" : "translateX(0)", transition: "transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)" }} 
-                className="bg-white rounded-[1.8rem] shadow-sm flex min-h-[150px] relative z-10 overflow-hidden"
+                style={{ 
+                  transform: !isReadOnly && openFlightId === f.id ? "translateX(-115px)" : "translateX(0)", 
+                  transition: "transform 0.4s cubic-bezier(0.1, 0.7, 0.1, 1.1)",
+                  WebkitMaskImage: "radial-gradient(circle at 71% 0px, transparent 21.5px, black 22px), radial-gradient(circle at 71% 100%, transparent 21.5px, black 22px)",
+                  maskImage: "radial-gradient(circle at 71% 0px, transparent 21.5px, black 22px), radial-gradient(circle at 71% 100%, transparent 21.5px, black 22px)"
+                }} 
+                className="bg-white rounded-[2.2rem] shadow-md border border-[#E8DCCF] flex min-h-[165px] relative z-10 overflow-hidden"
               >
-                {/* 實體大半圓：上下對齊虛線位置 */}
-                <div className="absolute -top-4 left-[71%] -translate-x-1/2 w-9 h-9 bg-[#FDF9F5] rounded-full z-20" />
-                <div className="absolute -bottom-4 left-[71%] -translate-x-1/2 w-9 h-9 bg-[#FDF9F5] rounded-full z-20" />
-
-                {/* 票券左側 */}
-                <div className="flex-[7.1] p-5 pr-8 flex flex-col justify-between">
+                {/* 票券左側內容 */}
+                <div className="flex-[7.1] p-6 pr-5 flex flex-col justify-between">
                   <div className="flex items-center justify-between gap-1 mb-2">
                     <div className="flex-1 text-left min-w-0">
                       <p className="text-[10px] font-bold text-[#5A4636] mb-0.5 opacity-60">出發地</p>
-                      <h4 className="text-2xl font-black text-[#5A4636] tracking-tighter leading-none">{f.from || "---"}</h4>
+                      <h4 className="text-2xl font-black text-[#5A4636] tracking-tighter leading-tight">{f.from || "---"}</h4>
                     </div>
+                    
                     <div className="flex-[0.8] flex items-center justify-center pt-4 opacity-20 px-1">
                       <div className="w-full flex items-center">
-                        <div className="flex-1 h-[1px] border-t border-dotted border-[#5A4636]" />
-                        <Plane className="text-[#5A4636] w-3.5 h-3.5 mx-0.5 shrink-0" fill="currentColor" />
-                        <div className="flex-1 h-[1px] border-t border-dotted border-[#5A4636]" />
+                        <div className="flex-1 h-[1.5px] border-t-[1.5px] border-dotted border-[#5A4636]" />
+                        <Plane className="text-[#5A4636] w-4 h-4 mx-0.5 shrink-0" fill="currentColor" />
+                        <div className="flex-1 h-[1.5px] border-t-[1.5px] border-dotted border-[#5A4636]" />
                       </div>
                     </div>
-                    <div className="flex-1 text-left ml-6">
+
+                    <div className="flex-1 text-right min-w-0">
                       <p className="text-[10px] font-bold text-[#5A4636] mb-0.5 opacity-60">抵達地</p>
-                      <h4 className="text-2xl font-black text-[#5A4636] tracking-tighter leading-none">{f.to || "---"}</h4>
+                      <h4 className="text-2xl font-black text-[#5A4636] tracking-tighter leading-tight">{f.to || "---"}</h4>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 items-start">
+                  <div className="grid grid-cols-2 gap-2 items-start mt-1">
                     <div className="space-y-0.5 text-left">
-                      <p className="text-[10px] font-bold text-[#333] leading-none truncate">{f.fromEn || "---"}</p>
-                      <p className="text-[8px] font-black text-[#333] uppercase opacity-50">{f.terminalFrom || "---"}</p>
+                      <p className="text-[11px] font-bold text-[#333] leading-none truncate">{f.fromEn || "---"}</p>
+                      <p className="text-[9px] font-black text-[#333] uppercase opacity-50">{f.terminalFrom || "---"}</p>
                     </div>
-                    <div className="space-y-0.5 text-left ml-6">
-                      <p className="text-[10px] font-bold text-[#333] leading-none truncate">{f.toEn || "---"}</p>
-                      <p className="text-[8px] font-black text-[#333] uppercase opacity-50">{f.terminalTo || "---"}</p>
+                    <div className="space-y-0.5 text-right">
+                      <p className="text-[11px] font-bold text-[#333] leading-none truncate">{f.toEn || "---"}</p>
+                      <p className="text-[9px] font-black text-[#333] uppercase opacity-50">{f.terminalTo || "---"}</p>
                     </div>
                   </div>
 
@@ -157,28 +160,28 @@ export default function Info({ trip, setTrip }) {
                       <p className="text-[9px] font-bold text-[#5A4636] mb-0.5 uppercase tracking-widest opacity-60">DEPARTURE</p>
                       <p className="text-xl font-black text-[#444] tracking-tight">{f.timeStart || "--:--"}</p>
                     </div>
-                    <div className="text-left flex-1 ml-6">
+                    <div className="text-right">
                       <p className="text-[9px] font-bold text-[#5A4636] mb-0.5 uppercase tracking-widest opacity-60">ARRIVAL</p>
                       <p className="text-xl font-black text-[#444] tracking-tight">{f.timeEnd || "--:--"}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* 粗虛線分隔 */}
-                <div className="absolute top-6 bottom-6 left-[71%] border-l-[3.5px] border-dashed border-[#E8DCCF]" style={{ height: 'calc(100% - 48px)' }} />
+                {/* 加粗虛線分隔線 */}
+                <div className="w-[4px] border-l-[4px] border-dashed border-[#E8DCCF] my-8 relative" />
 
-                {/* 票券右側 (存根聯) */}
-                <div className="flex-[2.9] p-5 pl-7 flex flex-col justify-between bg-[#FDFBF9]/50 relative">
+                {/* 票券右側存根 (行李上移優化) */}
+                <div className="flex-[2.9] p-6 pl-5 flex flex-col justify-between bg-[#FDFBF9]/40 relative">
                   <div className="space-y-1 text-left">
-                    <p className="text-[9px] font-bold text-[#5A4636] mb-0.5 uppercase tracking-wider opacity-60">FLIGHT</p>
-                    <h5 className="text-[11px] font-bold text-[#333] leading-tight truncate">{f.airline || "---"}</h5>
-                    <p className="text-[8px] font-bold text-[#333] uppercase opacity-40 leading-none">{f.airlineEn || ""}</p>
+                    <p className="text-[10px] font-bold text-[#5A4636] mb-1 uppercase tracking-wider opacity-60">FLIGHT</p>
+                    <h5 className="text-[12px] font-bold text-[#333] leading-tight truncate">{f.airline || "---"}</h5>
+                    <p className="text-[9px] font-bold text-[#333] uppercase opacity-40 leading-none">{f.airlineEn || ""}</p>
                     <h4 className="text-xl font-black text-[#5A4636] tracking-tighter mt-1">{f.flightNo || "---"}</h4>
                   </div>
 
-                  <div className="space-y-0.5 text-left mb-1">
-                    <p className="text-[9px] font-bold text-[#5A4636] uppercase tracking-wider opacity-60 leading-none">BAGGAGE</p>
-                    <p className="text-sm font-black text-[#333] leading-tight">{f.baggage || "---"}</p>
+                  <div className="space-y-0.5 text-left">
+                    <p className="text-[10px] font-bold text-[#5A4636] uppercase tracking-wider opacity-60 leading-none">BAGGAGE</p>
+                    <p className="text-[14px] font-black text-[#333] leading-tight">{f.baggage || "---"}</p>
                   </div>
                 </div>
               </div>
