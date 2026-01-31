@@ -120,7 +120,7 @@ export default function Info({ trip, setTrip }) {
                   WebkitMaskImage: "radial-gradient(circle at 71% 0px, transparent 21.5px, black 22px), radial-gradient(circle at 71% 100%, transparent 21.5px, black 22px)",
                   maskImage: "radial-gradient(circle at 71% 0px, transparent 21.5px, black 22px), radial-gradient(circle at 71% 100%, transparent 21.5px, black 22px)"
                 }} 
-                className="bg-white rounded-[2.2rem] shadow-md border border-[#E8DCCF] flex min-h-[160px] relative z-10 overflow-hidden"
+                className="bg-white rounded-[1.5rem] shadow-md border border-[#E8DCCF] flex min-h-[160px] relative z-10 overflow-hidden"
               >
                 {/* 票券左側內容 */}
                 <div className="flex-[7] p-6 pr-5 flex flex-col justify-between">
@@ -285,7 +285,6 @@ export default function Info({ trip, setTrip }) {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">航班號</label><input type="text" placeholder="例：UA838" value={editingFlight.flightNo} onChange={(e) => setEditingFlight({...editingFlight, flightNo: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" /></div>
-                    <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">類型 (去/回)</label><input type="text" value={editingFlight.direction} onChange={(e) => setEditingFlight({...editingFlight, direction: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" /></div>
                   </div>
                   <hr className="border-[#E5D5C5]/50" />
                   <div className="grid grid-cols-2 gap-4">
