@@ -69,6 +69,16 @@ export default function Info({ trip, setTrip }) {
   const saveFlight = () => { if (isReadOnly) return; updateInfo({ flights: flights.some((f) => f.id === editingFlight.id) ? flights.map((f) => (f.id === editingFlight.id ? editingFlight : f)) : [...flights, editingFlight] }); setEditingFlight(null); };
   const openEditHotel = (h) => !isReadOnly && setEditingHotel(h || { id: `hotel-${Date.now()}`, name: "", dateRange: "", addressLine1: "", addressLine2: "", phone: "" });
   const saveHotel = () => { if (isReadOnly) return; updateInfo({ hotels: hotels.some((h) => h.id === editingHotel.id) ? hotels.map((h) => (h.id === editingHotel.id ? editingHotel : h)) : [...hotels, editingHotel] }); setEditingHotel(null); };
+  const saveVisit = () => { updateInfo({ visitJapan: visitDraft }); setVisitModalOpen(false); };
+  const saveEmergency = () => {
+    updateInfo({
+      emergency110: { label: emDraft.label110, number: emDraft.number110 },
+      emergency119: { label: emDraft.label119, number: emDraft.number119 },
+      jnto: { title: emDraft.jntoTitle, subtitle: emDraft.jntoSubtitle, phone: emDraft.jntoPhone, note: emDraft.jntoNote },
+      taipei: { badge: emDraft.taipeiBadge, title: emDraft.taipeiTitle, officePhone: emDraft.taipeiOfficePhone, officeNote: emDraft.taipeiOfficeNote, emergencyPhone: emDraft.taipeiEmergencyPhone, emergencyNote: emDraft.taipeiEmergencyNote },
+    });
+    setEmergencyModalOpen(false);
+  };
 
   const handleNavigation = (e, address) => {
     e.stopPropagation();
@@ -106,8 +116,7 @@ export default function Info({ trip, setTrip }) {
                 onClick={() => !isReadOnly && setOpenFlightId(openFlightId === f.id ? null : f.id)} 
                 style={{ 
                   transform: !isReadOnly && openFlightId === f.id ? "translateX(-115px)" : "translateX(0)", 
-                  transition: "transform 0.4s cubic-bezier(0.1, 0.7, 0.1, 1)",
-                  // 真正的遮罩裁切實現大直徑正半圓挖洞，邊緣完全乾淨
+                  transition: "transform 0.4s cubic-bezier(0.1, 0.7, 0.1, 1.1)",
                   WebkitMaskImage: "radial-gradient(circle at 71% 0px, transparent 21.5px, black 22px), radial-gradient(circle at 71% 100%, transparent 21.5px, black 22px)",
                   maskImage: "radial-gradient(circle at 71% 0px, transparent 21.5px, black 22px), radial-gradient(circle at 71% 100%, transparent 21.5px, black 22px)"
                 }} 
@@ -148,31 +157,30 @@ export default function Info({ trip, setTrip }) {
 
                   <div className="flex items-center justify-between mt-5 px-0.5">
                     <div className="text-left">
-                      <p className="text-[9px] font-bold text-[#5A4636] mb-0.5 uppercase tracking-widest opacity-60">出發時間</p>
-                      <p className="text-2xl font-black text-[#444] tracking-tight leading-none">{f.timeStart || "--:--"}</p>
+                      <p className="text-[9px] font-bold text-[#5A4636] mb-0.5 uppercase tracking-widest opacity-60">DEPARTURE</p>
+                      <p className="text-2xl font-black text-[#444] tracking-tight">{f.timeStart || "--:--"}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[9px] font-bold text-[#5A4636] mb-0.5 uppercase tracking-widest opacity-60">抵達時間</p>
-                      <p className="text-2xl font-black text-[#444] tracking-tight leading-none">{f.timeEnd || "--:--"}</p>
+                      <p className="text-[9px] font-bold text-[#5A4636] mb-0.5 uppercase tracking-widest opacity-60">ARRIVAL</p>
+                      <p className="text-2xl font-black text-[#444] tracking-tight">{f.timeEnd || "--:--"}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* 加粗虛線分隔線 (精準鎖定 71% 中心軸) */}
+                {/* 加粗虛線分隔線 */}
                 <div className="w-[4px] border-l-[4px] border-dashed border-[#E8DCCF] my-8 relative" />
 
                 {/* 票券右側存根 (行李上移優化) */}
                 <div className="flex-[2.9] p-6 pl-5 flex flex-col justify-between bg-[#FDFBF9]/40 relative">
                   <div className="space-y-1 text-left">
-                    <p className="text-[10px] font-bold text-[#5A4636] mb-1 uppercase tracking-wider opacity-60">航班</p>
+                    <p className="text-[10px] font-bold text-[#5A4636] mb-1 uppercase tracking-wider opacity-60">FLIGHT</p>
                     <h5 className="text-[12px] font-bold text-[#333] leading-tight truncate">{f.airline || "---"}</h5>
-                    <p className="text-[9px] font-bold text-[#333] uppercase opacity-40 leading-none">{f.airlineEn || "---"}</p>
+                    <p className="text-[9px] font-bold text-[#333] uppercase opacity-40 leading-none">{f.airlineEn || ""}</p>
                     <h4 className="text-2xl font-black text-[#5A4636] tracking-tighter mt-1">{f.flightNo || "---"}</h4>
                   </div>
 
-                  {/* 行李資訊移至與抵達時間同行 (同高度) */}
-                  <div className="space-y-1 text-left">
-                    <p className="text-[10px] font-bold text-[#5A4636] uppercase tracking-wider opacity-60 leading-none">行李</p>
+                  <div className="space-y-0.5 text-left">
+                    <p className="text-[10px] font-bold text-[#5A4636] uppercase tracking-wider opacity-60 leading-none">BAGGAGE</p>
                     <p className="text-[16px] font-black text-[#333] leading-tight">{f.baggage || "---"}</p>
                   </div>
                 </div>
