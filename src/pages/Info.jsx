@@ -166,12 +166,13 @@ export default function Info({ trip, setTrip }) {
                   <div className="space-y-1 text-left">
                     <p className="text-[10px] font-bold text-[#5A4636] mb-1 uppercase tracking-wider opacity-60">航班</p>
                     <h5 className="text-[12px] font-bold text-[#333] leading-tight truncate">{f.airline || "---"}</h5>
+                    <p className="text-[9px] font-bold text-[#333] uppercase opacity-40 leading-none">{f.airlineEn || "---"}</p>
                     <h4 className="text-2xl font-black text-[#5A4636] tracking-tighter mt-1">{f.flightNo || "---"}</h4>
                   </div>
 
                   {/* 行李資訊移至與抵達時間同行 (同高度) */}
-                  <div className="space-y-0.5 text-left">
-                    <p className="text-[10px] font-bold text-[#5A4636] uppercase tracking-wider opacity-60">行李</p>
+                  <div className="space-y-1 text-left">
+                    <p className="text-[10px] font-bold text-[#5A4636] uppercase tracking-wider opacity-60 leading-none">行李</p>
                     <p className="text-[16px] font-black text-[#333] leading-tight">{f.baggage || "---"}</p>
                   </div>
                 </div>
