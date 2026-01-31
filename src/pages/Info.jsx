@@ -123,7 +123,7 @@ export default function Info({ trip, setTrip }) {
                 className="bg-white rounded-[2.2rem] shadow-md border border-[#E8DCCF] flex min-h-[160px] relative z-10 overflow-hidden"
               >
                 {/* 票券左側內容 */}
-                <div className="flex-[7.1] p-6 pr-5 flex flex-col justify-between">
+                <div className="flex-[7] p-6 pr-5 flex flex-col justify-between">
                   <div className="flex items-center justify-between gap-1 mb-2">
                     <div className="flex-1 text-left min-w-0">
                       <p className="text-[10px] font-bold text-[#5A4636] mb-0.5 opacity-60">出發地</p>
@@ -157,11 +157,11 @@ export default function Info({ trip, setTrip }) {
 
                   <div className="flex items-center justify-between mt-5 px-0.5">
                     <div className="text-left">
-                      <p className="text-[9px] font-bold text-[#5A4636] mb-0.5 uppercase tracking-widest opacity-60">出發時間</p>
+                      <p className="text-[10px] font-bold text-[#5A4636] mb-0.5 uppercase tracking-widest opacity-60">出發時間</p>
                       <p className="text-xl font-black text-[#444] tracking-tight leading-none">{f.timeStart || "--:--"}</p>
                     </div>
                     <div className="text-right pr-2">
-                      <p className="text-[9px] font-bold text-[#5A4636] mb-0.5 uppercase tracking-widest opacity-60">抵達時間</p>
+                      <p className="text-[10px] font-bold text-[#5A4636] mb-0.5 uppercase tracking-widest opacity-60">抵達時間</p>
                       <p className="text-xl font-black text-[#444] tracking-tight leading-none">{f.timeEnd || "--:--"}</p>
                     </div>
                   </div>
@@ -171,18 +171,18 @@ export default function Info({ trip, setTrip }) {
                 <div className="w-[4px] border-l-[4px] border-dashed border-[#E8DCCF] my-8 relative" />
 
                 {/* 票券右側存根 */}
-                <div className="flex-[2.9] p-6 pl-5 flex flex-col justify-between bg-[#FDFBF9]/40 relative">
+                <div className="flex-[3] p-6 pl-5 flex flex-col justify-between bg-[#FDFBF9]/40 relative">
                   <div className="space-y-1 text-left">
                     <p className="text-[10px] font-bold text-[#5A4636] mb-1 uppercase tracking-wider opacity-60">航班</p>
                     <h5 className="text-[12px] font-bold text-[#333] leading-tight truncate">{f.airline || "---"}</h5>
-                    <p className="text-[7px] font-bold text-[#333] uppercase opacity-40 leading-none">{f.airlineEn || ""}</p>
+                    <p className="text-[8px] font-bold text-[#333] uppercase opacity-40 leading-none">{f.airlineEn || ""}</p>
                     <h4 className="text-xl font-black text-[#5A4636] tracking-tighter mt-1 leading-none">{f.flightNo || "---"}</h4>
                   </div>
 
                   {/* 行李資訊移至與抵達時間同行 (同視覺高度) */}
                   <div className="space-y-0.5 text-left mb-1">
                     <p className="text-[10px] font-bold text-[#5A4636] uppercase tracking-wider opacity-60 leading-none">行李</p>
-                    <p className="text-[12px] font-black text-[#333] leading-tight">{f.baggage || "---"}</p>
+                    <p className="text-[13px] font-black text-[#333] leading-tight">{f.baggage || "---"}</p>
                   </div>
                 </div>
               </div>
