@@ -13,32 +13,23 @@ import {
   Info as InfoIcon,
   BookUser,
   ShieldAlert,
-  Check
+  Check,
+  MoveRight
 } from "lucide-react";
 
-/* =========================
-   預設 Info 結構
-========================= */
 const DEFAULT_INFO = {
   flights: [
-    { id: "flight-out", direction: "去程", flightNo: "UA838", from: "KHH", to: "NRT", time: "11:30 - 15:55", baggage: "行李：23KG" },
-    { id: "flight-back", direction: "回程", flightNo: "UA837", from: "NRT", to: "KHH", time: "17:50 - 21:20", baggage: "行李：23KG" },
+    { id: "flight-out", direction: "去程", flightNo: "UA838", airline: "聯合航空公司", airlineEn: "UNITED AIRLINES", from: "KHH", fromEn: "高雄國際機場", terminalFrom: "TERMINAL I", to: "NRT", toEn: "成田國際機場", terminalTo: "TERMINAL 1", timeStart: "11:30", timeEnd: "15:55", baggage: "23 KG / 1件" },
+    { id: "flight-back", direction: "回程", flightNo: "UA837", airline: "聯合航空公司", airlineEn: "UNITED AIRLINES", from: "NRT", fromEn: "成田國際機場", terminalFrom: "TERMINAL 1", to: "KHH", toEn: "高雄國際機場", terminalTo: "TERMINAL I", timeStart: "17:50", timeEnd: "21:20", baggage: "23 KG / 1件" },
   ],
   hotels: [
-    {
-      id: "hotel-1",
-      name: "OMO3 東京赤坂 by 星野集團",
-      dateRange: "3月11日 - 3月14日",
-      addressLine1: "〒107-0052 東京都港區赤坂4丁目3-2",
-      addressLine2: "4 Chome-3-2 Akasaka, Minato City, Tokyo 107-0052",
-      phone: "+81-50-3134-8895",
-    },
+    { id: "hotel-1", name: "OMO3 東京赤坂 by 星野集團", dateRange: "3月11日 - 3月14日", addressLine1: "〒107-0052 東京都港區赤坂4丁目3-2", addressLine2: "4 Chome-3-2 Akasaka, Minato City, Tokyo 107-0052", phone: "+81-50-3134-8895" },
   ],
-  visitJapan: { title: "Visit Japan Web", subtitle: "入境審查 & 海關申報（請截圖 QR Code）", url: "https://vjw-lp.digital.go.jp/" },
+  visitJapan: { title: "Visit Japan Web", subtitle: "入境審查 & 海關申報", url: "https://vjw-lp.digital.go.jp/" },
   emergency110: { label: "警察 (POLICE)", number: "110" },
   emergency119: { label: "救護／火警", number: "119" },
-  jnto: { title: "訪日外國人 醫療＆急難熱線", subtitle: "JAPAN VISITOR HOTLINE (JNTO)", phone: "050-3816-2787", note: "※ 24小時對應（英／中／韓）。" },
-  taipei: { badge: "外交部", title: "台北駐日經濟文化代表處", officePhone: "03-3280-7811", officeNote: "（上班時間）", emergencyPhone: "080-1009-7179", emergencyNote: "（急難救助）" },
+  jnto: { title: "訪日外國人 醫療＆急難熱線", subtitle: "JAPAN VISITOR HOTLINE", phone: "050-3816-2787", note: "※ 24小時對應。" },
+  taipei: { badge: "外交部", title: "台北駐日經濟文化代表處", officePhone: "03-3280-7811", officeNote: "（上班）", emergencyPhone: "080-1009-7179", emergencyNote: "（急難）" },
 };
 
 export default function Info({ trip, setTrip }) {
@@ -47,7 +38,7 @@ export default function Info({ trip, setTrip }) {
 
   useEffect(() => {
     if (!trip.info && !isReadOnly) {
-      setTrip((prev) => ({ ...prev, info: DEFAULT_INFO }));
+      setTrip((prev) => ({ ...prev, info: { ...DEFAULT_INFO, ...prev.info } }));
     }
   }, [trip, setTrip, isReadOnly]);
 
@@ -68,35 +59,21 @@ export default function Info({ trip, setTrip }) {
   const [emergencyModalOpen, setEmergencyModalOpen] = useState(false);
   
   const [emDraft, setEmDraft] = useState({
-    label110: emergency110.label, number110: emergency110.number,
-    label119: emergency119.label, number119: emergency119.number,
+    label110: emergency110.label, number110: emergency110.number, label119: emergency119.label, number119: emergency119.number,
     jntoTitle: jnto.title, jntoSubtitle: jnto.subtitle, jntoPhone: jnto.phone, jntoNote: jnto.note,
-    taipeiBadge: taipei.badge, taipeiTitle: taipei.title,
-    taipeiOfficePhone: taipei.officePhone, taipeiOfficeNote: taipei.officeNote,
+    taipeiBadge: taipei.badge, taipeiTitle: taipei.title, taipeiOfficePhone: taipei.officePhone, taipeiOfficeNote: taipei.officeNote,
     taipeiEmergencyPhone: taipei.emergencyPhone, taipeiEmergencyNote: taipei.emergencyNote,
   });
 
-  const saveVisit = () => { updateInfo({ visitJapan: visitDraft }); setVisitModalOpen(false); };
-  const saveEmergency = () => {
-    updateInfo({
-      emergency110: { label: emDraft.label110, number: emDraft.number110 },
-      emergency119: { label: emDraft.label119, number: emDraft.number119 },
-      jnto: { title: emDraft.jntoTitle, subtitle: emDraft.jntoSubtitle, phone: emDraft.jntoPhone, note: emDraft.jntoNote },
-      taipei: { badge: emDraft.taipeiBadge, title: emDraft.taipeiTitle, officePhone: emDraft.taipeiOfficePhone, officeNote: emDraft.taipeiOfficeNote, emergencyPhone: emDraft.taipeiEmergencyPhone, emergencyNote: emDraft.taipeiEmergencyNote },
-    });
-    setEmergencyModalOpen(false);
-  };
-
-  const openEditFlight = (f) => !isReadOnly && setEditingFlight(f || { id: `flight-${Date.now()}`, direction: "去程", flightNo: "", from: "", to: "", time: "", baggage: "" });
-  const openEditHotel = (h) => !isReadOnly && setEditingHotel(h || { id: `hotel-${Date.now()}`, name: "", dateRange: "", addressLine1: "", addressLine2: "", phone: "" });
+  const openEditFlight = (f) => !isReadOnly && setEditingFlight(f || { id: `flight-${Date.now()}`, direction: "去程", flightNo: "", airline: "", airlineEn: "", from: "", fromEn: "", terminalFrom: "", to: "", toEn: "", terminalTo: "", timeStart: "", timeEnd: "", baggage: "" });
   const saveFlight = () => { if (isReadOnly) return; updateInfo({ flights: flights.some((f) => f.id === editingFlight.id) ? flights.map((f) => (f.id === editingFlight.id ? editingFlight : f)) : [...flights, editingFlight] }); setEditingFlight(null); };
+  const openEditHotel = (h) => !isReadOnly && setEditingHotel(h || { id: `hotel-${Date.now()}`, name: "", dateRange: "", addressLine1: "", addressLine2: "", phone: "" });
   const saveHotel = () => { if (isReadOnly) return; updateInfo({ hotels: hotels.some((h) => h.id === editingHotel.id) ? hotels.map((h) => (h.id === editingHotel.id ? editingHotel : h)) : [...hotels, editingHotel] }); setEditingHotel(null); };
 
   const handleNavigation = (e, address) => {
     e.stopPropagation();
     if (!address) return;
-    const query = encodeURIComponent(address);
-    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank");
+    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, "_blank");
   };
 
   const telHref = (phone) => `tel:${phone.replace(/\s+/g, "").replace(/[^0-9+]/g, "")}`;
@@ -107,35 +84,97 @@ export default function Info({ trip, setTrip }) {
 
       {/* 航班資訊 */}
       <section>
-        <div className="flex items-center justify-between mb-3 px-4">
+        <div className="flex items-center justify-between mb-4 px-4">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-[#F7F1EB] flex items-center justify-center"><Plane className="w-4 h-4 text-[#8C6A4F]" /></div>
             <h2 className="text-base font-semibold text-[#5A4636]">航班資訊</h2>
           </div>
+          {!isReadOnly && <button onClick={() => openEditFlight(null)} className="px-3 py-1.5 rounded-full text-xs bg-white border border-[#C6A087] text-[#5A4636] font-bold shadow-sm">＋ 新增航班</button>}
         </div>
-        <div className="space-y-3 px-4">
+        
+        <div className="space-y-6 px-4">
           {flights.map((f) => (
-            <div key={f.id} className="relative">
+            <div key={f.id} className="relative overflow-visible">
               {!isReadOnly && (
-                <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-3">
-                  <button onClick={() => openEditFlight(f)} className="w-9 h-9 rounded-full bg-[#F7C85C] flex items-center justify-center shadow"><Pencil className="w-4 h-4 text-[#5A4636]" /></button>
-                  <button onClick={() => updateInfo({ flights: flights.filter(x => x.id !== f.id) })} className="w-9 h-9 rounded-full bg-[#E35B5B] flex items-center justify-center shadow"><Trash2 className="w-4 h-4 text-white" /></button>
+                <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-3 z-0">
+                  <button onClick={(e) => { e.stopPropagation(); openEditFlight(f); }} className="w-10 h-10 rounded-full bg-[#F7C85C] flex items-center justify-center shadow transition-transform active:scale-90"><Pencil className="w-5 h-5 text-[#5A4636]" /></button>
+                  <button onClick={(e) => { e.stopPropagation(); updateInfo({ flights: flights.filter(x => x.id !== f.id) }); }} className="w-10 h-10 rounded-full bg-[#E35B5B] flex items-center justify-center shadow transition-transform active:scale-90"><Trash2 className="w-5 h-5 text-white" /></button>
                 </div>
               )}
-              <div onClick={() => !isReadOnly && setOpenFlightId(openFlightId === f.id ? null : f.id)} style={{ transform: !isReadOnly && openFlightId === f.id ? "translateX(-100px)" : "translateX(0)", transition: "transform 0.3s ease" }} className="bg-white rounded-2xl shadow-sm border border-[#F0E3D5] px-4 py-3 relative overflow-hidden">
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#D88B4A] rounded-l-2xl" />
-                <div className="flex items-center justify-between mb-3 pl-3">
-                  <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#F7F1EB] text-xs text-[#8C6A4F] font-bold">{f.direction}</div>
-                  <span className="text-xs text-[#8C6A4F] font-medium">{f.flightNo}</span>
-                </div>
-                <div className="flex items-center justify-between pl-3 mb-2 relative">
-                  <span className="text-2xl font-bold text-[#5A4636] z-10">{f.from}</span>
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                    <Plane className="w-4 h-4 text-[#C6A087]" />
+              
+              <div 
+                onClick={() => !isReadOnly && setOpenFlightId(openFlightId === f.id ? null : f.id)} 
+                style={{ 
+                  transform: !isReadOnly && openFlightId === f.id ? "translateX(-115px)" : "translateX(0)", 
+                  transition: "transform 0.4s cubic-bezier(0.1, 0.7, 0.1, 1)",
+                  // 真正的遮罩裁切實現大直徑正半圓挖洞，邊緣完全乾淨
+                  WebkitMaskImage: "radial-gradient(circle at 71% 0px, transparent 21.5px, black 22px), radial-gradient(circle at 71% 100%, transparent 21.5px, black 22px)",
+                  maskImage: "radial-gradient(circle at 71% 0px, transparent 21.5px, black 22px), radial-gradient(circle at 71% 100%, transparent 21.5px, black 22px)"
+                }} 
+                className="bg-white rounded-[2.2rem] shadow-md border border-[#E8DCCF] flex min-h-[165px] relative z-10 overflow-hidden"
+              >
+                {/* 票券左側內容 */}
+                <div className="flex-[7.1] p-6 pr-5 flex flex-col justify-between">
+                  <div className="flex items-center justify-between gap-1 mb-2">
+                    <div className="flex-1 text-left min-w-0">
+                      <p className="text-[10px] font-bold text-[#5A4636] mb-0.5 opacity-60">出發地</p>
+                      <h4 className="text-3xl font-black text-[#5A4636] tracking-tighter leading-tight">{f.from || "---"}</h4>
+                    </div>
+                    
+                    <div className="flex-[0.8] flex items-center justify-center pt-4 opacity-20 px-1">
+                      <div className="w-full flex items-center">
+                        <div className="flex-1 h-[1.5px] border-t-[1.5px] border-dotted border-[#5A4636]" />
+                        <Plane className="text-[#5A4636] w-4 h-4 mx-0.5 shrink-0" fill="currentColor" />
+                        <div className="flex-1 h-[1.5px] border-t-[1.5px] border-dotted border-[#5A4636]" />
+                      </div>
+                    </div>
+
+                    <div className="flex-1 text-right min-w-0">
+                      <p className="text-[10px] font-bold text-[#5A4636] mb-0.5 opacity-60">抵達地</p>
+                      <h4 className="text-3xl font-black text-[#5A4636] tracking-tighter leading-tight">{f.to || "---"}</h4>
+                    </div>
                   </div>
-                  <span className="text-2xl font-bold text-[#5A4636] z-10">{f.to}</span>
+
+                  <div className="grid grid-cols-2 gap-2 items-start mt-1">
+                    <div className="space-y-0.5 text-left">
+                      <p className="text-[11px] font-bold text-[#333] leading-none truncate">{f.fromEn || "---"}</p>
+                      <p className="text-[9px] font-black text-[#333] uppercase opacity-50">{f.terminalFrom || "---"}</p>
+                    </div>
+                    <div className="space-y-0.5 text-right">
+                      <p className="text-[11px] font-bold text-[#333] leading-none truncate">{f.toEn || "---"}</p>
+                      <p className="text-[9px] font-black text-[#333] uppercase opacity-50">{f.terminalTo || "---"}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between mt-5 px-0.5">
+                    <div className="text-left">
+                      <p className="text-[9px] font-bold text-[#5A4636] mb-0.5 uppercase tracking-widest opacity-60">出發時間</p>
+                      <p className="text-2xl font-black text-[#444] tracking-tight leading-none">{f.timeStart || "--:--"}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[9px] font-bold text-[#5A4636] mb-0.5 uppercase tracking-widest opacity-60">抵達時間</p>
+                      <p className="text-2xl font-black text-[#444] tracking-tight leading-none">{f.timeEnd || "--:--"}</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between pl-3 text-[11px] text-[#8C6A4F] font-medium"><span>{f.time}</span><span>{f.baggage}</span></div>
+
+                {/* 加粗虛線分隔線 (精準鎖定 71% 中心軸) */}
+                <div className="w-[4px] border-l-[4px] border-dashed border-[#E8DCCF] my-8 relative" />
+
+                {/* 票券右側存根 (行李上移優化) */}
+                <div className="flex-[2.9] p-6 pl-5 flex flex-col justify-between bg-[#FDFBF9]/40 relative">
+                  <div className="space-y-1 text-left">
+                    <p className="text-[10px] font-bold text-[#5A4636] mb-1 uppercase tracking-wider opacity-60">航班</p>
+                    <h5 className="text-[12px] font-bold text-[#333] leading-tight truncate">{f.airline || "---"}</h5>
+                    <h4 className="text-2xl font-black text-[#5A4636] tracking-tighter mt-1">{f.flightNo || "---"}</h4>
+                  </div>
+
+                  {/* 行李資訊移至與抵達時間同行 (同高度) */}
+                  <div className="space-y-0.5 text-left">
+                    <p className="text-[10px] font-bold text-[#5A4636] uppercase tracking-wider opacity-60">行李</p>
+                    <p className="text-[16px] font-black text-[#333] leading-tight">{f.baggage || "---"}</p>
+                  </div>
+                </div>
               </div>
             </div>
           ))}
@@ -156,22 +195,18 @@ export default function Info({ trip, setTrip }) {
             <div key={h.id} className="relative">
               {!isReadOnly && (
                 <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-3">
-                  <button onClick={() => openEditHotel(h)} className="w-9 h-9 rounded-full bg-[#F7C85C] flex items-center justify-center shadow"><Pencil className="w-4 h-4 text-[#5A4636]" /></button>
-                  <button onClick={() => updateInfo({ hotels: hotels.filter(x => x.id !== h.id) })} className="w-9 h-9 rounded-full bg-[#E35B5B] flex items-center justify-center shadow"><Trash2 className="w-4 h-4 text-white" /></button>
+                  <button onClick={() => openEditHotel(h)} className="w-9 h-9 rounded-full bg-[#F7C85C] flex items-center justify-center shadow transition-transform active:scale-90"><Pencil className="w-4 h-4 text-[#5A4636]" /></button>
+                  <button onClick={() => updateInfo({ hotels: hotels.filter(x => x.id !== h.id) })} className="w-9 h-9 rounded-full bg-[#E35B5B] flex items-center justify-center shadow transition-transform active:scale-90"><Trash2 className="w-4 h-4 text-white" /></button>
                 </div>
               )}
-              <div onClick={() => !isReadOnly && setOpenHotelId(openHotelId === h.id ? null : h.id)} style={{ transform: !isReadOnly && openHotelId === h.id ? "translateX(-100px)" : "translateX(0)", transition: "transform 0.3s ease" }} className="bg-white rounded-2xl shadow-sm border border-[#F0E3D5] px-5 py-4 relative overflow-hidden">
+              <div onClick={() => !isReadOnly && setOpenHotelId(openHotelId === h.id ? null : h.id)} style={{ transform: !isReadOnly && openHotelId === h.id ? "translateX(-100px)" : "translateX(0)", transition: "transform 0.3s ease" }} className="bg-white rounded-3xl shadow-sm border border-[#F0E3D5] px-5 py-4 relative overflow-hidden">
                 <div className="flex items-center justify-between mb-3">
                   <div className="inline-flex items-center px-4 py-1 rounded-full bg-[#F7F1EB] text-xs text-[#8C6A4F] font-bold">HOTEL</div>
                   <div className="flex items-center gap-1 text-[11px] text-[#8C6A4F] font-medium"><CalendarDays className="w-3 h-3" /><span>{h.dateRange}</span></div>
                 </div>
                 <h3 className="text-xl font-bold text-[#5A4636] mb-3 leading-snug">{h.name}</h3>
                 <div className="border-t border-[#F0E3D5] pt-3 mt-1 space-y-2 text-[13px] text-[#5A4636]">
-                  {/* 地址：點擊導航功能與樣式優化 */}
-                  <div 
-                    onClick={(e) => handleNavigation(e, h.addressLine1)} 
-                    className="flex items-start gap-2 cursor-pointer hover:opacity-70 transition-opacity"
-                  >
+                  <div onClick={(e) => handleNavigation(e, h.addressLine1)} className="flex items-start gap-2 cursor-pointer hover:opacity-70 transition-opacity">
                     <MapPin className="w-4 h-4 mt-0.5 text-[#C6A087] shrink-0" />
                     <div className="flex-1">
                       <p className="font-medium underline underline-offset-2">{h.addressLine1}</p>
@@ -192,12 +227,12 @@ export default function Info({ trip, setTrip }) {
       <section className="px-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-[#F7F1EB] flex items-center justify-center"><BookUser className="w-5 h-5 text-[#8C6A4F]" /></div>
-            <h2 className="text-base font-semibold text-[#5A4636]">Visit Japan Web</h2>
+            <div className="w-8 h-8 rounded-full bg-[#F7F1EB] flex items-center justify-center"><BookUser className="w-5 h-5 text-[#3E5370]" /></div>
+            <h2 className="text-base font-semibold text-[#3E5370]">Visit Japan Web</h2>
           </div>
           {!isReadOnly && <button onClick={() => { setVisitDraft(visitJapan); setVisitModalOpen(true); }} className="flex items-center gap-1 text-xs text-[#364D6E] px-2.5 py-1 rounded-full border border-[#A7C3EB] bg-white"><Pencil className="w-3 h-3" />編輯</button>}
         </div>
-        <button onClick={() => window.open(visitJapan.url, "_blank")} className="w-full text-left bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm border border-[#F0E3D5] active:bg-[#FDF9F5] transition-all">
+        <button onClick={() => window.open(visitJapan.url, "_blank")} className="w-full text-left bg-white rounded-[2rem] p-5 flex items-center justify-between shadow-sm border border-[#F0E3D5] active:bg-[#FDF9F5] transition-all">
           <div className="min-w-0 flex-1">
             <div className="inline-flex px-2.5 py-0.5 rounded-full bg-[#E7EEF9] text-[12px] text-[#4A607F] font-bold mb-2 uppercase tracking-wider">Must Have</div>
             <h3 className="text-[17px] font-bold text-[#5A4636] leading-tight">{visitJapan.title}</h3>
@@ -214,14 +249,14 @@ export default function Info({ trip, setTrip }) {
           {!isReadOnly && <button onClick={() => { setEmDraft({ label110: emergency110.label, number110: emergency110.number, label119: emergency119.label, number119: emergency119.number, jntoTitle: jnto.title, jntoSubtitle: jnto.subtitle, jntoPhone: jnto.phone, jntoNote: jnto.note, taipeiBadge: taipei.badge, taipeiTitle: taipei.title, taipeiOfficePhone: taipei.officePhone, taipeiOfficeNote: taipei.officeNote, taipeiEmergencyPhone: taipei.emergencyPhone, taipeiEmergencyNote: taipei.emergencyNote }); setEmergencyModalOpen(true); }} className="flex items-center gap-1 text-xs text-[#B43737] px-2.5 py-1 rounded-full border border-[#F1C8C8] bg-white shadow-sm"><Pencil className="w-3 h-3" />編輯</button>}
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white rounded-2xl border border-[#F0E3D5] p-3 text-center shadow-sm"><p className="text-[14px] text-[#8C6A4F] mb-1 font-medium">{emergency110.label}</p><p className="text-3xl font-bold text-[#B43737]">{emergency110.number}</p></div>
-          <div className="bg-white rounded-2xl border border-[#F0E3D5] p-3 text-center shadow-sm"><p className="text-[14px] text-[#8C6A4F] mb-1 font-medium">{emergency119.label}</p><p className="text-3xl font-bold text-[#B43737]">{emergency119.number}</p></div>
+          <div className="bg-white rounded-[2rem] border border-[#F0E3D5] p-3 text-center shadow-sm"><p className="text-[14px] text-[#8C6A4F] mb-1 font-medium">{emergency110.label}</p><p className="text-3xl font-bold text-[#B43737]">{emergency110.number}</p></div>
+          <div className="bg-white rounded-[2rem] border border-[#F0E3D5] p-3 text-center shadow-sm"><p className="text-[14px] text-[#8C6A4F] mb-1 font-medium">{emergency119.label}</p><p className="text-3xl font-bold text-[#B43737]">{emergency119.number}</p></div>
         </div>
-        <div className="bg-white rounded-2xl border border-[#F0E3D5] p-4 shadow-sm"><p className="text-[18px] font-bold text-[#5A4636] mb-0.5">{jnto.title}</p><p className="text-[11px] text-[#8C6A4F] font-medium">{jnto.subtitle}</p><a href={telHref(jnto.phone)} className="block text-xl font-bold text-[#5A4636] my-2 underline underline-offset-4">{jnto.phone}</a><p className="text-[10px] text-[#8C6A4F] opacity-70 font-medium">{jnto.note}</p></div>
-        <div className="bg-white rounded-2xl border border-[#F0E3D5] p-4 shadow-sm"><div className="flex items-center gap-2 mb-3"><div className="inline-flex px-2.5 py-0.5 rounded-full bg-[#F7F1EB] text-[12px] text-[#8C6A4F] font-bold shrink-0">{taipei.badge}</div><p className="text-[14px] font-bold text-[#5A4636] truncate">{taipei.title}</p></div><div className="space-y-2 text-[14px]"><div className="flex items-center justify-between font-medium"><a href={telHref(taipei.officePhone)} className="font-bold text-[#5A4636] underline">{taipei.officePhone}</a><span className="text-[14px] text-[#5A4636]">{taipei.officeNote}</span></div><div className="flex items-center justify-between font-medium"><a href={telHref(taipei.emergencyPhone)} className="font-bold text-[#B43737] underline">{taipei.emergencyPhone}</a><span className="text-[14px] text-[#B43737]">{taipei.emergencyNote}</span></div></div></div>
+        <div className="bg-white rounded-[2rem] border border-[#F0E3D5] p-6 shadow-sm"><p className="text-[18px] font-bold text-[#5A4636] mb-0.5">{jnto.title}</p><p className="text-[11px] text-[#8C6A4F] font-medium">{jnto.subtitle}</p><a href={telHref(jnto.phone)} className="block text-xl font-bold text-[#5A4636] my-2 underline underline-offset-4">{jnto.phone}</a><p className="text-[10px] text-[#8C6A4F] opacity-70 font-medium">{jnto.note}</p></div>
+        <div className="bg-white rounded-[2rem] border border-[#F0E3D5] p-6 shadow-sm"><div className="flex items-center gap-2 mb-3"><div className="inline-flex px-2.5 py-0.5 rounded-full bg-[#F7F1EB] text-[12px] text-[#8C6A4F] font-bold shrink-0">{taipei.badge}</div><p className="text-[14px] font-bold text-[#5A4636] truncate">{taipei.title}</p></div><div className="space-y-2 text-[14px]"><div className="flex items-center justify-between font-medium"><a href={telHref(taipei.officePhone)} className="font-bold text-[#5A4636] underline">{taipei.officePhone}</a><span className="text-[14px] text-[#5A4636]">{taipei.officeNote}</span></div><div className="flex items-center justify-between font-medium"><a href={telHref(taipei.emergencyPhone)} className="font-bold text-[#B43737] underline">{taipei.emergencyPhone}</a><span className="text-[14px] text-[#B43737]">{taipei.emergencyNote}</span></div></div></div>
       </section>
 
-      {/* --- Modals --- */}
+      {/* --- Modals 保持不變 --- */}
       {(editingFlight || editingHotel || visitModalOpen || emergencyModalOpen) && (
         <div className="fixed inset-0 z-[200] flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-6 overflow-y-auto">
           <div className="w-full max-w-lg bg-[#FFF9F2] rounded-[2.5rem] border border-[#E5D5C5] shadow-2xl overflow-hidden mb-10 transition-all mx-auto">
@@ -234,14 +269,35 @@ export default function Info({ trip, setTrip }) {
             <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto scrollbar-hide">
               {editingFlight && (
                 <>
-                  <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">去程 / 回程</label><input type="text" value={editingFlight.direction} onChange={(e) => setEditingFlight({...editingFlight, direction: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" /></div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">航班</label><input type="text" value={editingFlight.flightNo} onChange={(e) => setEditingFlight({...editingFlight, flightNo: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-2 py-1.5 text-[13px] outline-none shadow-inner" /></div>
-                    <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">出發</label><input type="text" value={editingFlight.from} onChange={(e) => setEditingFlight({...editingFlight, from: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-2 py-1.5 text-[13px] outline-none shadow-inner" /></div>
-                    <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">抵達</label><input type="text" value={editingFlight.to} onChange={(e) => setEditingFlight({...editingFlight, to: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-2 py-1.5 text-[13px] outline-none shadow-inner" /></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">航空公司</label><input type="text" placeholder="例：聯合航空" value={editingFlight.airline} onChange={(e) => setEditingFlight({...editingFlight, airline: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" /></div>
+                    <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">英文名稱</label><input type="text" placeholder="例：UNITED" value={editingFlight.airlineEn} onChange={(e) => setEditingFlight({...editingFlight, airlineEn: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" /></div>
                   </div>
-                  <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">時間</label><input type="text" value={editingFlight.time} onChange={(e) => setEditingFlight({...editingFlight, time: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" /></div>
-                  <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">行李</label><input type="text" value={editingFlight.baggage} onChange={(e) => setEditingFlight({...editingFlight, baggage: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" /></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">航班號</label><input type="text" placeholder="例：UA838" value={editingFlight.flightNo} onChange={(e) => setEditingFlight({...editingFlight, flightNo: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" /></div>
+                    <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">類型 (去/回)</label><input type="text" value={editingFlight.direction} onChange={(e) => setEditingFlight({...editingFlight, direction: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" /></div>
+                  </div>
+                  <hr className="border-[#E5D5C5]/50" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <p className="text-[10px] font-bold text-[#C6A087]">出發資訊</p>
+                      <input type="text" placeholder="簡稱 (例：高雄)" value={editingFlight.from} onChange={(e) => setEditingFlight({...editingFlight, from: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" />
+                      <input type="text" placeholder="全名 (例：高雄國際機場)" value={editingFlight.fromEn} onChange={(e) => setEditingFlight({...editingFlight, fromEn: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" />
+                      <input type="text" placeholder="航廈" value={editingFlight.terminalFrom} onChange={(e) => setEditingFlight({...editingFlight, terminalFrom: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" />
+                    </div>
+                    <div className="space-y-3">
+                      <p className="text-[10px] font-bold text-[#C6A087]">抵達資訊</p>
+                      <input type="text" placeholder="簡稱 (例：成田)" value={editingFlight.to} onChange={(e) => setEditingFlight({...editingFlight, to: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" />
+                      <input type="text" placeholder="全名 (例：成田國際機場)" value={editingFlight.toEn} onChange={(e) => setEditingFlight({...editingFlight, toEn: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" />
+                      <input type="text" placeholder="航廈" value={editingFlight.terminalTo} onChange={(e) => setEditingFlight({...editingFlight, terminalTo: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" />
+                    </div>
+                  </div>
+                  <hr className="border-[#E5D5C5]/50" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">起飛時間</label><input type="text" value={editingFlight.timeStart} onChange={(e) => setEditingFlight({...editingFlight, timeStart: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" /></div>
+                    <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">抵達時間</label><input type="text" value={editingFlight.timeEnd} onChange={(e) => setEditingFlight({...editingFlight, timeEnd: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" /></div>
+                  </div>
+                  <div><label className="block text-[10px] font-bold text-[#8C6A4F] mb-1.5 uppercase tracking-widest">行李限制</label><input type="text" value={editingFlight.baggage} onChange={(e) => setEditingFlight({...editingFlight, baggage: e.target.value})} className="w-full border border-[#E5D5C5] rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" /></div>
                   <div className="pt-2 flex gap-3"><button onClick={() => setEditingFlight(null)} className="flex-1 py-3 rounded-2xl border border-[#E5D5C5] text-sm text-[#8C6A4F] font-bold bg-white active:scale-95 transition-all">取消</button><button onClick={saveFlight} className="flex-1 py-3 rounded-2xl bg-[#C6A087] text-white text-sm font-bold shadow-md active:scale-95 transition-all">儲存</button></div>
                 </>
               )}
