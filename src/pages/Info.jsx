@@ -116,11 +116,11 @@ export default function Info({ trip, setTrip }) {
                 onClick={() => !isReadOnly && setOpenFlightId(openFlightId === f.id ? null : f.id)} 
                 style={{ 
                   transform: !isReadOnly && openFlightId === f.id ? "translateX(-115px)" : "translateX(0)", 
-                  transition: "transform 0.4s cubic-bezier(0.1, 0.7, 0.1, 1.1)",
+                  transition: "transform 0.4s cubic-bezier(0.1, 0.7, 0.1, 1)",
                   WebkitMaskImage: "radial-gradient(circle at 71% 0px, transparent 21.5px, black 22px), radial-gradient(circle at 71% 100%, transparent 21.5px, black 22px)",
                   maskImage: "radial-gradient(circle at 71% 0px, transparent 21.5px, black 22px), radial-gradient(circle at 71% 100%, transparent 21.5px, black 22px)"
                 }} 
-                className="bg-white rounded-[2.2rem] shadow-md border border-[#E8DCCF] flex min-h-[165px] relative z-10 overflow-hidden"
+                className="bg-white rounded-[2.2rem] shadow-md border border-[#E8DCCF] flex min-h-[160px] relative z-10 overflow-hidden"
               >
                 {/* 票券左側內容 */}
                 <div className="flex-[7.1] p-6 pr-5 flex flex-col justify-between">
@@ -138,7 +138,7 @@ export default function Info({ trip, setTrip }) {
                       </div>
                     </div>
 
-                    <div className="flex-1 text-right min-w-0">
+                    <div className="flex-1 text-right min-w-0 pr-2">
                       <p className="text-[10px] font-bold text-[#5A4636] mb-0.5 opacity-60">抵達地</p>
                       <h4 className="text-2xl font-black text-[#5A4636] tracking-tighter leading-tight">{f.to || "---"}</h4>
                     </div>
@@ -149,7 +149,7 @@ export default function Info({ trip, setTrip }) {
                       <p className="text-[11px] font-bold text-[#333] leading-none truncate">{f.fromEn || "---"}</p>
                       <p className="text-[9px] font-black text-[#333] uppercase opacity-50">{f.terminalFrom || "---"}</p>
                     </div>
-                    <div className="space-y-0.5 text-right">
+                    <div className="space-y-0.5 text-right pr-2">
                       <p className="text-[11px] font-bold text-[#333] leading-none truncate">{f.toEn || "---"}</p>
                       <p className="text-[9px] font-black text-[#333] uppercase opacity-50">{f.terminalTo || "---"}</p>
                     </div>
@@ -157,31 +157,32 @@ export default function Info({ trip, setTrip }) {
 
                   <div className="flex items-center justify-between mt-5 px-0.5">
                     <div className="text-left">
-                      <p className="text-[9px] font-bold text-[#5A4636] mb-0.5 uppercase tracking-widest opacity-60">DEPARTURE</p>
-                      <p className="text-xl font-black text-[#444] tracking-tight">{f.timeStart || "--:--"}</p>
+                      <p className="text-[9px] font-bold text-[#5A4636] mb-0.5 uppercase tracking-widest opacity-60">出發時間</p>
+                      <p className="text-xl font-black text-[#444] tracking-tight leading-none">{f.timeStart || "--:--"}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-[9px] font-bold text-[#5A4636] mb-0.5 uppercase tracking-widest opacity-60">ARRIVAL</p>
-                      <p className="text-xl font-black text-[#444] tracking-tight">{f.timeEnd || "--:--"}</p>
+                    <div className="text-right pr-2">
+                      <p className="text-[9px] font-bold text-[#5A4636] mb-0.5 uppercase tracking-widest opacity-60">抵達時間</p>
+                      <p className="text-xl font-black text-[#444] tracking-tight leading-none">{f.timeEnd || "--:--"}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* 加粗虛線分隔線 */}
+                {/* 加粗虛線分隔線 (精準鎖定 71% 中心軸) */}
                 <div className="w-[4px] border-l-[4px] border-dashed border-[#E8DCCF] my-8 relative" />
 
-                {/* 票券右側存根 (行李上移優化) */}
+                {/* 票券右側存根 */}
                 <div className="flex-[2.9] p-6 pl-5 flex flex-col justify-between bg-[#FDFBF9]/40 relative">
                   <div className="space-y-1 text-left">
-                    <p className="text-[10px] font-bold text-[#5A4636] mb-1 uppercase tracking-wider opacity-60">FLIGHT</p>
+                    <p className="text-[10px] font-bold text-[#5A4636] mb-1 uppercase tracking-wider opacity-60">航班</p>
                     <h5 className="text-[12px] font-bold text-[#333] leading-tight truncate">{f.airline || "---"}</h5>
-                    <p className="text-[9px] font-bold text-[#333] uppercase opacity-40 leading-none">{f.airlineEn || ""}</p>
-                    <h4 className="text-xl font-black text-[#5A4636] tracking-tighter mt-1">{f.flightNo || "---"}</h4>
+                    <p className="text-[7px] font-bold text-[#333] uppercase opacity-40 leading-none">{f.airlineEn || ""}</p>
+                    <h4 className="text-xl font-black text-[#5A4636] tracking-tighter mt-1 leading-none">{f.flightNo || "---"}</h4>
                   </div>
 
-                  <div className="space-y-0.5 text-left">
-                    <p className="text-[10px] font-bold text-[#5A4636] uppercase tracking-wider opacity-60 leading-none">BAGGAGE</p>
-                    <p className="text-[14px] font-black text-[#333] leading-tight">{f.baggage || "---"}</p>
+                  {/* 行李資訊移至與抵達時間同行 (同視覺高度) */}
+                  <div className="space-y-0.5 text-left mb-1">
+                    <p className="text-[10px] font-bold text-[#5A4636] uppercase tracking-wider opacity-60 leading-none">行李</p>
+                    <p className="text-[12px] font-black text-[#333] leading-tight">{f.baggage || "---"}</p>
                   </div>
                 </div>
               </div>
