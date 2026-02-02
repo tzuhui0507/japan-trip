@@ -187,7 +187,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
 
       {isExpanded && !isViewer && (
         <div className="mt-2 bg-white border border-[#E5D5C5] rounded-xl p-4 shadow-lg w-full z-10">
-          <h4 className="text-[10px] font-bold text-[#8C6A4F]/70 tracking-widest mb-1 uppercase">
+          <h4 className="text-[10px] font-bold text-[#8C6A4F] tracking-widest mb-1 uppercase">
             編輯交通方式
           </h4>
           <p className="text-[9px] text-[#C6A087] mb-3 font-medium">支援二選一語法：方案A --- 方案B</p>

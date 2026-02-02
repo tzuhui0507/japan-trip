@@ -1,12 +1,13 @@
 // src/components/EditHeroModal.jsx
 import React, { useState } from "react";
-import { X, Check, MapPin, Image as ImageIcon, Type, Loader2 } from "lucide-react";
+import { X, Check, MapPin, Image as ImageIcon, Type, Loader2, StickyNote } from "lucide-react";
 
 export default function EditHeroModal({ dayData, onSave, onClose }) {
   const [form, setForm] = useState({
     heroTitle: dayData.heroTitle || "",
     heroLocation: dayData.heroLocation || "",
     heroImage: dayData.heroImage || "",
+    dayNotes: dayData.dayNotes || "", // 新增：今日小提醒內容
   });
 
   const [loading, setLoading] = useState(false);
@@ -30,7 +31,7 @@ export default function EditHeroModal({ dayData, onSave, onClose }) {
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationName)}&limit=1`,
           {
             headers: {
-              'User-Agent': 'MyTravelApp/1.0' // 加上這個能避免被 API 拒絕
+              'User-Agent': 'MyTravelApp/1.0'
             }
           }
         );
@@ -53,17 +54,17 @@ export default function EditHeroModal({ dayData, onSave, onClose }) {
     // 統一執行儲存
     onSave({
       ...dayData,
-      ...finalCoords, // 這裡會使用原本的或新查詢到的座標
+      ...finalCoords,
       heroTitle: form.heroTitle.trim(),
       heroLocation: locationName,
       heroImage: form.heroImage.trim(),
+      dayNotes: form.dayNotes.trim(), // 新增：儲存提醒文字
       weatherLocation: locationName || dayData.weatherLocation
     });
   };
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-md p-3">
-      {/* 寬度優化：使用 w-full 並微調最大寬度，確保內容飽滿 */}
       <div className="w-full max-w-lg bg-[#FFF9F2] rounded-[2.5rem] border border-[#E5D5C5] shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
         <div className="px-6 pt-6 pb-4 flex items-start justify-between">
@@ -89,6 +90,7 @@ export default function EditHeroModal({ dayData, onSave, onClose }) {
 
         {/* Body */}
         <div className="px-6 pb-8 space-y-5">
+          {/* 標題 */}
           <div>
             <label className="block text-[10px] font-bold text-[#A8937C] mb-1.5 uppercase tracking-widest px-1">標題</label>
             <div className="flex items-center gap-3 border border-[#E5D5C5] rounded-2xl px-4 py-3 bg-white focus-within:ring-1 focus-within:ring-[#C6A087] shadow-sm">
@@ -97,6 +99,7 @@ export default function EditHeroModal({ dayData, onSave, onClose }) {
             </div>
           </div>
 
+          {/* 地點 */}
           <div>
             <label className="block text-[10px] font-bold text-[#A8937C] mb-1.5 uppercase tracking-widest px-1">地點 (地名自動抓取天氣)</label>
             <div className="flex items-center gap-3 border border-[#E5D5C5] rounded-2xl px-4 py-3 bg-white focus-within:ring-1 focus-within:ring-[#C6A087] shadow-sm">
@@ -105,9 +108,9 @@ export default function EditHeroModal({ dayData, onSave, onClose }) {
             </div>
           </div>
 
+          {/* 封面圖片 */}
           <div>
             <label className="block text-[10px] font-bold text-[#A8937C] mb-1.5 uppercase tracking-widest px-1">封面圖片網址</label>
-            {/* 關鍵：加入 min-w-0 解決網址溢出 */}
             <div className="flex items-center gap-3 border border-[#E5D5C5] rounded-2xl px-4 py-3 bg-white focus-within:ring-1 focus-within:ring-[#C6A087] shadow-sm min-w-0">
               <ImageIcon className="w-4 h-4 text-[#C6A087] shrink-0" />
               <input 
@@ -116,6 +119,21 @@ export default function EditHeroModal({ dayData, onSave, onClose }) {
                 onChange={(e) => update({ heroImage: e.target.value })} 
                 placeholder="貼上圖片網址" 
                 className="flex-1 text-sm outline-none bg-transparent min-w-0 overflow-hidden" 
+              />
+            </div>
+          </div>
+
+          {/* 今日提醒 (新增區塊) */}
+          <div>
+            <label className="block text-[10px] font-bold text-[#A8937C] mb-1.5 uppercase tracking-widest px-1">今日行程提醒 (有文字才顯示)</label>
+            <div className="flex items-start gap-3 border border-[#E5D5C5] rounded-2xl px-4 py-3 bg-white focus-within:ring-1 focus-within:ring-[#C6A087] shadow-sm">
+              <StickyNote className="w-4 h-4 text-[#C6A087] shrink-0 mt-0.5" />
+              <textarea 
+                rows={3}
+                value={form.dayNotes} 
+                onChange={(e) => update({ dayNotes: e.target.value })} 
+                placeholder="輸入今天的特別叮嚀內容..." 
+                className="flex-1 text-sm outline-none bg-transparent resize-none leading-relaxed"
               />
             </div>
           </div>
