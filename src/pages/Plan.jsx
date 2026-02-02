@@ -25,6 +25,7 @@ import {
   Link,
   ArrowLeftRight,
   AlertCircle,
+  CalendarOff, // 用於公休日圖示
 } from "lucide-react";
 
 export default function Plan({ trip, setTrip, dayIndex }) {
@@ -79,6 +80,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
       note: split(item.notes)[currentIndex] || split(item.notes)[0],
       address: split(item.address)[currentIndex] || split(item.address)[0],
       openingHours: split(item.openingHours)[currentIndex] || split(item.openingHours)[0],
+      offDay: split(item.offDay)[currentIndex] || split(item.offDay)[0], // 抓取公休日
       phone: split(item.phone)[currentIndex] || split(item.phone)[0],
       link: split(item.link)[currentIndex] || split(item.link)[0],
       ticketIds: typeof item.ticketIds === "string" 
@@ -195,7 +197,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       </section>
 
-      {/* 今日行程小提醒 - 獨立於時間線外且對齊天氣 */}
+      {/* 今日行程小提醒 - 對齊天氣 */}
       {currentDay?.dayNotes && (
         <section className="px-2 mb-8">
           <div className="flex items-center gap-2 mb-2 px-1">
@@ -213,7 +215,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
 
       {/* 行程列表區域 */}
       <div className="mt-2 ml-5 mr-0 relative">
-        {/* 垂直時間線 - 從行程項目的圓點正下方開始 */}
+        {/* 垂直時間線 */}
         <div className="absolute left-0 top-6 bottom-0 w-px bg-[#E5D5C5] -z-0" />
 
         <DragDropContext onDragEnd={isViewer ? () => {} : onDragEnd}>
@@ -231,7 +233,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                     <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={isViewer}>
                       {(drag) => (
                         <div ref={drag.innerRef} {...drag.draggableProps} {...drag.dragHandleProps} className="relative pl-4 pr-2 mb-5">
-                          {/* 行程圓點 - 精準定位於 w-px (1px) 的線上 */}
+                          {/* 行程圓點 - 修復還原正確位置 -left-[6px] */}
                           <div className="absolute -left-[6px] top-6 w-3 h-3 bg-[#F7F1EB] border-2 border-[#C6A087] rounded-full z-10" />
                           
                           <div className="relative overflow-visible">
@@ -300,6 +302,15 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                   </div>
                                 )}
                                 {branch.openingHours && <div className="flex items-start gap-1.5 text-[11px] text-[#5A4636]"><Clock className="w-3.5 h-3.5 text-[#C6A087] shrink-0 mt-0.5" /><span>{branch.openingHours}</span></div>}
+                                
+                                {/* 新增：公休日顯示 */}
+                                {branch.offDay && (
+                                  <div className="flex items-start gap-1.5 text-[11px] text-[#B43737] font-black">
+                                    <CalendarOff className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                                    <span>公休日：{branch.offDay}</span>
+                                  </div>
+                                )}
+
                                 {branch.phone && <div className="flex items-start gap-1.5 text-[11px] text-[#5A4636]"><Phone className="w-3.5 h-3.5 text-[#C6A087] shrink-0 mt-0.5" /><span>{branch.phone}</span></div>}
                                 {linkData && (
                                   <div onClick={(e) => { e.stopPropagation(); window.open(linkData.url, "_blank"); }} className="flex items-start gap-1.5 text-[11px] text-blue-500 font-medium cursor-pointer hover:underline transition-all">
@@ -351,7 +362,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         <div className="flex justify-center mt-4 px-2">
           <button onClick={() => setTrip((prev) => {
             const next = structuredClone(prev);
-            next.days[activeDayIndex].items.push({ id: `item-${Date.now()}`, time: "09:00", type: "ATTRACTION", title: "新的行程", ticketIds: [], subtitle: "", address: "", openingHours: "", phone: "", notes: "", link: "" });
+            next.days[activeDayIndex].items.push({ id: `item-${Date.now()}`, time: "09:00", type: "ATTRACTION", title: "新的行程", ticketIds: [], subtitle: "", address: "", openingHours: "", offDay: "", phone: "", notes: "", link: "" });
             return next;
           })} className="w-full max-w-xs py-2.5 rounded-full border border-dashed border-[#C6A087] bg-white text-xs text-[#8C6A4F] font-bold shadow-sm active:scale-95 transition-all">
             ＋ 新增行程
