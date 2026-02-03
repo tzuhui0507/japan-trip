@@ -175,8 +175,8 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       </div>
 
-      {/* 天氣預報 - 修改間距 mb-8 -> mb-4 */}
-      <section className="mb-4 pl-2 pr-2">
+      {/* 天氣預報 - 修改間距 mb-8 -> mb-1 */}
+      <section className="mb-1 pl-2 pr-2">
         <div className="flex items-center justify-between mb-3 px-1">
           <div>
             <p className="text-sm font-bold text-[#5A4636]">{currentDay?.weatherLocation || "未設定地點"}</p>
