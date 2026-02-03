@@ -1,6 +1,6 @@
 // src/components/EditItemModal.jsx
 import React, { useMemo, useState } from "react";
-import { X, Check, UtensilsCrossed, Landmark, Train, BedDouble, Ticket, Clock, Phone, Link, Layers, MapPin, StickyNote, Pin, Bookmark, CalendarOff } from "lucide-react";
+import { X, Check, UtensilsCrossed, Landmark, Train, BedDouble, Ticket, Clock, Phone, Link, Layers, MapPin, StickyNote, Pin, Bookmark, CalendarOff, Trash2 } from "lucide-react";
 
 const TYPE_OPTIONS = {
   ATTRACTION: { key: "ATTRACTION", label: "景點", icon: Landmark, pillBg: "#E7EEF9", pillText: "#4A607F" },
@@ -19,14 +19,15 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
     return { a: parts[0] || "", b: parts[1] || "" };
   };
 
-  const [baseForm, setBaseForm] = useState({ time: item.time || "09:00", type: item.type || "ATTRACTION" });
+  // 初始化使用 || "" 確保空值不會變回預設時間
+  const [baseForm, setBaseForm] = useState({ time: item.time || "", type: item.type || "ATTRACTION" });
   
   const initialData = useMemo(() => ({
     title: parseBranch(item.title),
     subtitle: parseBranch(item.subtitle),
     address: parseBranch(item.address),
     openingHours: parseBranch(item.openingHours),
-    offDay: parseBranch(item.offDay), // 新增：公休日
+    offDay: parseBranch(item.offDay),
     phone: parseBranch(item.phone),
     notes: parseBranch(item.notes),
     link: parseBranch(item.link),
@@ -37,7 +38,7 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
     subtitle: initialData.subtitle.a, 
     address: initialData.address.a, 
     openingHours: initialData.openingHours.a, 
-    offDay: initialData.offDay.a, // 新增
+    offDay: initialData.offDay.a,
     phone: initialData.phone.a, 
     notes: initialData.notes.a, 
     link: initialData.link.a 
@@ -48,7 +49,7 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
     subtitle: initialData.subtitle.b, 
     address: initialData.address.b, 
     openingHours: initialData.openingHours.b, 
-    offDay: initialData.offDay.b, // 新增
+    offDay: initialData.offDay.b,
     phone: initialData.phone.b, 
     notes: initialData.notes.b, 
     link: initialData.link.b 
@@ -68,17 +69,23 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
 
   const handleSave = () => {
     const hasAnyB = Object.values(formB).some(val => val && val.trim() !== "") || branchTickets.B.length > 0;
-    const combine = (key) => hasAnyB ? `${formA[key]}---${formB[key]}` : formA[key];
+    
+    // 安全加強版：在 combine 時確保即便沒資料也會存入空字串而非 undefined
+    const combine = (key) => {
+      const valA = formA[key] || "";
+      const valB = formB[key] || "";
+      return hasAnyB ? `${valA}---${valB}` : valA;
+    };
     
     onSave({ 
       ...item, 
-      time: baseForm.time, 
+      time: baseForm.time || "", // 安全加強版：確保即便 baseForm 出錯也存入空字串
       type: baseForm.type, 
       title: combine("title"), 
       subtitle: combine("subtitle"), 
       address: combine("address"), 
       openingHours: combine("openingHours"), 
-      offDay: combine("offDay"), // 新增
+      offDay: combine("offDay"),
       phone: combine("phone"), 
       notes: combine("notes"), 
       link: combine("link"), 
@@ -111,6 +118,7 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-md p-2 sm:p-4">
       <div className="w-[98%] sm:max-w-2xl bg-[#FFF9F2] rounded-[2rem] border border-[#E5D5C5] shadow-2xl overflow-hidden flex flex-col max-h-[88vh]">
+        {/* Header */}
         <div className="px-4 sm:px-6 py-4 flex items-center justify-between border-b border-[#E5D5C5]/50 bg-white/70 backdrop-blur-sm sticky top-0 z-20">
           <div className="flex-1 min-w-0 pr-2">
             <p className="text-[10px] tracking-[0.2em] text-[#C6A087] uppercase font-bold mb-0.5">行程編輯</p>
@@ -122,17 +130,37 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
           </div>
         </div>
 
+        {/* Body */}
         <div className="px-3 sm:px-6 py-6 space-y-8 overflow-y-auto scrollbar-none pb-20 flex-1">
           <div className="flex flex-col gap-8">
+            {/* 時間區塊 */}
             <div className="w-full">
               <label className="flex items-center gap-1.5 text-[11px] font-bold text-[#8C6A4F] mb-2 uppercase tracking-widest px-1">
                 <Clock className="w-3.5 h-3.5" /> 抵達時間
               </label>
-              <div className="flex items-center justify-center border border-[#E5D5C5] rounded-xl bg-white shadow-sm focus-within:ring-1 focus-within:ring-[#C6A087] h-14">
-                <input type="time" value={baseForm.time} onChange={(e) => setBaseForm(prev => ({ ...prev, time: e.target.value }))} className="w-full h-full text-center text-[16px] outline-none bg-transparent" />
+              <div className="flex items-center gap-2">
+                <div className="flex-1 flex items-center justify-center border border-[#E5D5C5] rounded-xl bg-white shadow-sm focus-within:ring-1 focus-within:ring-[#C6A087] h-14">
+                  <input 
+                    type="time" 
+                    value={baseForm.time} 
+                    onChange={(e) => setBaseForm(prev => ({ ...prev, time: e.target.value }))} 
+                    className="w-full h-full text-center text-[16px] outline-none bg-transparent" 
+                  />
+                </div>
+                <button 
+                  onClick={() => setBaseForm(prev => ({ ...prev, time: "" }))}
+                  className="w-14 h-14 flex items-center justify-center rounded-xl border border-[#E5D5C5] bg-white text-[#E35B5B] shadow-sm active:scale-90 transition-all"
+                  title="不顯示時間"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
               </div>
+              {baseForm.time === "" && (
+                <p className="text-[10px] text-[#C6A087] mt-1 px-1 italic">目前設定為「不固定時間」，卡片將不顯示時間。</p>
+              )}
             </div>
 
+            {/* 類別區塊 */}
             <div className="w-full">
               <label className="flex items-center gap-1.5 text-[11px] font-bold text-[#8C6A4F] mb-3 uppercase tracking-widest px-1">
                 <Layers className="w-3.5 h-3.5" /> 類別選擇
@@ -141,7 +169,17 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
                 {Object.values(TYPE_OPTIONS).map((t) => {
                   const active = baseForm.type === t.key;
                   return (
-                    <button key={t.key} type="button" onClick={() => setBaseForm(prev => ({ ...prev, type: t.key }))} style={{ backgroundColor: active ? t.pillBg : 'white', color: active ? t.pillText : '#5A4636', borderColor: active ? t.pillText : '#E5D5C5' }} className="flex-1 min-w-[70px] sm:min-w-[80px] h-14 rounded-2xl flex flex-col items-center justify-center border transition-all gap-1 shadow-sm active:scale-95">
+                    <button 
+                      key={t.key} 
+                      type="button" 
+                      onClick={() => setBaseForm(prev => ({ ...prev, type: t.key }))} 
+                      style={{ 
+                        backgroundColor: active ? t.pillBg : 'white', 
+                        color: active ? t.pillText : '#5A4636', 
+                        borderColor: active ? t.pillText : '#E5D5C5' 
+                      }} 
+                      className="flex-1 min-w-[70px] sm:min-w-[80px] h-14 rounded-2xl flex flex-col items-center justify-center border transition-all gap-1 shadow-sm active:scale-95"
+                    >
                       <t.icon className={`w-5 h-5 ${active ? "scale-110" : ""}`} />
                       <span className="text-[10px] font-bold tracking-tight">{t.label}</span>
                     </button>
@@ -157,11 +195,10 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
           {renderField("副標題", "subtitle", Bookmark)}
           {renderField("詳細地址", "address", MapPin)}
           {renderField("營業時間", "openingHours", Clock)}
-          {renderField("公休日", "offDay", CalendarOff)} {/* 新增欄位 */}
+          {renderField("公休日", "offDay", CalendarOff)}
           {renderField("聯絡電話", "phone", Phone)}
           {renderField("外部連結", "link", Link)}
           
-          {/* 票券方案綁定 (保持不變) */}
           <div className="bg-[#FDF9F5] border border-[#E5D5C5]/50 rounded-2xl p-4 space-y-4 shadow-sm">
             <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#8C6A4F] uppercase tracking-widest"><Ticket className="w-4 h-4" /> 票券方案綁定</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

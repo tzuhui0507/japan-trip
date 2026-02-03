@@ -233,7 +233,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                     <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={isViewer}>
                       {(drag) => (
                         <div ref={drag.innerRef} {...drag.draggableProps} {...drag.dragHandleProps} className="relative pl-4 pr-2 mb-5">
-                          {/* 行程圓點 - 修復還原正確位置 -left-[6px] */}
+                          {/* 行程圓點 - 精準定位於 w-px (1px) 的線上 */}
                           <div className="absolute -left-[6px] top-6 w-3 h-3 bg-[#F7F1EB] border-2 border-[#C6A087] rounded-full z-10" />
                           
                           <div className="relative overflow-visible">
@@ -273,7 +273,10 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm" style={{ backgroundColor: meta.pillBg, color: meta.pillText }}>
                                   <TypeIcon className="w-3 h-3" /> {meta.label}
                                 </span>
-                                <span className="text-[11px] text-[#8C6A4F] font-bold tracking-tight">{item.time}</span>
+                                {/* 修改處：時間欄位若為空則隱藏 */}
+                                {item.time && (
+                                  <span className="text-[11px] text-[#8C6A4F] font-bold tracking-tight">{item.time}</span>
+                                )}
                               </div>
                               
                               <h3 className="text-base font-bold text-[#5A4636] leading-snug">{branch.title}</h3>
@@ -303,7 +306,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                 )}
                                 {branch.openingHours && <div className="flex items-start gap-1.5 text-[11px] text-[#5A4636]"><Clock className="w-3.5 h-3.5 text-[#C6A087] shrink-0 mt-0.5" /><span>{branch.openingHours}</span></div>}
                                 
-                                {/* 新增：公休日顯示 */}
+                                {/* 顯示公休日 */}
                                 {branch.offDay && (
                                   <div className="flex items-start gap-1.5 text-[11px] text-[#B43737] font-black">
                                     <CalendarOff className="w-3.5 h-3.5 shrink-0 mt-0.5" />
@@ -360,9 +363,10 @@ export default function Plan({ trip, setTrip, dayIndex }) {
 
       {!isViewer && (
         <div className="flex justify-center mt-4 px-2">
+          {/* 修正處：將 time: "09:00" 改為 time: ""，避免每次編輯新增行程都出現預設時間 */}
           <button onClick={() => setTrip((prev) => {
             const next = structuredClone(prev);
-            next.days[activeDayIndex].items.push({ id: `item-${Date.now()}`, time: "09:00", type: "ATTRACTION", title: "新的行程", ticketIds: [], subtitle: "", address: "", openingHours: "", offDay: "", phone: "", notes: "", link: "" });
+            next.days[activeDayIndex].items.push({ id: `item-${Date.now()}`, time: "", type: "ATTRACTION", title: "新的行程", ticketIds: [], subtitle: "", address: "", openingHours: "", offDay: "", phone: "", notes: "", link: "" });
             return next;
           })} className="w-full max-w-xs py-2.5 rounded-full border border-dashed border-[#C6A087] bg-white text-xs text-[#8C6A4F] font-bold shadow-sm active:scale-95 transition-all">
             ＋ 新增行程
