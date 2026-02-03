@@ -175,8 +175,8 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       </div>
 
-      {/* 天氣預報 */}
-      <section className="mb-8 pl-2 pr-2">
+      {/* 天氣預報 - 修改間距 mb-8 -> mb-4 */}
+      <section className="mb-4 pl-2 pr-2">
         <div className="flex items-center justify-between mb-3 px-1">
           <div>
             <p className="text-sm font-bold text-[#5A4636]">{currentDay?.weatherLocation || "未設定地點"}</p>
@@ -199,7 +199,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
 
       {/* 今日行程小提醒 - 對齊天氣 */}
       {currentDay?.dayNotes && (
-        <section className="px-2 mb-8">
+        <section className="px-2 mb-6">
           <div className="flex items-center gap-2 mb-2 px-1">
             <AlertCircle className="w-5 h-5 text-[#5A4636]" />
             <h4 className="text-m font-bold text-[#5A4636] uppercase tracking-wider">今日行程提醒</h4>
@@ -233,7 +233,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                     <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={isViewer}>
                       {(drag) => (
                         <div ref={drag.innerRef} {...drag.draggableProps} {...drag.dragHandleProps} className="relative pl-4 pr-2 mb-5">
-                          {/* 行程圓點 - 精準定位於 w-px (1px) 的線上 */}
+                          {/* 行程圓點 - 修復還原正確位置 -left-[6px] */}
                           <div className="absolute -left-[6px] top-6 w-3 h-3 bg-[#F7F1EB] border-2 border-[#C6A087] rounded-full z-10" />
                           
                           <div className="relative overflow-visible">
@@ -273,7 +273,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm" style={{ backgroundColor: meta.pillBg, color: meta.pillText }}>
                                   <TypeIcon className="w-3 h-3" /> {meta.label}
                                 </span>
-                                {/* 修改處：時間欄位若為空則隱藏 */}
                                 {item.time && (
                                   <span className="text-[11px] text-[#8C6A4F] font-bold tracking-tight">{item.time}</span>
                                 )}
@@ -301,12 +300,11 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                 {branch.address && (
                                   <div onClick={(e) => handleNavigation(e, branch.address, branch.title)} className="flex items-start gap-1.5 text-[11px] text-[#5A4636] cursor-pointer hover:opacity-70 transition-opacity">
                                     <MapPin className="w-3.5 h-3.5 text-[#C6A087] shrink-0 mt-0.5" />
-                                    <span className="truncate flex-1">{branch.address}</span>
+                                    <span className="truncate flex-1 font-bold underline">{branch.address}</span>
                                   </div>
                                 )}
                                 {branch.openingHours && <div className="flex items-start gap-1.5 text-[11px] text-[#5A4636]"><Clock className="w-3.5 h-3.5 text-[#C6A087] shrink-0 mt-0.5" /><span>{branch.openingHours}</span></div>}
                                 
-                                {/* 顯示公休日 */}
                                 {branch.offDay && (
                                   <div className="flex items-start gap-1.5 text-[11px] text-[#B43737] font-black">
                                     <CalendarOff className="w-3.5 h-3.5 shrink-0 mt-0.5" />
@@ -363,7 +361,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
 
       {!isViewer && (
         <div className="flex justify-center mt-4 px-2">
-          {/* 修正處：將 time: "09:00" 改為 time: ""，避免每次編輯新增行程都出現預設時間 */}
           <button onClick={() => setTrip((prev) => {
             const next = structuredClone(prev);
             next.days[activeDayIndex].items.push({ id: `item-${Date.now()}`, time: "", type: "ATTRACTION", title: "新的行程", ticketIds: [], subtitle: "", address: "", openingHours: "", offDay: "", phone: "", notes: "", link: "" });
