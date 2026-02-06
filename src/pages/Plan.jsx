@@ -25,7 +25,7 @@ import {
   Link,
   ArrowLeftRight,
   AlertCircle,
-  CalendarOff, // 用於公休日圖示
+  CalendarOff, 
 } from "lucide-react";
 
 export default function Plan({ trip, setTrip, dayIndex }) {
@@ -71,22 +71,31 @@ export default function Plan({ trip, setTrip, dayIndex }) {
   const getBranchData = (item) => {
     const split = (val) => (typeof val === "string" ? val.split("---") : [val]);
     const currentIndex = branchIndexMap[item.id] || 0;
-    const titles = split(item.title);
+    const allTitles = split(item.title);
+    const branchCount = allTitles.length;
+
+    const getVal = (val) => {
+      const parts = split(val);
+      return (parts[currentIndex] !== undefined && parts[currentIndex].trim() !== "") 
+        ? parts[currentIndex] 
+        : parts[0];
+    };
+
     return {
-      hasBranch: titles.length > 1,
+      hasBranch: branchCount > 1,
       currentIndex,
-      title: titles[currentIndex] || titles[0],
-      subtitle: split(item.subtitle)[currentIndex] || split(item.subtitle)[0],
-      note: split(item.notes)[currentIndex] || split(item.notes)[0],
-      address: split(item.address)[currentIndex] || split(item.address)[0],
-      openingHours: split(item.openingHours)[currentIndex] || split(item.openingHours)[0],
-      offDay: split(item.offDay)[currentIndex] || split(item.offDay)[0], // 抓取公休日
-      phone: split(item.phone)[currentIndex] || split(item.phone)[0],
-      link: split(item.link)[currentIndex] || split(item.link)[0],
+      branchCount,
+      title: getVal(item.title),
+      subtitle: getVal(item.subtitle),
+      note: getVal(item.notes),
+      address: getVal(item.address),
+      openingHours: getVal(item.openingHours),
+      offDay: getVal(item.offDay),
+      phone: getVal(item.phone),
+      link: getVal(item.link),
       ticketIds: typeof item.ticketIds === "string" 
-        ? (item.ticketIds.split("---")[currentIndex] || item.ticketIds.split("---")[0]).split(",").filter(Boolean)
-        : (Array.isArray(item.ticketIds) ? item.ticketIds : []),
-      altTitle: titles.length > 1 ? titles[currentIndex === 0 ? 1 : 0] : "方案"
+        ? (split(item.ticketIds)[currentIndex] || split(item.ticketIds)[0]).split(",").filter(Boolean)
+        : (Array.isArray(item.ticketIds) ? item.ticketIds : [])
     };
   };
 
@@ -175,7 +184,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       </div>
 
-      {/* 天氣預報 - 修改間距 mb-8 -> mb-1 */}
+      {/* 天氣預報 */}
       <section className="mb-1 pl-2 pr-2">
         <div className="flex items-center justify-between mb-3 px-1">
           <div>
@@ -197,7 +206,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       </section>
 
-      {/* 今日行程小提醒 - 對齊天氣 */}
+      {/* 今日行程小提醒 */}
       {currentDay?.dayNotes && (
         <section className="px-2 mb-6">
           <div className="flex items-center gap-2 mb-2 px-1">
@@ -215,7 +224,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
 
       {/* 行程列表區域 */}
       <div className="mt-2 ml-5 mr-0 relative">
-        {/* 垂直時間線 */}
         <div className="absolute left-0 top-6 bottom-0 w-px bg-[#E5D5C5] -z-0" />
 
         <DragDropContext onDragEnd={isViewer ? () => {} : onDragEnd}>
@@ -233,7 +241,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                     <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={isViewer}>
                       {(drag) => (
                         <div ref={drag.innerRef} {...drag.draggableProps} {...drag.dragHandleProps} className="relative pl-4 pr-2 mb-5">
-                          {/* 行程圓點 - 修復還原正確位置 -left-[6px] */}
                           <div className="absolute -left-[6px] top-6 w-3 h-3 bg-[#F7F1EB] border-2 border-[#C6A087] rounded-full z-10" />
                           
                           <div className="relative overflow-visible">
@@ -261,11 +268,25 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                             >
                               {branch.hasBranch && (
                                 <div className="flex items-center justify-between mb-3 pb-2 border-b border-dashed border-[#F0E3D5]">
-                                  <div className="text-[10px] font-bold text-[#C6A087] tracking-tight">✦ 方案 {branch.currentIndex === 0 ? "1" : "2"}</div>
-                                  <button onClick={(e) => { e.stopPropagation(); setBranchIndexMap(prev => ({ ...prev, [item.id]: prev[item.id] === 1 ? 0 : 1 })); }} className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-[#F7F1EB] hover:bg-[#E5D5C5] transition-all shadow-sm">
-                                    <ArrowLeftRight className="w-3 h-3 text-[#8C6A4F]" />
-                                    <span className="text-[10px] text-[#8C6A4F] font-bold">方案 {branch.currentIndex === 0 ? "2" : "1"}：<span className="text-[#C6A087] font-semibold truncate max-w-[100px] inline-block align-bottom">{branch.altTitle}</span></span>
-                                  </button>
+                                  <div className="text-[10px] font-bold text-[#C6A087] tracking-tight uppercase font-black">方案 {branch.currentIndex + 1}</div>
+                                  <div className="flex gap-1.5">
+                                    {[0, 1, 2].slice(0, branch.branchCount).map((idx) => (
+                                      <button
+                                        key={idx}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setBranchIndexMap(prev => ({ ...prev, [item.id]: idx }));
+                                        }}
+                                        className={`w-6 h-6 rounded-full text-[10px] font-black transition-all flex items-center justify-center shadow-sm ${
+                                          branch.currentIndex === idx 
+                                          ? "bg-[#C6A087] text-white scale-110" 
+                                          : "bg-[#F7F1EB] text-[#8C6A4F] hover:bg-[#E5D5C5]"
+                                        }`}
+                                      >
+                                        {idx + 1}
+                                      </button>
+                                    ))}
+                                  </div>
                                 </div>
                               )}
 
@@ -335,7 +356,8 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                               id={`transit-${item.id}`}
                               defaultData={item.transit}
                               isViewer={isViewer}
-                              branchIndex={currentItems[index + 1] ? (branchIndexMap[currentItems[index + 1].id] || 0) : 0} 
+                              // ✅ 修正處：連動下一個行程項目的 branchIndex
+                              branchIndex={branchIndexMap[currentItems[index + 1]?.id] || 0} 
                               onUpdate={(transitId, data) => {
                                 if (isViewer) return;
                                 setTrip(prev => {

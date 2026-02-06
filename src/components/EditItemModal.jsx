@@ -12,14 +12,17 @@ const TYPE_OPTIONS = {
 export default function EditItemModal({ item, trip, tickets = [], onSave, onClose }) {
   const ticketList = tickets?.length ? tickets : trip?.tickets || [];
 
+  // 解析三段支線邏輯 (A---B---C)
   const parseBranch = (val) => {
-    if (typeof val !== "string") return { a: val || "", b: "" };
-    if (!val.includes("---")) return { a: val, b: "" };
+    if (typeof val !== "string") return { a: val || "", b: "", c: "" };
     const parts = val.split("---");
-    return { a: parts[0] || "", b: parts[1] || "" };
+    return { 
+      a: parts[0] || "", 
+      b: parts[1] || "", 
+      c: parts[2] || "" 
+    };
   };
 
-  // 初始化使用 || "" 確保空值不會變回預設時間
   const [baseForm, setBaseForm] = useState({ time: item.time || "", type: item.type || "ATTRACTION" });
   
   const initialData = useMemo(() => ({
@@ -33,53 +36,43 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
     link: parseBranch(item.link),
   }), [item]);
 
-  const [formA, setFormA] = useState({ 
-    title: initialData.title.a, 
-    subtitle: initialData.subtitle.a, 
-    address: initialData.address.a, 
-    openingHours: initialData.openingHours.a, 
-    offDay: initialData.offDay.a,
-    phone: initialData.phone.a, 
-    notes: initialData.notes.a, 
-    link: initialData.link.a 
-  });
-  
-  const [formB, setFormB] = useState({ 
-    title: initialData.title.b, 
-    subtitle: initialData.subtitle.b, 
-    address: initialData.address.b, 
-    openingHours: initialData.openingHours.b, 
-    offDay: initialData.offDay.b,
-    phone: initialData.phone.b, 
-    notes: initialData.notes.b, 
-    link: initialData.link.b 
-  });
+  const [formA, setFormA] = useState({ ...initialData.title, title: initialData.title.a, subtitle: initialData.subtitle.a, address: initialData.address.a, openingHours: initialData.openingHours.a, offDay: initialData.offDay.a, phone: initialData.phone.a, notes: initialData.notes.a, link: initialData.link.a });
+  const [formB, setFormB] = useState({ title: initialData.title.b, subtitle: initialData.subtitle.b, address: initialData.address.b, openingHours: initialData.openingHours.b, offDay: initialData.offDay.b, phone: initialData.phone.b, notes: initialData.notes.b, link: initialData.link.b });
+  const [formC, setFormC] = useState({ title: initialData.title.c, subtitle: initialData.subtitle.c, address: initialData.address.c, openingHours: initialData.openingHours.c, offDay: initialData.offDay.c, phone: initialData.phone.c, notes: initialData.notes.c, link: initialData.link.c });
 
   const [branchTickets, setBranchTickets] = useState(useMemo(() => {
     let ids = item.ticketIds || [];
     if (typeof ids === "string" && ids.includes("---")) {
       const parts = ids.split("---");
-      return { A: parts[0]?.split(",").filter(Boolean) || [], B: parts[1]?.split(",").filter(Boolean) || [] };
+      return { 
+        A: parts[0]?.split(",").filter(Boolean) || [], 
+        B: parts[1]?.split(",").filter(Boolean) || [],
+        C: parts[2]?.split(",").filter(Boolean) || []
+      };
     }
     const normalized = Array.isArray(ids) ? ids : (typeof ids === "string" ? ids.split(",") : []);
-    return { A: [...normalized], B: [] };
+    return { A: [...normalized], B: [], C: [] };
   }, [item.ticketIds]));
 
   const [ticketMenu, setTicketMenu] = useState(null);
 
   const handleSave = () => {
+    // 檢查是否有填寫任何 B 或 C 方案的內容
     const hasAnyB = Object.values(formB).some(val => val && val.trim() !== "") || branchTickets.B.length > 0;
+    const hasAnyC = Object.values(formC).some(val => val && val.trim() !== "") || branchTickets.C.length > 0;
     
-    // 安全加強版：在 combine 時確保即便沒資料也會存入空字串而非 undefined
     const combine = (key) => {
-      const valA = formA[key] || "";
-      const valB = formB[key] || "";
-      return hasAnyB ? `${valA}---${valB}` : valA;
+      const vA = (formA[key] || "").trim();
+      const vB = (formB[key] || "").trim();
+      const vC = (formC[key] || "").trim();
+      if (hasAnyC) return `${vA}---${vB}---${vC}`;
+      if (hasAnyB) return `${vA}---${vB}`;
+      return vA;
     };
     
     onSave({ 
       ...item, 
-      time: baseForm.time || "", // 安全加強版：確保即便 baseForm 出錯也存入空字串
+      time: baseForm.time || "", 
       type: baseForm.type, 
       title: combine("title"), 
       subtitle: combine("subtitle"), 
@@ -89,7 +82,11 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
       phone: combine("phone"), 
       notes: combine("notes"), 
       link: combine("link"), 
-      ticketIds: hasAnyB ? `${branchTickets.A.join(",")}---${branchTickets.B.join(",")}` : branchTickets.A.join(",") 
+      ticketIds: hasAnyC 
+        ? `${branchTickets.A.join(",")}---${branchTickets.B.join(",")}---${branchTickets.C.join(",")}`
+        : hasAnyB 
+          ? `${branchTickets.A.join(",")}---${branchTickets.B.join(",")}`
+          : branchTickets.A.join(",")
     });
   };
 
@@ -98,17 +95,27 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
       <label className="flex items-center gap-1.5 text-[11px] font-bold text-[#8C6A4F] uppercase px-1 tracking-widest">
         {Icon && <Icon className="w-3.5 h-3.5" />} {label}
       </label>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="flex flex-col gap-3">
+        {/* 方案 1 */}
         <div className="relative">
           <span className="absolute -top-2 left-2 px-1.5 bg-[#FFF9F2] text-[9px] text-[#C6A087] font-bold z-10">方案 1</span>
           <div className="w-full border border-[#E5D5C5] rounded-xl bg-white shadow-sm overflow-hidden">
             <input value={formA[key]} onChange={(e) => setFormA(prev => ({ ...prev, [key]: e.target.value }))} className="w-full px-3 py-2.5 text-[14px] outline-none" placeholder={`輸入方案 1 ${label}...`} />
           </div>
         </div>
-        <div className="relative">
-          <span className="absolute -top-2 left-2 px-1.5 bg-[#FFF9F2] text-[9px] text-[#8C6A4F] font-bold z-10">方案 2</span>
-          <div className="w-full border border-[#E5D5C5] border-dashed rounded-xl bg-[#F7F1EB]/30 overflow-hidden">
-            <input value={formB[key]} onChange={(e) => setFormB(prev => ({ ...prev, [key]: e.target.value }))} className="w-full px-3 py-2.5 text-[14px] outline-none bg-transparent" placeholder="輸入方案 2..." />
+        {/* 方案 2 與 3 並列 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="relative">
+            <span className="absolute -top-2 left-2 px-1.5 bg-[#FFF9F2] text-[9px] text-[#8C6A4F] font-bold z-10">方案 2</span>
+            <div className="w-full border border-[#E5D5C5] border-dashed rounded-xl bg-[#F7F1EB]/30 overflow-hidden">
+              <input value={formB[key]} onChange={(e) => setFormB(prev => ({ ...prev, [key]: e.target.value }))} className="w-full px-3 py-2.5 text-[14px] outline-none bg-transparent" placeholder="輸入方案 2..." />
+            </div>
+          </div>
+          <div className="relative">
+            <span className="absolute -top-2 left-2 px-1.5 bg-[#FFF9F2] text-[9px] text-[#4A607F] font-bold z-10">方案 3</span>
+            <div className="w-full border border-[#D1D9E6] border-dashed rounded-xl bg-[#F0F2F9]/30 overflow-hidden">
+              <input value={formC[key]} onChange={(e) => setFormC(prev => ({ ...prev, [key]: e.target.value }))} className="w-full px-3 py-2.5 text-[14px] outline-none bg-transparent" placeholder="輸入方案 3..." />
+            </div>
           </div>
         </div>
       </div>
@@ -121,7 +128,7 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
         {/* Header */}
         <div className="px-4 sm:px-6 py-4 flex items-center justify-between border-b border-[#E5D5C5]/50 bg-white/70 backdrop-blur-sm sticky top-0 z-20">
           <div className="flex-1 min-w-0 pr-2">
-            <p className="text-[10px] tracking-[0.2em] text-[#C6A087] uppercase font-bold mb-0.5">行程編輯</p>
+            <p className="text-[10px] tracking-[0.2em] text-[#C6A087] uppercase font-bold mb-0.5">行程編輯 (三方案版)</p>
             <h2 className="text-base font-bold text-[#5A4636] truncate">{formA.title || "新的行程"}</h2>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
@@ -140,24 +147,10 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
               </label>
               <div className="flex items-center gap-2">
                 <div className="flex-1 flex items-center justify-center border border-[#E5D5C5] rounded-xl bg-white shadow-sm focus-within:ring-1 focus-within:ring-[#C6A087] h-14">
-                  <input 
-                    type="time" 
-                    value={baseForm.time} 
-                    onChange={(e) => setBaseForm(prev => ({ ...prev, time: e.target.value }))} 
-                    className="w-full h-full text-center text-[16px] outline-none bg-transparent" 
-                  />
+                  <input type="time" value={baseForm.time} onChange={(e) => setBaseForm(prev => ({ ...prev, time: e.target.value }))} className="w-full h-full text-center text-[16px] outline-none bg-transparent" />
                 </div>
-                <button 
-                  onClick={() => setBaseForm(prev => ({ ...prev, time: "" }))}
-                  className="w-14 h-14 flex items-center justify-center rounded-xl border border-[#E5D5C5] bg-white text-[#E35B5B] shadow-sm active:scale-90 transition-all"
-                  title="不顯示時間"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
+                <button onClick={() => setBaseForm(prev => ({ ...prev, time: "" }))} className="w-14 h-14 flex items-center justify-center rounded-xl border border-[#E5D5C5] bg-white text-[#E35B5B] shadow-sm active:scale-90 transition-all"><Trash2 className="w-5 h-5" /></button>
               </div>
-              {baseForm.time === "" && (
-                <p className="text-[10px] text-[#C6A087] mt-1 px-1 italic">目前設定為「不固定時間」，卡片將不顯示時間。</p>
-              )}
             </div>
 
             {/* 類別區塊 */}
@@ -169,17 +162,7 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
                 {Object.values(TYPE_OPTIONS).map((t) => {
                   const active = baseForm.type === t.key;
                   return (
-                    <button 
-                      key={t.key} 
-                      type="button" 
-                      onClick={() => setBaseForm(prev => ({ ...prev, type: t.key }))} 
-                      style={{ 
-                        backgroundColor: active ? t.pillBg : 'white', 
-                        color: active ? t.pillText : '#5A4636', 
-                        borderColor: active ? t.pillText : '#E5D5C5' 
-                      }} 
-                      className="flex-1 min-w-[70px] sm:min-w-[80px] h-14 rounded-2xl flex flex-col items-center justify-center border transition-all gap-1 shadow-sm active:scale-95"
-                    >
+                    <button key={t.key} type="button" onClick={() => setBaseForm(prev => ({ ...prev, type: t.key }))} style={{ backgroundColor: active ? t.pillBg : 'white', color: active ? t.pillText : '#5A4636', borderColor: active ? t.pillText : '#E5D5C5' }} className="flex-1 min-w-[70px] sm:min-w-[80px] h-14 rounded-2xl flex flex-col items-center justify-center border transition-all gap-1 shadow-sm active:scale-95">
                       <t.icon className={`w-5 h-5 ${active ? "scale-110" : ""}`} />
                       <span className="text-[10px] font-bold tracking-tight">{t.label}</span>
                     </button>
@@ -199,40 +182,35 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
           {renderField("聯絡電話", "phone", Phone)}
           {renderField("外部連結", "link", Link)}
           
+          {/* 票券方案綁定 (升級為三方案) */}
           <div className="bg-[#FDF9F5] border border-[#E5D5C5]/50 rounded-2xl p-4 space-y-4 shadow-sm">
             <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#8C6A4F] uppercase tracking-widest"><Ticket className="w-4 h-4" /> 票券方案綁定</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2 border-b sm:border-b-0 sm:border-r border-[#E5D5C5]/30 pb-3 sm:pb-0 sm:pr-3">
-                <span className="text-[9px] font-bold text-[#C6A087] bg-white px-2 py-0.5 rounded-full border border-[#E5D5C5]">方案 1</span>
-                <div className="flex flex-wrap gap-2 min-h-[30px]">
-                  {branchTickets.A.map(id => (
-                    <span key={`A-${id}`} className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] bg-white border border-[#E5D5C5] text-[#5A4636]">
-                      {ticketList.find(x => x.id === id)?.title}
-                      <button onClick={() => setBranchTickets(p => ({ ...p, A: p.A.filter(x => x !== id) }))} className="ml-1 text-red-400 font-bold hover:text-red-600 transition-colors">×</button>
-                    </span>
-                  ))}
+            <div className="flex flex-col gap-4">
+              {/* 方案 A, B, C 的票券列表 */}
+              {['A', 'B', 'C'].map((b) => (
+                <div key={b} className={`p-2 rounded-xl border border-dashed ${b === 'A' ? 'bg-white border-[#E5D5C5]' : b === 'B' ? 'bg-[#F7F1EB]/50 border-[#E5D5C5]' : 'bg-[#F0F2F9]/50 border-[#D1D9E6]'}`}>
+                  <span className="text-[9px] font-bold text-[#8C6A4F] px-2 py-0.5 rounded-full bg-white border border-[#E5D5C5] mb-2 inline-block">方案 {b === 'A' ? '1' : b === 'B' ? '2' : '3'}</span>
+                  <div className="flex flex-wrap gap-2 min-h-[24px]">
+                    {branchTickets[b].map(id => (
+                      <span key={`${b}-${id}`} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] bg-white border border-[#E5D5C5] text-[#5A4636]">
+                        {ticketList.find(x => x.id === id)?.title}
+                        <button onClick={() => setBranchTickets(p => ({ ...p, [b]: p[b].filter(x => x !== id) }))} className="ml-1 text-red-400 font-bold hover:text-red-600 transition-colors">×</button>
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-2 sm:pl-1">
-                <span className="text-[9px] font-bold text-[#8C6A4F] bg-white px-2 py-0.5 rounded-full border border-[#E5D5C5]">方案 2</span>
-                <div className="flex flex-wrap gap-2 min-h-[30px]">
-                  {branchTickets.B.map(id => (
-                    <span key={`B-${id}`} className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] bg-white border border-[#E5D5C5] text-[#5A4636]">
-                      {ticketList.find(x => x.id === id)?.title}
-                      <button onClick={() => setBranchTickets(p => ({ ...p, B: p.B.filter(x => x !== id) }))} className="ml-1 text-red-400 font-bold hover:text-red-600 transition-colors">×</button>
-                    </span>
-                  ))}
-                </div>
-              </div>
+              ))}
             </div>
+            {/* 加入按鈕選單 */}
             <div className="pt-3 border-t border-[#E5D5C5]/30 flex flex-wrap gap-2">
               {ticketList.map((t) => (
                 <div key={t.id} className="relative">
                   <button type="button" onClick={() => setTicketMenu(ticketMenu === t.id ? null : t.id)} className={`px-3 py-1.5 rounded-xl text-[11px] border transition-all ${ticketMenu === t.id ? "bg-[#C6A087] text-white border-[#C6A087]" : "border-dashed border-[#C6A087] text-[#8C6A4F] bg-white hover:bg-[#F7F1EB]"}`}>＋ {t.title}</button>
                   {ticketMenu === t.id && (
-                    <div className="absolute bottom-full left-0 mb-2 z-[110] bg-white border border-[#E5D5C5] rounded-xl shadow-2xl p-1 flex flex-col min-w-[110px]">
-                      <button onClick={() => { setBranchTickets(p => ({ ...p, A: Array.from(new Set([...p.A, t.id])) })); setTicketMenu(null); }} className="px-3 py-2 text-[12px] text-left hover:bg-[#F7F1EB] rounded-lg border-b border-[#F0E3D5]/30">加入方案 1</button>
-                      <button onClick={() => { setBranchTickets(p => ({ ...p, B: Array.from(new Set([...p.B, t.id])) })); setTicketMenu(null); }} className="px-3 py-2 text-[12px] text-left hover:bg-[#F7F1EB] rounded-lg">加入方案 2</button>
+                    <div className="absolute bottom-full left-0 mb-2 z-[110] bg-white border border-[#E5D5C5] rounded-xl shadow-2xl p-1 flex flex-col min-w-[120px]">
+                      {['A', 'B', 'C'].map((b, idx) => (
+                        <button key={b} onClick={() => { setBranchTickets(p => ({ ...p, [b]: Array.from(new Set([...p[b], t.id])) })); setTicketMenu(null); }} className={`px-3 py-2 text-[12px] text-left hover:bg-[#F7F1EB] rounded-lg ${idx < 2 ? 'border-b border-[#F0E3D5]/30' : ''}`}>加入方案 {idx + 1}</button>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -240,19 +218,22 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
             </div>
           </div>
 
+          {/* 補充備註 (升級為三方案) */}
           <div className="space-y-2">
             <label className="flex items-center gap-1.5 text-[11px] font-bold text-[#8C6A4F] uppercase px-1 tracking-widest"><StickyNote className="w-3.5 h-3.5" /> 補充備註</label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex flex-col gap-3">
               <div className="relative">
                 <span className="absolute -top-2 left-2 px-1.5 bg-[#FFF9F2] text-[9px] text-[#C6A087] font-bold z-10">方案 1</span>
-                <div className="w-full border border-[#E5D5C5] rounded-xl bg-white shadow-sm">
-                  <textarea value={formA.notes} onChange={(e) => setFormA(prev => ({ ...prev, notes: e.target.value }))} className="w-full px-3 py-3 text-[14px] outline-none bg-transparent resize-none min-h-[80px]" />
-                </div>
+                <div className="w-full border border-[#E5D5C5] rounded-xl bg-white shadow-sm"><textarea value={formA.notes} onChange={(e) => setFormA(prev => ({ ...prev, notes: e.target.value }))} className="w-full px-3 py-3 text-[14px] outline-none bg-transparent resize-none min-h-[80px]" /></div>
               </div>
-              <div className="relative">
-                <span className="absolute -top-2 left-2 px-1.5 bg-[#FFF9F2] text-[9px] text-[#8C6A4F] font-bold z-10">方案 2</span>
-                <div className="w-full border border-[#E5D5C5] border-dashed rounded-xl bg-[#F7F1EB]/30 shadow-sm">
-                  <textarea value={formB.notes} onChange={(e) => setFormB(prev => ({ ...prev, notes: e.target.value }))} className="w-full px-3 py-3 text-[14px] outline-none bg-transparent resize-none min-h-[80px]" placeholder="輸入開啟備案..." />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="relative">
+                  <span className="absolute -top-2 left-2 px-1.5 bg-[#FFF9F2] text-[9px] text-[#8C6A4F] font-bold z-10">方案 2</span>
+                  <div className="w-full border border-[#E5D5C5] border-dashed rounded-xl bg-[#F7F1EB]/30 shadow-sm"><textarea value={formB.notes} onChange={(e) => setFormB(prev => ({ ...prev, notes: e.target.value }))} className="w-full px-3 py-3 text-[14px] outline-none bg-transparent resize-none min-h-[80px]" placeholder="輸入備案 2..." /></div>
+                </div>
+                <div className="relative">
+                  <span className="absolute -top-2 left-2 px-1.5 bg-[#FFF9F2] text-[9px] text-[#4A607F] font-bold z-10">方案 3</span>
+                  <div className="w-full border border-[#D1D9E6] border-dashed rounded-xl bg-[#F0F2F9]/30 shadow-sm"><textarea value={formC.notes} onChange={(e) => setFormC(prev => ({ ...prev, notes: e.target.value }))} className="w-full px-3 py-3 text-[14px] outline-none bg-transparent resize-none min-h-[80px]" placeholder="輸入備案 3..." /></div>
                 </div>
               </div>
             </div>

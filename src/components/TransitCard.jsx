@@ -44,8 +44,6 @@ const SHINKANSEN_COLORS = {
 };
 
 function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex = 0 }) {
-  // 🆕 branchIndex 由 Plan.jsx 傳入，達成行程與交通連動切換
-  
   const [legs, setLegs] = useState(() => {
     if (defaultData?.legs) return defaultData.legs;
     return [{ id: "1", mode: "train", duration: "10" }];
@@ -66,15 +64,16 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
     onUpdate && onUpdate(id, { legs });
   };
 
-  // 🆕 輔助解析 A/B 內容
+  // ✅ 升級：輔助解析 A/B/C 三段內容
   const parseBranchText = (text) => {
     if (!text) return "";
-    const parts = text.split("---");
-    return parts[branchIndex] || parts[0];
+    const parts = text.split("---").map(p => p.trim());
+    // 如果有對應索引的值就回傳，否則回傳第一筆（方案1）
+    return parts[branchIndex] !== undefined ? parts[branchIndex] : parts[0];
   };
 
   const detectColor = (leg) => {
-    const lineName = parseBranchText(leg.lineName); // 使用解析後的名稱判斷顏色
+    const lineName = parseBranchText(leg.lineName);
     if (leg.mode === "shinkansen") {
       const key = Object.keys(SHINKANSEN_COLORS).find((k) => lineName?.includes(k)) || "東海道";
       return SHINKANSEN_COLORS[key];
@@ -163,6 +162,13 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
     </div>
   );
 
+  // 根據 branchIndex 決定背景顏色
+  const getCardStyle = () => {
+    if (branchIndex === 1) return 'border-[#C6A087]/50 bg-[#FDF9F5]'; // 方案2: 暖色
+    if (branchIndex === 2) return 'border-[#D1D9E6] bg-[#F0F2F9]/50'; // 方案3: 藍紫色
+    return 'border-[#E5D5C5] bg-white'; // 方案1: 白色
+  };
+
   return (
     <div className="relative flex flex-col my-3 pl-3 animate-in fade-in duration-500">
       <div
@@ -170,7 +176,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
           if (!isViewer && isExpanded) commitUpdate();
           setIsExpanded((v) => !v);
         }}
-        className={`flex items-center bg-white border rounded-lg px-3 py-2 shadow-sm cursor-pointer w-full min-h-[54px] transition-colors ${branchIndex === 1 ? 'border-[#C6A087]/50 bg-[#FDF9F5]' : 'border-[#E5D5C5]'}`}
+        className={`flex items-center border rounded-lg px-3 py-2 shadow-sm cursor-pointer w-full min-h-[54px] transition-all ${getCardStyle()}`}
       >
         <div className="flex-1 flex flex-col justify-center">
           {renderSummary()}
@@ -190,7 +196,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
           <h4 className="text-[10px] font-bold text-[#8C6A4F] tracking-widest mb-1 uppercase">
             編輯交通方式
           </h4>
-          <p className="text-[9px] text-[#C6A087] mb-3 font-medium">支援二選一語法：方案A --- 方案B</p>
+          <p className="text-[9px] text-[#C6A087] mb-3 font-medium">支援三選一語法：方案1 --- 方案2 --- 方案3</p>
 
           <div className="space-y-4">
             {legs.map((leg) => {
@@ -208,7 +214,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
                         value={leg.duration}
                         onChange={(e) => updateLeg(leg.id, "duration", e.target.value)}
                         className="w-24 bg-white border border-[#E5D5C5] rounded-md px-2 py-1.5 text-[12px] text-center text-[#5A4636] outline-none"
-                        placeholder="10 --- 20"
+                        placeholder="10 --- 20 --- 30"
                       />
                       <span className="absolute -right-4 top-1/2 -translate-y-1/2 text-[10px] text-[#8C6A4F]">分</span>
                     </div>
@@ -227,7 +233,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
                       value={leg.lineName || ""}
                       onChange={(e) => updateLeg(leg.id, "lineName", e.target.value)}
                       className="w-full bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[12px] text-[#5A4636] outline-none"
-                      placeholder="路線 A --- 路線 B"
+                      placeholder="路線 1 --- 2 --- 3"
                     />
                   </div>
 
@@ -239,7 +245,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
                         value={leg.fromStation || ""}
                         onChange={(e) => updateLeg(leg.id, "fromStation", e.target.value)}
                         className="flex-1 bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[12px] text-[#5A4636] outline-none min-w-0"
-                        placeholder="出發 A --- B"
+                        placeholder="出發 1 --- 2 --- 3"
                       />
                       <ArrowRight className="w-4 h-4 text-[#8C6A4F]/60 shrink-0" />
                       <input
@@ -247,7 +253,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
                         value={leg.toStation || ""}
                         onChange={(e) => updateLeg(leg.id, "toStation", e.target.value)}
                         className="flex-1 bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[12px] text-[#5A4636] outline-none min-w-0"
-                        placeholder="抵達 A --- B"
+                        placeholder="抵達 1 --- 2 --- 3"
                       />
                     </div>
                   </div>
@@ -261,7 +267,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
                         value={leg.price || ""}
                         onChange={(e) => updateLeg(leg.id, "price", e.target.value)}
                         className="w-full bg-white border border-[#E5D5C5] rounded-md pl-7 pr-3 py-1.5 text-[12px] text-[#5A4636] outline-none"
-                        placeholder="210 --- 550"
+                        placeholder="¥1 --- 2 --- 3"
                       />
                     </div>
                   </div>
