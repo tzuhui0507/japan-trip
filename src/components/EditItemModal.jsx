@@ -128,7 +128,7 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
         {/* Header */}
         <div className="px-4 sm:px-6 py-4 flex items-center justify-between border-b border-[#E5D5C5]/50 bg-white/70 backdrop-blur-sm sticky top-0 z-20">
           <div className="flex-1 min-w-0 pr-2">
-            <p className="text-[10px] tracking-[0.2em] text-[#C6A087] uppercase font-bold mb-0.5">行程編輯 (三方案版)</p>
+            <p className="text-[10px] tracking-[0.2em] text-[#C6A087] uppercase font-bold mb-0.5">行程編輯</p>
             <h2 className="text-base font-bold text-[#5A4636] truncate">{formA.title || "新的行程"}</h2>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
