@@ -33,7 +33,10 @@ import {
   Sparkles,
   Map,
   ShoppingBag,
-  Heart
+  Heart,
+  Circle,
+  Minus,
+  Star // ✅ 引入經典星星
 } from "lucide-react";
 
 export default function Plan({ trip, setTrip, dayIndex }) {
@@ -166,7 +169,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
       const parts = l.trim().substring(1).split("|").map(p => p.trim());
       return {
         name: parts[0] || "",
-        subtitle: parts[1] || "", // ✅ 第2段變更為副標題
+        subtitle: parts[1] || "",
         hours: parts[2] || "",
         desc: parts[3] || ""
       };
@@ -454,12 +457,11 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       )}
 
-      {/* ✅ 店家資訊彈窗 (副標題化排版版) */}
+      {/* ✅ 彈窗優化：可愛星星 (Star) 版 */}
       {selectedShop && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setSelectedShop(null)}>
           <div className="w-full max-w-[300px] bg-[#FFF9F2] rounded-[2.5rem] border border-[#E5D5C5] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
             
-            {/* ✅ 重新安置的小字：移至頂部裝飾區 */}
             <div className="h-16 bg-[#F7F1EB] flex flex-col items-center justify-center relative">
                <span className="text-[8px] font-bold text-[#C6A087] tracking-[0.3em] uppercase mb-1 opacity-60">Shop Information</span>
                <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-sm"><Store className="w-4 h-4 text-[#C6A087]" /></div>
@@ -467,7 +469,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
             </div>
 
             <div className="px-6 pb-8 pt-6 flex flex-col items-center">
-              {/* ✅ 店名與副標題 (原本的推薦項目) */}
               <div className="text-center mb-6">
                 <h3 className="text-xl font-black text-[#5A4636] leading-tight">{selectedShop.name}</h3>
                 {selectedShop.subtitle && (
@@ -477,31 +478,52 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                 )}
               </div>
               
-              <div className="w-full space-y-4">
-                {/* 營業時間區塊 */}
+              <div className="w-full space-y-4 text-left overflow-y-auto max-h-[40vh] scrollbar-none pr-1">
+                {/* 營業時間 */}
                 <div className="flex flex-col gap-1.5">
                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#8C6A4F] opacity-70 uppercase tracking-tight ml-1">
                       <Clock className="w-3 h-3" /> 營業時間
                    </div>
-                   <div className="bg-white rounded-2xl p-3.5 border border-[#F0E3D5] text-[13px] text-[#5A4636] font-medium leading-relaxed shadow-sm">
+                   <div className="bg-white rounded-2xl p-3.5 border border-[#F0E3D5] text-[13px] text-[#5A4636] font-medium leading-relaxed shadow-sm text-center">
                       {selectedShop.hours || "請參考現場公告"}
                    </div>
                 </div>
 
-                {/* 店家介紹 */}
+                {/* 詳細介紹 (經典星星 + 愛心版) */}
                 <div className="flex flex-col gap-1.5">
                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#8C6A4F] opacity-70 uppercase tracking-tight ml-1">
-                      <StickyNote className="w-3 h-3" /> 詳細介紹
+                      <Sparkles className="w-3 h-3" /> 詳細介紹
                    </div>
                    <div className="bg-white rounded-2xl p-4 border border-[#F0E3D5] shadow-sm">
-                      <p className="text-[12px] text-[#5A4636] leading-relaxed whitespace-pre-wrap">
-                         {selectedShop.desc || "暫無詳細備註..."}
-                      </p>
+                      {selectedShop.desc ? (
+                        <div className="space-y-3">
+                          {selectedShop.desc.split("\\").map((line, lIdx) => {
+                            const trimmed = line.trim();
+                            const isSubItem = trimmed.startsWith(">");
+                            const content = isSubItem ? trimmed.substring(1).trim() : trimmed;
+
+                            return (
+                              <div key={lIdx} className={`flex items-start gap-2 ${isSubItem ? "pl-5" : ""}`}>
+                                {isSubItem ? (
+                                  <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1.5 shrink-0" />
+                                ) : (
+                                  // ✅ 大項目：經典五角星 (Star)
+                                  <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-1 shrink-0" />
+                                )}
+                                <p className={`${isSubItem ? "text-[11px] text-[#8C6A4F]" : "text-[12px] font-bold text-[#5A4636]"} leading-relaxed flex-1`}>
+                                  {content}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-[12px] text-[#8C6A4F] text-center italic">暫無詳細備註...</p>
+                      )}
                    </div>
                 </div>
               </div>
               
-              {/* 地圖按鈕 */}
               <button 
                 onClick={() => {
                   const query = encodeURIComponent(selectedShop.name);
