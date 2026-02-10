@@ -25,7 +25,15 @@ import {
   Link,
   ArrowLeftRight,
   AlertCircle,
-  CalendarOff, 
+  CalendarOff,
+  ChevronDown,
+  ChevronUp,
+  Store, 
+  X,
+  Sparkles,
+  Map,
+  ShoppingBag,
+  Heart
 } from "lucide-react";
 
 export default function Plan({ trip, setTrip, dayIndex }) {
@@ -51,8 +59,9 @@ export default function Plan({ trip, setTrip, dayIndex }) {
   const [slideOpenId, setSlideOpenId] = useState(null);
   const [viewTicket, setViewTicket] = useState(null);
   const [weatherHourly, setWeatherHourly] = useState([]);
-
   const [branchIndexMap, setBranchIndexMap] = useState({});
+  const [expandedNotes, setExpandedNotes] = useState({});
+  const [selectedShop, setSelectedShop] = useState(null);
 
   const TYPE_META = {
     ATTRACTION: { label: "景點", pillBg: "#E7EEF9", pillText: "#4A607F", icon: Landmark },
@@ -150,6 +159,22 @@ export default function Plan({ trip, setTrip, dayIndex }) {
     });
   };
 
+  const parseNotes = (noteText) => {
+    if (!noteText) return { intro: "", shops: [] };
+    const lines = noteText.split("\n");
+    const shops = lines.filter(l => l.trim().startsWith("*")).map(l => {
+      const parts = l.trim().substring(1).split("|").map(p => p.trim());
+      return {
+        name: parts[0] || "",
+        subtitle: parts[1] || "", // ✅ 第2段變更為副標題
+        hours: parts[2] || "",
+        desc: parts[3] || ""
+      };
+    });
+    const intro = lines.filter(l => !l.trim().startsWith("*")).join("\n").trim();
+    return { intro, shops };
+  };
+
   return (
     <div className="pt-4 pb-24">
       {/* 封面區域 */}
@@ -236,6 +261,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                   const isOpen = slideOpenId === item.id;
                   const branch = getBranchData(item);
                   const linkData = getLinkDisplay(branch.link);
+                  const { intro, shops } = parseNotes(branch.note);
 
                   return (
                     <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={isViewer}>
@@ -325,7 +351,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                   </div>
                                 )}
                                 {branch.openingHours && <div className="flex items-start gap-1.5 text-[11px] text-[#5A4636]"><Clock className="w-3.5 h-3.5 text-[#C6A087] shrink-0 mt-0.5" /><span>{branch.openingHours}</span></div>}
-                                
                                 {branch.offDay && (
                                   <div className="flex items-start gap-1.5 text-[11px] text-[#B43737] font-black">
                                     <CalendarOff className="w-3.5 h-3.5 shrink-0 mt-0.5" />
@@ -342,10 +367,47 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                 )}
                               </div>
 
-                              {branch.note && (
-                                <div className="mt-3 rounded-xl bg-[#F7F1EB] px-3 py-2.5 flex gap-2 text-[12px] text-[#8C6A4F] leading-relaxed shadow-inner border border-[#E5D5C5]/30">
-                                  <StickyNote className="w-3.5 h-3.5 mt-0.5 shrink-0 text-[#C6A087]" />
-                                  <p className="whitespace-pre-wrap">{branch.note}</p>
+                              {(intro || shops.length > 0) && (
+                                <div className="mt-3">
+                                  {intro && (
+                                    <div className="rounded-xl bg-[#F7F1EB] px-3 py-2.5 flex gap-2 text-[12px] text-[#8C6A4F] leading-relaxed border border-[#E5D5C5]/30">
+                                      <StickyNote className="w-3.5 h-3.5 mt-0.5 shrink-0 text-[#C6A087]" />
+                                      <p className="whitespace-pre-wrap">{intro}</p>
+                                    </div>
+                                  )}
+
+                                  {shops.length > 0 && (
+                                    <div className="mt-2">
+                                      <button 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setExpandedNotes(prev => ({ ...prev, [item.id]: !prev[item.id] }));
+                                        }}
+                                        className="w-full flex items-center justify-between px-3 py-2 bg-white border border-[#E5D5C5] rounded-xl text-[11px] font-bold text-[#8C6A4F] hover:bg-[#F7F1EB] transition-colors"
+                                      >
+                                        <div className="flex items-center gap-1.5">
+                                          <Store className="w-3 h-3 text-[#C6A087]" />
+                                          <span>查看清單 ({shops.length})</span>
+                                        </div>
+                                        {expandedNotes[item.id] ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                      </button>
+                                      
+                                      {expandedNotes[item.id] && (
+                                        <div className="mt-2 grid grid-cols-2 gap-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                                          {shops.map((shop, sIdx) => (
+                                            <button 
+                                              key={sIdx} 
+                                              onClick={(e) => { e.stopPropagation(); setSelectedShop(shop); }}
+                                              className="bg-[#FDFBF9] border border-[#F0E3D5] rounded-xl p-2.5 text-[11px] text-left hover:bg-[#F7F1EB] active:scale-95 transition-all shadow-sm flex items-center gap-2"
+                                            >
+                                              <div className="w-1.5 h-1.5 rounded-full bg-[#C6A087] shrink-0" />
+                                              <span className="text-[#5A4636] font-bold truncate">{shop.name}</span>
+                                            </button>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -356,7 +418,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                               id={`transit-${item.id}`}
                               defaultData={item.transit}
                               isViewer={isViewer}
-                              // ✅ 修正處：連動下一個行程項目的 branchIndex
                               branchIndex={branchIndexMap[currentItems[index + 1]?.id] || 0} 
                               onUpdate={(transitId, data) => {
                                 if (isViewer) return;
@@ -390,6 +451,68 @@ export default function Plan({ trip, setTrip, dayIndex }) {
           })} className="w-full max-w-xs py-2.5 rounded-full border border-dashed border-[#C6A087] bg-white text-xs text-[#8C6A4F] font-bold shadow-sm active:scale-95 transition-all">
             ＋ 新增行程
           </button>
+        </div>
+      )}
+
+      {/* ✅ 店家資訊彈窗 (副標題化排版版) */}
+      {selectedShop && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setSelectedShop(null)}>
+          <div className="w-full max-w-[300px] bg-[#FFF9F2] rounded-[2.5rem] border border-[#E5D5C5] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+            
+            {/* ✅ 重新安置的小字：移至頂部裝飾區 */}
+            <div className="h-16 bg-[#F7F1EB] flex flex-col items-center justify-center relative">
+               <span className="text-[8px] font-bold text-[#C6A087] tracking-[0.3em] uppercase mb-1 opacity-60">Shop Information</span>
+               <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-sm"><Store className="w-4 h-4 text-[#C6A087]" /></div>
+               <button onClick={() => setSelectedShop(null)} className="absolute top-4 right-4 w-7 h-7 rounded-full flex items-center justify-center bg-white/60 text-[#8C6A4F] active:scale-90 transition-all z-10"><X className="w-4 h-4" /></button>
+            </div>
+
+            <div className="px-6 pb-8 pt-6 flex flex-col items-center">
+              {/* ✅ 店名與副標題 (原本的推薦項目) */}
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-black text-[#5A4636] leading-tight">{selectedShop.name}</h3>
+                {selectedShop.subtitle && (
+                  <p className="text-[12px] text-[#8C6A4F] font-bold mt-1 tracking-wide opacity-80 italic">
+                    {selectedShop.subtitle}
+                  </p>
+                )}
+              </div>
+              
+              <div className="w-full space-y-4">
+                {/* 營業時間區塊 */}
+                <div className="flex flex-col gap-1.5">
+                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#8C6A4F] opacity-70 uppercase tracking-tight ml-1">
+                      <Clock className="w-3 h-3" /> 營業時間
+                   </div>
+                   <div className="bg-white rounded-2xl p-3.5 border border-[#F0E3D5] text-[13px] text-[#5A4636] font-medium leading-relaxed shadow-sm">
+                      {selectedShop.hours || "請參考現場公告"}
+                   </div>
+                </div>
+
+                {/* 店家介紹 */}
+                <div className="flex flex-col gap-1.5">
+                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#8C6A4F] opacity-70 uppercase tracking-tight ml-1">
+                      <StickyNote className="w-3 h-3" /> 詳細介紹
+                   </div>
+                   <div className="bg-white rounded-2xl p-4 border border-[#F0E3D5] shadow-sm">
+                      <p className="text-[12px] text-[#5A4636] leading-relaxed whitespace-pre-wrap">
+                         {selectedShop.desc || "暫無詳細備註..."}
+                      </p>
+                   </div>
+                </div>
+              </div>
+              
+              {/* 地圖按鈕 */}
+              <button 
+                onClick={() => {
+                  const query = encodeURIComponent(selectedShop.name);
+                  window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank");
+                }}
+                className="mt-8 w-full py-4 bg-[#C6A087] text-white rounded-2xl text-[13px] font-black shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-[#8C6A4F]"
+              >
+                <Map className="w-4 h-4" /> 查看店家地圖
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
