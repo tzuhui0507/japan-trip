@@ -36,7 +36,9 @@ import {
   Heart,
   Circle,
   Minus,
-  Star // ✅ 引入經典星星
+  Star,
+  ArrowRight,
+  Cherry
 } from "lucide-react";
 
 export default function Plan({ trip, setTrip, dayIndex }) {
@@ -389,8 +391,8 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                         className="w-full flex items-center justify-between px-3 py-2 bg-white border border-[#E5D5C5] rounded-xl text-[11px] font-bold text-[#8C6A4F] hover:bg-[#F7F1EB] transition-colors"
                                       >
                                         <div className="flex items-center gap-1.5">
-                                          <Store className="w-3 h-3 text-[#C6A087]" />
-                                          <span>查看清單 ({shops.length})</span>
+                                          <Cherry className="w-3 h-3 text-[#C6A087]" />
+                                          <span>查看推薦清單 ({shops.length})</span>
                                         </div>
                                         {expandedNotes[item.id] ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                                       </button>
@@ -403,7 +405,8 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                               onClick={(e) => { e.stopPropagation(); setSelectedShop(shop); }}
                                               className="bg-[#FDFBF9] border border-[#F0E3D5] rounded-xl p-2.5 text-[11px] text-left hover:bg-[#F7F1EB] active:scale-95 transition-all shadow-sm flex items-center gap-2"
                                             >
-                                              <div className="w-1.5 h-1.5 rounded-full bg-[#C6A087] shrink-0" />
+                                              {/* ✅ 修改處：原本的小圓點改為 Store 圖示 */}
+                                              <Store className="w-3.5 h-3.5 text-[#C6A087] shrink-0" />
                                               <span className="text-[#5A4636] font-bold truncate">{shop.name}</span>
                                             </button>
                                           ))}
@@ -457,7 +460,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       )}
 
-      {/* ✅ 彈窗優化：可愛星星 (Star) 版 */}
+      {/* 店家資訊彈窗 */}
       {selectedShop && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setSelectedShop(null)}>
           <div className="w-full max-w-[300px] bg-[#FFF9F2] rounded-[2.5rem] border border-[#E5D5C5] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
@@ -479,7 +482,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
               </div>
               
               <div className="w-full space-y-4 text-left overflow-y-auto max-h-[40vh] scrollbar-none pr-1">
-                {/* 營業時間 */}
                 <div className="flex flex-col gap-1.5">
                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#8C6A4F] opacity-70 uppercase tracking-tight ml-1">
                       <Clock className="w-3 h-3" /> 營業時間
@@ -489,7 +491,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                    </div>
                 </div>
 
-                {/* 詳細介紹 (經典星星 + 愛心版) */}
                 <div className="flex flex-col gap-1.5">
                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#8C6A4F] opacity-70 uppercase tracking-tight ml-1">
                       <Sparkles className="w-3 h-3" /> 詳細介紹
@@ -507,7 +508,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                 {isSubItem ? (
                                   <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1.5 shrink-0" />
                                 ) : (
-                                  // ✅ 大項目：經典五角星 (Star)
                                   <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-1 shrink-0" />
                                 )}
                                 <p className={`${isSubItem ? "text-[11px] text-[#8C6A4F]" : "text-[12px] font-bold text-[#5A4636]"} leading-relaxed flex-1`}>
