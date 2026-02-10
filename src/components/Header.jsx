@@ -40,7 +40,6 @@ export default function Header({ trip, setTrip, currentTab }) {
       return;
     }
 
-    // 計算總天數 (包含起始與結束當天)
     const diffTime = Math.abs(end - start);
     const targetDayCount = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
@@ -48,7 +47,6 @@ export default function Header({ trip, setTrip, currentTab }) {
       const next = structuredClone(prev);
       const currentDayCount = next.days.length;
 
-      // 如果天數變少，詢問使用者確認
       if (targetDayCount < currentDayCount) {
         const confirmDelete = window.confirm(`縮短日期區間將會刪除最後 ${currentDayCount - targetDayCount} 天的行程，確定嗎？`);
         if (!confirmDelete) return prev;
@@ -65,7 +63,6 @@ export default function Header({ trip, setTrip, currentTab }) {
         d.setDate(d.getDate() + i);
         const dateStr = d.toISOString().split('T')[0];
 
-        // 如果舊資料已經有這一天，保留舊內容並更新日期資訊
         if (next.days[i]) {
           newDays.push({
             ...next.days[i],
@@ -74,7 +71,6 @@ export default function Header({ trip, setTrip, currentTab }) {
             dayNumber: d.getDate()
           });
         } else {
-          // 否則新增空白天數
           newDays.push({
             id: `day-${Date.now()}-${i}`,
             date: dateStr,
@@ -95,7 +91,7 @@ export default function Header({ trip, setTrip, currentTab }) {
     setShowRangeModal(false);
   };
 
-  // ===== 3. 原本的 匯入/匯出/分享 邏輯 =====
+  // ===== 3. 匯入/匯出/分享 邏輯 =====
   const [showImport, setShowImport] = useState(false);
 
   const handleShare = async () => {
@@ -120,21 +116,39 @@ export default function Header({ trip, setTrip, currentTab }) {
     } catch { alert("❌ 匯出失敗"); }
   };
 
+  // ✅ 升級：智慧合併匯入邏輯
   const handleImportFile = (e) => {
     const file = e.target.files?.[0];
     if (!file || file.type !== "application/json") return;
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const parsed = JSON.parse(reader.result);
-        const nextTrip = { ...parsed, shareMode: trip.shareMode };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextTrip));
-        setTrip(nextTrip);
+        const importedData = JSON.parse(reader.result);
+        
+        setTrip(prevTrip => {
+          // 建立合併後的資料
+          const mergedTrip = {
+            ...prevTrip,             // 1. 保留目前所有資料 (包含朋友打好的行李清單 checklist、購物清單 shoppingList)
+            title: importedData.title || prevTrip.title,
+            startDate: importedData.startDate || prevTrip.startDate,
+            endDate: importedData.endDate || prevTrip.endDate,
+            days: importedData.days || prevTrip.days,       // 2. 覆蓋行程 (PLAN)
+            tickets: importedData.tickets || prevTrip.tickets, // 3. 覆蓋票券 (TICKET)
+            shareMode: prevTrip.shareMode // 強制維持目前的權限模式
+          };
+
+          // 存入本地暫存
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedTrip));
+          return mergedTrip;
+        });
+
         setShowImport(false);
-        alert("📥 行程匯入成功");
+        alert("📥 行程與票券已智慧合併成功！(已保留既有清單)");
       } catch { alert("❌ 檔案格式錯誤"); }
     };
     reader.readAsText(file);
+    // 清除 input 值，確保同一個檔案可以連續匯入
+    e.target.value = "";
   };
 
   return (
@@ -185,7 +199,6 @@ export default function Header({ trip, setTrip, currentTab }) {
               </h1>
             )}
 
-            {/* 點擊 Pills 開啟區間設定 */}
             <button 
               onClick={() => !isViewer && setShowRangeModal(true)}
               className="px-3 py-[2px] text-[12px] border border-[#D8CFC4] rounded-full bg-white text-[#5A3F2E] tracking-wider hover:bg-[#F7F1EB] transition-colors shrink-0"
@@ -197,7 +210,6 @@ export default function Header({ trip, setTrip, currentTab }) {
         </div>
       </header>
 
-      {/* 🆕 區間設定 Modal：解決天數調整需求 */}
       {showRangeModal && (
         <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center">
           <div className="w-full max-w-sm mx-4 bg-[#FFF9F2] rounded-2xl border border-[#E5D5C5] p-6 shadow-xl text-center">
@@ -252,7 +264,8 @@ export default function Header({ trip, setTrip, currentTab }) {
       {showImport && (
         <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center">
           <div className="w-full max-w-lg mx-4 bg-[#FFF9F2] rounded-2xl border border-[#E5D5C5] p-5 text-center">
-            <h2 className="text-sm font-bold text-[#5A4636] mb-4">匯入行程（JSON）</h2>
+            <h2 className="text-sm font-bold text-[#5A4636] mb-2">匯入行程與票券資料</h2>
+            <p className="text-[11px] text-[#8C6A4F] mb-4">匯入將會覆蓋目前的行程 (PLAN) 與票券 (TICKET)，<br/>但會保留您目前打好的行李與購物清單。</p>
             <input type="file" accept="application/json" onChange={handleImportFile} className="w-full border border-[#E5D5C5] rounded-xl p-3 text-sm bg-white mb-5" />
             <button onClick={() => setShowImport(false)} className="px-6 py-2 text-xs rounded-full border border-[#E5D5C5] text-[#5A4636]">取消</button>
           </div>
