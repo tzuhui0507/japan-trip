@@ -408,7 +408,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                               
                                               <p className={`flex-1 ${
                                                 isAlert 
-                                                  ? "text-[12px] font-bold text-[#E11D48]" 
+                                                  ? "text-[12px] font-bold text-[#FA5F73]" 
                                                   : isSubItem 
                                                     ? "text-[11px] text-[#8C6A4F] font-semibold"
                                                     : isListItem
@@ -558,7 +558,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                 {/* 詳情彈窗也同步對齊 logic */}
                                 <div className="w-5 flex-shrink-0 flex justify-center">
                                   {isAlert ? (
-                                    <BellRing className="w-3.5 h-3.5 text-[#F43F5E] mt-1 animate-pulse" />
+                                    <BellRing className="w-3.5 h-3.5 text-[#FA5F73] mt-1 animate-pulse" />
                                   ) : isSubItem ? (
                                     <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1.5" />
                                   ) : isListItem ? (
@@ -568,7 +568,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                   )}
                                 </div>
                                 <p className={`${
-                                  isAlert ? "text-[14px] font-bold text-[#E11D48]" : 
+                                  isAlert ? "text-[14px] font-bold text-[#FA5F73]" : 
                                   isSubItem ? "text-[12px] text-[#8C6A4F] font-semibold" : 
                                   isListItem ? "text-[11px] text-[#8C6A4F]/80 font-medium italic" :
                                   "text-[14px] font-bold"
