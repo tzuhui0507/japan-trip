@@ -182,7 +182,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
 
   return (
     <div className="pt-4 pb-24">
-      {/* 封面區域 */}
       <div className="mb-6 relative flex gap-1 items-stretch pr-2" style={{ height: 260 }}>
         <div className="w-10 flex flex-col items-center h-full shrink-0">
           <span className="w-2.5 h-2.5 rounded-full bg-[#C6A087] mb-2 shrink-0" />
@@ -214,7 +213,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       </div>
 
-      {/* 天氣預報 */}
       <section className="mb-1 pl-2 pr-2">
         <div className="flex items-center justify-between mb-3 px-1">
           <div>
@@ -236,7 +234,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       </section>
 
-      {/* 今日行程小提醒 */}
       {currentDay?.dayNotes && (
         <section className="px-2 mb-6">
           <div className="flex items-center gap-2 mb-2 px-1">
@@ -252,7 +249,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </section>
       )}
 
-      {/* 行程列表區域 */}
       <div className="mt-2 ml-5 mr-0 relative">
         <div className="absolute left-0 top-6 bottom-0 w-px bg-[#E5D5C5] -z-0" />
 
@@ -418,12 +414,15 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                             </div>
                           </div>
 
+                          {/* ✅ 交通卡與「目的地景點」連動的邏輯 */}
                           {index < currentItems.length - 1 && (
                             <TransitCard
                               id={`transit-${item.id}`}
+                              // 核心連動： branchIndex 同時聽從「上方景點」或「下方景點」
+                              // 當你點選下方景點 (currentItems[index + 1]) 的方案，其「去程交通」也會連動跳轉
+                              branchIndex={branchIndexMap[currentItems[index + 1]?.id] || branchIndexMap[item.id] || 0} 
                               defaultData={item.transit}
                               isViewer={isViewer}
-                              branchIndex={branchIndexMap[currentItems[index + 1]?.id] || 0} 
                               onUpdate={(transitId, data) => {
                                 if (isViewer) return;
                                 setTrip(prev => {
@@ -459,45 +458,29 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       )}
 
-      {/* ✅ 詳情頁優化版 */}
       {selectedShop && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-3 bg-black/50 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setSelectedShop(null)}>
-          {/* 修改點：提升 max-w 到 340px，寬度設為 w-[95%] */}
           <div className="w-[95%] max-w-[340px] bg-[#FFF9F2] rounded-[2.2rem] border border-[#E5D5C5] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
-            
             <div className="h-14 bg-[#F7F1EB] flex flex-col items-center justify-center relative">
                <span className="text-[8px] font-bold text-[#C6A087] tracking-[0.3em] uppercase mb-1 opacity-60">Shop Information</span>
                <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-sm"><Store className="w-4 h-4 text-[#C6A087]" /></div>
                <button onClick={() => setSelectedShop(null)} className="absolute top-3.5 right-4 w-7 h-7 rounded-full flex items-center justify-center bg-white/60 text-[#8C6A4F] active:scale-90 transition-all z-10"><X className="w-4 h-4" /></button>
             </div>
 
-            {/* 修改點：調整 Padding (px-5) 讓文字不要太靠邊 */}
             <div className="px-5 pb-7 pt-5 flex flex-col items-center">
               <div className="text-center mb-5 w-full">
                 <h3 className="text-[20px] font-black text-[#5A4636] leading-tight">{selectedShop.name}</h3>
-                {selectedShop.subtitle && (
-                  <p className="text-[13px] text-[#8C6A4F] font-bold mt-1.5 tracking-wide opacity-80 italic">
-                    {selectedShop.subtitle}
-                  </p>
-                )}
+                {selectedShop.subtitle && <p className="text-[13px] text-[#8C6A4F] font-bold mt-1.5 tracking-wide opacity-80 italic">{selectedShop.subtitle}</p>}
               </div>
               
               <div className="w-full space-y-4 text-left overflow-y-auto max-h-[45vh] scrollbar-none">
-                {/* 營業時間 */}
                 <div className="flex flex-col gap-1.5">
-                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#8C6A4F] opacity-70 uppercase tracking-tight ml-1">
-                      <Clock className="w-3.5 h-3.5" /> 營業時間
-                   </div>
-                   <div className="bg-white rounded-2xl p-3 border border-[#F0E3D5] text-[14px] text-[#5A4636] font-medium leading-relaxed shadow-sm text-center">
-                      {selectedShop.hours || "請參考現場公告"}
-                   </div>
+                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#8C6A4F] opacity-70 uppercase tracking-tight ml-1"><Clock className="w-3.5 h-3.5" /> 營業時間</div>
+                   <div className="bg-white rounded-2xl p-3 border border-[#F0E3D5] text-[14px] text-[#5A4636] font-medium leading-relaxed shadow-sm text-center">{selectedShop.hours || "請參考現場公告"}</div>
                 </div>
 
-                {/* 詳細介紹 */}
                 <div className="flex flex-col gap-1.5">
-                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#8C6A4F] opacity-70 uppercase tracking-tight ml-1">
-                      <Sparkles className="w-3.5 h-3.5" /> 詳細介紹
-                   </div>
+                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#8C6A4F] opacity-70 uppercase tracking-tight ml-1"><Sparkles className="w-3.5 h-3.5" /> 詳細介紹</div>
                    <div className="bg-white rounded-2xl p-4 border border-[#F0E3D5] shadow-sm">
                       {selectedShop.desc ? (
                         <div className="space-y-3">
@@ -505,38 +488,20 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                             const trimmed = line.trim();
                             const isSubItem = trimmed.startsWith(">");
                             const content = isSubItem ? trimmed.substring(1).trim() : trimmed;
-
                             return (
                               <div key={lIdx} className={`flex items-start gap-2 ${isSubItem ? "pl-4" : ""}`}>
-                                {isSubItem ? (
-                                  <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1.5 shrink-0" />
-                                ) : (
-                                  <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-1 shrink-0" />
-                                )}
-                                {/* 修改點：內容字體提升至 14px，提升閱讀感 */}
-                                <p className={`${isSubItem ? "text-[12px] text-[#8C6A4F]" : "text-[14px] font-bold"} text-[#5A4636] leading-relaxed flex-1`}>
-                                  {content}
-                                </p>
+                                {isSubItem ? <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1.5 shrink-0" /> : <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-1 shrink-0" />}
+                                <p className={`${isSubItem ? "text-[12px] text-[#8C6A4F]" : "text-[14px] font-bold"} text-[#5A4636] leading-relaxed flex-1`}>{content}</p>
                               </div>
                             );
                           })}
                         </div>
-                      ) : (
-                        <p className="text-[13px] text-[#8C6A4F] text-center italic">暫無詳細備註...</p>
-                      )}
+                      ) : <p className="text-[13px] text-[#8C6A4F] text-center italic">暫無詳細備註...</p>}
                    </div>
                 </div>
               </div>
               
-              <button 
-                onClick={() => {
-                  const query = encodeURIComponent(selectedShop.name);
-                  window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank");
-                }}
-                className="mt-6 w-full py-4 bg-[#C6A087] text-white rounded-2xl text-[14px] font-black shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-[#8C6A4F]"
-              >
-                <Map className="w-4 h-4" /> 查看店家地圖
-              </button>
+              <button onClick={() => { const query = encodeURIComponent(selectedShop.name); window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank"); }} className="mt-6 w-full py-4 bg-[#C6A087] text-white rounded-2xl text-[14px] font-black shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-[#8C6A4F]"><Map className="w-4 h-4" /> 查看店家地圖</button>
             </div>
           </div>
         </div>

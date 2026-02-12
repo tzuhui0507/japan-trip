@@ -47,7 +47,7 @@ const SHINKANSEN_COLORS = {
 function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex = 0 }) {
   const [legs, setLegs] = useState(() => {
     if (defaultData?.legs) return defaultData.legs;
-    return [{ id: "1", mode: "train", duration: "" }]; // 預設時間改為空
+    return [{ id: "1", mode: "train", duration: "" }];
   });
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -65,13 +65,16 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
     onUpdate && onUpdate(id, { legs });
   };
 
+  // 強化解析：支援自動回溯到第一個方案 (如果當前方案為空)
   const parseBranchText = (text) => {
     if (!text) return "";
     const parts = text.split("---").map(p => p.trim());
-    return parts[branchIndex] !== undefined ? parts[branchIndex] : parts[0];
+    // 如果對應索引有值就用它，否則回歸到方案 1 (parts[0])
+    return (parts[branchIndex] !== undefined && parts[branchIndex] !== "") 
+      ? parts[branchIndex] 
+      : parts[0];
   };
 
-  // 判斷當前方案是否有任何內容
   const hasContentInCurrentBranch = () => {
     return legs.some(leg => {
       return (
@@ -86,9 +89,6 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
 
   const hasAnyContent = hasContentInCurrentBranch();
 
-  // 如果完全沒內容：
-  // 1. 訪客模式 (isViewer) -> 直接消失
-  // 2. 編輯模式 -> 顯示一個極簡的「新增交通」按鈕，不干擾視覺
   if (!hasAnyContent && !isExpanded) {
     if (isViewer) return null;
     return (
@@ -152,8 +152,11 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
     let totalTime = 0;
     let totalPrice = 0;
     legs.forEach(leg => {
-      totalTime += parseInt(parseBranchText(leg.duration)) || 0;
-      totalPrice += parseInt(parseBranchText(leg.price)) || 0;
+      // 確保只計算當前 Branch 的數值
+      const d = parseBranchText(leg.duration);
+      const p = parseBranchText(leg.price);
+      totalTime += parseInt(d) || 0;
+      totalPrice += parseInt(p) || 0;
     });
     return { totalTime, totalPrice };
   };
@@ -170,7 +173,6 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
         const duration = parseBranchText(leg.duration);
         const price = parseBranchText(leg.price);
 
-        // 如果個別路段沒內容，則不顯示該路段
         if (!lineName && !from && !to && !duration && !price) return null;
 
         return (
@@ -183,13 +185,13 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
               <span className="truncate max-w-[120px]">{(from || "—") + " → " + (to || "—")}</span>
               {duration && (
                 <>
-                  <span>✦</span>
+                  <span className="mx-0.5 opacity-50">✦</span>
                   <span>{duration}m</span>
                 </>
               )}
               {price && (
                 <>
-                  <span>｜</span>
+                  <span className="mx-0.5 opacity-50">｜</span>
                   <span>¥{price}</span>
                 </>
               )}
@@ -242,7 +244,12 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
               <X className="w-4 h-4" />
             </button>
           </div>
-          <p className="text-[9px] text-[#C6A087] mb-3 font-medium">支援三選一語法：方案1 --- 方案2 --- 方案3</p>
+          <div className="bg-[#F7F1EB] rounded-lg p-2 mb-4">
+             <p className="text-[9px] text-[#8C6A4F] font-bold flex items-center gap-1">
+               💡 支援多方案語法：方案1 --- 方案2 --- 方案3
+             </p>
+             <p className="text-[8px] text-[#8C6A4F]/60 mt-0.5">切換上方景點時，交通會自動跟著變換。</p>
+          </div>
 
           <div className="space-y-4">
             {legs.map((leg) => {
@@ -291,7 +298,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
                         value={leg.fromStation || ""}
                         onChange={(e) => updateLeg(leg.id, "fromStation", e.target.value)}
                         className="flex-1 bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[12px] text-[#5A4636] outline-none min-w-0"
-                        placeholder="出發站"
+                        placeholder="出發站 --- 其他站"
                       />
                       <ArrowRight className="w-4 h-4 text-[#8C6A4F]/60 shrink-0" />
                       <input
@@ -299,7 +306,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
                         value={leg.toStation || ""}
                         onChange={(e) => updateLeg(leg.id, "toStation", e.target.value)}
                         className="flex-1 bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[12px] text-[#5A4636] outline-none min-w-0"
-                        placeholder="到達站"
+                        placeholder="到達站 --- 某門口"
                       />
                     </div>
                   </div>
@@ -313,7 +320,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
                         value={leg.price || ""}
                         onChange={(e) => updateLeg(leg.id, "price", e.target.value)}
                         className="w-full bg-white border border-[#E5D5C5] rounded-md pl-7 pr-3 py-1.5 text-[12px] text-[#5A4636] outline-none"
-                        placeholder="金額"
+                        placeholder="210 --- 1500"
                       />
                     </div>
                   </div>
