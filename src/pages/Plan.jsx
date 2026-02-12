@@ -39,7 +39,7 @@ import {
   Star,
   ArrowRight,
   Cherry,
-  BellRing // ✅ 確保有引入
+  BellRing // ✅ 已引入鈴鐺圖示
 } from "lucide-react";
 
 export default function Plan({ trip, setTrip, dayIndex }) {
@@ -183,7 +183,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
 
   return (
     <div className="pt-4 pb-24">
-      {/* 封面與天氣區塊 (略過，維持原樣) */}
+      {/* 封面區域 */}
       <div className="mb-6 relative flex gap-1 items-stretch pr-2" style={{ height: 260 }}>
         <div className="w-10 flex flex-col items-center h-full shrink-0">
           <span className="w-2.5 h-2.5 rounded-full bg-[#C6A087] mb-2 shrink-0" />
@@ -215,6 +215,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       </div>
 
+      {/* 天氣預報 */}
       <section className="mb-1 pl-2 pr-2">
         <div className="flex items-center justify-between mb-3 px-1">
           <div>
@@ -236,6 +237,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       </section>
 
+      {/* 今日行程小提醒 */}
       {currentDay?.dayNotes && (
         <section className="px-2 mb-6">
           <div className="flex items-center gap-2 mb-2 px-1">
@@ -251,7 +253,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </section>
       )}
 
-      {/* 行程列表 */}
+      {/* 行程列表區域 */}
       <div className="mt-2 ml-5 mr-0 relative">
         <div className="absolute left-0 top-6 bottom-0 w-px bg-[#E5D5C5] -z-0" />
 
@@ -274,7 +276,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                           <div className="absolute -left-[6px] top-6 w-3 h-3 bg-[#F7F1EB] border-2 border-[#C6A087] rounded-full z-10" />
                           
                           <div className="relative overflow-visible">
-                            {/* 操作按鈕 (略) */}
                             <div className="absolute top-0 bottom-0 right-0 flex gap-2 items-center px-3 z-0">
                               {!isViewer && (
                                 <>
@@ -297,7 +298,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                               }}
                               className="bg-white border border-[#E5D5C5] rounded-xl px-3 py-4 shadow-sm relative z-10 overflow-hidden"
                             >
-                              {/* 方案切換與內容 (略) */}
                               {branch.hasBranch && (
                                 <div className="flex items-center justify-between mb-3 pb-2 border-b border-dashed border-[#F0E3D5]">
                                   <div className="text-[10px] font-bold text-[#C6A087] tracking-tight uppercase font-black">方案 {branch.currentIndex + 1}</div>
@@ -334,7 +334,46 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                               <h3 className="text-base font-bold text-[#5A4636] leading-snug">{branch.title}</h3>
                               {branch.subtitle && <p className="text-[11px] text-[#8C6A4F]/70 mt-0.5">{branch.subtitle}</p>}
 
-                              {/* 行程卡片備註 (Note) */}
+                              {branch.ticketIds?.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-3">
+                                  {branch.ticketIds.map((ticketId) => {
+                                    const ticket = trip.tickets?.find((t) => t.id === ticketId);
+                                    if (!ticket) return null;
+                                    const styleConfig = TYPE_META[ticket.type] || { pillBg: "#F7F1EB", pillText: "#8C6A4F" };
+                                    return (
+                                      <button key={ticketId} onClick={(e) => { e.stopPropagation(); setViewTicket(ticket); }} style={{ backgroundColor: styleConfig.pillBg, color: styleConfig.pillText, borderColor: `${styleConfig.pillText}20` }} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] border font-bold active:scale-95 transition-all shadow-sm">
+                                        <Ticket className="w-3 h-3" /> <span>{ticket.title}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              <div className="space-y-1 mt-3">
+                                {branch.address && (
+                                  <div onClick={(e) => handleNavigation(e, branch.address, branch.title)} className="flex items-start gap-1.5 text-[11px] text-[#5A4636] cursor-pointer hover:opacity-70 transition-opacity">
+                                    <MapPin className="w-3.5 h-3.5 text-[#C6A087] shrink-0 mt-0.5" />
+                                    <span className="truncate flex-1 font-bold underline">{branch.address}</span>
+                                  </div>
+                                )}
+                                {branch.openingHours && <div className="flex items-start gap-1.5 text-[11px] text-[#5A4636]"><Clock className="w-3.5 h-3.5 text-[#C6A087] shrink-0 mt-0.5" /><span>{branch.openingHours}</span></div>}
+                                {branch.offDay && (
+                                  <div className="flex items-start gap-1.5 text-[11px] text-[#B43737] font-black">
+                                    <CalendarOff className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                                    <span>公休日：{branch.offDay}</span>
+                                  </div>
+                                )}
+
+                                {branch.phone && <div className="flex items-start gap-1.5 text-[11px] text-[#5A4636]"><Phone className="w-3.5 h-3.5 text-[#C6A087] shrink-0 mt-0.5" /><span>{branch.phone}</span></div>}
+                                {linkData && (
+                                  <div onClick={(e) => { e.stopPropagation(); window.open(linkData.url, "_blank"); }} className="flex items-start gap-1.5 text-[11px] text-blue-500 font-medium cursor-pointer hover:underline transition-all">
+                                    <Link className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
+                                    <span className="truncate flex-1">{linkData.label}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* 行程列表卡片備註區域 */}
                               {(intro || shops.length > 0) && (
                                 <div className="mt-3">
                                   {intro && (
@@ -343,26 +382,41 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                         <StickyNote className="w-3.5 h-3.5 text-[#C6A087]" />
                                         <span className="text-[10px] font-black tracking-widest uppercase text-[#A8937C]">Notes</span>
                                       </div>
+                                      
                                       <div className="space-y-2">
                                         {intro.split("\n").map((line, lIdx) => {
                                           const trimmed = line.trim();
                                           if (!trimmed) return null;
+
                                           const isAlert = trimmed.startsWith("!");
                                           const isSubItem = trimmed.startsWith(">");
                                           const content = (isAlert || isSubItem) ? trimmed.substring(1).trim() : trimmed;
+
                                           return (
                                             <div key={lIdx} className={`flex items-start gap-2 ${isSubItem ? "pl-4" : ""}`}>
-                                              {isAlert ? <BellRing className="w-3.5 h-3.5 text-[#F43F5E] mt-1 shrink-0 animate-pulse" /> : 
-                                               isSubItem ? <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1.5 shrink-0" /> : 
-                                               <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-1 shrink-0" />}
-                                              <p className={`flex-1 ${isAlert ? "text-[12px] font-bold text-[#E11D48]" : isSubItem ? "text-[11px] text-[#8C6A4F]" : "text-[12px] font-bold text-[#5A4636]"}`}>{content}</p>
+                                              {isAlert ? (
+                                                <BellRing className="w-3.5 h-3.5 text-[#FA5F73] mt-1 shrink-0 animate-pulse" />
+                                              ) : isSubItem ? (
+                                                <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1.5 shrink-0" />
+                                              ) : (
+                                                <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-1 shrink-0" />
+                                              )}
+                                              <p className={`flex-1 ${
+                                                isAlert 
+                                                  ? "text-[12px] font-bold text-[#FA5F73]" // 可愛提醒色
+                                                  : isSubItem 
+                                                    ? "text-[11px] text-[#8C6A4F]"
+                                                    : "text-[12px] font-bold text-[#5A4636]"
+                                              }`}>
+                                                {content}
+                                              </p>
                                             </div>
                                           );
                                         })}
                                       </div>
                                     </div>
                                   )}
-                                  {/* 推薦清單 (略) */}
+
                                   {shops.length > 0 && (
                                     <div className="mt-2">
                                       <button 
@@ -399,7 +453,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                               )}
                             </div>
                           </div>
-                          {/* 交通卡 (略) */}
+
                           {index < currentItems.length - 1 && (
                             <TransitCard
                               id={`transit-${item.id}`}
@@ -429,10 +483,23 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </DragDropContext>
       </div>
 
-      {/* ✅ 詳情頁更新：支援鈴鐺提醒 */}
+      {!isViewer && (
+        <div className="flex justify-center mt-4 px-2">
+          <button onClick={() => setTrip((prev) => {
+            const next = structuredClone(prev);
+            next.days[activeDayIndex].items.push({ id: `item-${Date.now()}`, time: "", type: "ATTRACTION", title: "新的行程", ticketIds: [], subtitle: "", address: "", openingHours: "", offDay: "", phone: "", notes: "", link: "" });
+            return next;
+          })} className="w-full max-w-xs py-2.5 rounded-full border border-dashed border-[#C6A087] bg-white text-xs text-[#8C6A4F] font-bold shadow-sm active:scale-95 transition-all">
+            ＋ 新增行程
+          </button>
+        </div>
+      )}
+
+      {/* 店家詳情頁彈窗 - 同步符號邏輯 */}
       {selectedShop && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-3 bg-black/50 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setSelectedShop(null)}>
           <div className="w-[95%] max-w-[340px] bg-[#FFF9F2] rounded-[2.2rem] border border-[#E5D5C5] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+            
             <div className="h-14 bg-[#F7F1EB] flex flex-col items-center justify-center relative">
                <span className="text-[8px] font-bold text-[#C6A087] tracking-[0.3em] uppercase mb-1 opacity-60">Shop Information</span>
                <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-sm"><Store className="w-4 h-4 text-[#C6A087]" /></div>
@@ -442,49 +509,79 @@ export default function Plan({ trip, setTrip, dayIndex }) {
             <div className="px-5 pb-7 pt-5 flex flex-col items-center">
               <div className="text-center mb-5 w-full">
                 <h3 className="text-[20px] font-black text-[#5A4636] leading-tight">{selectedShop.name}</h3>
-                {selectedShop.subtitle && <p className="text-[13px] text-[#8C6A4F] font-bold mt-1.5 tracking-wide opacity-80 italic">{selectedShop.subtitle}</p>}
+                {selectedShop.subtitle && (
+                  <p className="text-[13px] text-[#8C6A4F] font-bold mt-1.5 tracking-wide opacity-80 italic">
+                    {selectedShop.subtitle}
+                  </p>
+                )}
               </div>
               
               <div className="w-full space-y-4 text-left overflow-y-auto max-h-[45vh] scrollbar-none">
                 <div className="flex flex-col gap-1.5">
-                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#8C6A4F] opacity-70 uppercase tracking-tight ml-1"><Clock className="w-3.5 h-3.5" /> 營業時間</div>
-                   <div className="bg-white rounded-2xl p-3 border border-[#F0E3D5] text-[14px] text-[#5A4636] font-medium leading-relaxed shadow-sm text-center">{selectedShop.hours || "請參考現場公告"}</div>
+                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#8C6A4F] opacity-70 uppercase tracking-tight ml-1">
+                      <Clock className="w-3.5 h-3.5" /> 營業時間
+                   </div>
+                   <div className="bg-white rounded-2xl p-3 border border-[#F0E3D5] text-[14px] text-[#5A4636] font-medium leading-relaxed shadow-sm text-center">
+                      {selectedShop.hours || "請參考現場公告"}
+                   </div>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#8C6A4F] opacity-70 uppercase tracking-tight ml-1"><Sparkles className="w-3.5 h-3.5" /> 詳細介紹</div>
+                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#8C6A4F] opacity-70 uppercase tracking-tight ml-1">
+                      <Sparkles className="w-3.5 h-3.5" /> 詳細介紹
+                   </div>
                    <div className="bg-white rounded-2xl p-4 border border-[#F0E3D5] shadow-sm">
                       {selectedShop.desc ? (
                         <div className="space-y-3">
-                          {/* ✅ 店家資訊解析邏輯更新 */}
                           {selectedShop.desc.split("\\").map((line, lIdx) => {
                             const trimmed = line.trim();
                             if (!trimmed) return null;
+
                             const isAlert = trimmed.startsWith("!");
                             const isSubItem = trimmed.startsWith(">");
                             const content = (isAlert || isSubItem) ? trimmed.substring(1).trim() : trimmed;
+
                             return (
                               <div key={lIdx} className={`flex items-start gap-2 ${isSubItem ? "pl-4" : ""}`}>
-                                {isAlert ? <BellRing className="w-3.5 h-3.5 text-[#F43F5E] mt-1 shrink-0 animate-pulse" /> : 
-                                 isSubItem ? <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1.5 shrink-0" /> : 
-                                 <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-1 shrink-0" />}
-                                <p className={`flex-1 ${isAlert ? "text-[14px] font-bold text-[#E11D48]" : isSubItem ? "text-[12px] text-[#8C6A4F]" : "text-[14px] font-bold text-[#5A4636]"}`}>{content}</p>
+                                {isAlert ? (
+                                  <BellRing className="w-3.5 h-3.5 text-[#FA5F73] mt-1 shrink-0 animate-pulse" />
+                                ) : isSubItem ? (
+                                  <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1.5 shrink-0" />
+                                ) : (
+                                  <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-1 shrink-0" />
+                                )}
+                                <p className={`${
+                                  isAlert ? "text-[14px] font-bold text-[#FA5F73]" : 
+                                  isSubItem ? "text-[12px] text-[#8C6A4F]" : 
+                                  "text-[14px] font-bold"
+                                } text-[#5A4636] leading-relaxed flex-1`}>
+                                  {content}
+                                </p>
                               </div>
                             );
                           })}
                         </div>
-                      ) : <p className="text-[13px] text-[#8C6A4F] text-center italic">暫無詳細備註...</p>}
+                      ) : (
+                        <p className="text-[13px] text-[#8C6A4F] text-center italic">暫無詳細備註...</p>
+                      )}
                    </div>
                 </div>
               </div>
               
-              <button onClick={() => { const query = encodeURIComponent(selectedShop.name); window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank"); }} className="mt-6 w-full py-4 bg-[#C6A087] text-white rounded-2xl text-[14px] font-black shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-[#8C6A4F]"><Map className="w-4 h-4" /> 查看店家地圖</button>
+              <button 
+                onClick={() => {
+                  const query = encodeURIComponent(selectedShop.name);
+                  window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank");
+                }}
+                className="mt-6 w-full py-4 bg-[#C6A087] text-white rounded-2xl text-[14px] font-black shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-[#8C6A4F]"
+              >
+                <Map className="w-4 h-4" /> 查看店家地圖
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal 區塊 (略) */}
       {editingItem && !isViewer && (
         <EditItemModal
           item={editingItem} trip={trip} tickets={trip.tickets || []}
