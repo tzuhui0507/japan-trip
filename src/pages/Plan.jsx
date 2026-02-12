@@ -412,7 +412,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                                   : isSubItem 
                                                     ? "text-[11px] text-[#8C6A4F] font-semibold"
                                                     : isListItem
-                                                      ? "text-[11px] text-[#8C6A4F]/90 font-medium italic"
+                                                      ? "text-[11px] text-[#8C6A4F]/90 font-medium"
                                                       : "text-[12px] font-bold text-[#5A4636]"
                                               }`}>
                                                 {content}
@@ -516,7 +516,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
               <div className="text-center mb-5 w-full">
                 <h3 className="text-[20px] font-black text-[#5A4636] leading-tight">{selectedShop.name}</h3>
                 {selectedShop.subtitle && (
-                  <p className="text-[13px] text-[#8C6A4F] font-bold mt-1.5 tracking-wide opacity-80 italic">
+                  <p className="text-[13px] text-[#8C6A4F] font-bold mt-1.5 tracking-wide opacity-80">
                     {selectedShop.subtitle}
                   </p>
                 )}
@@ -570,7 +570,7 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                 <p className={`${
                                   isAlert ? "text-[14px] font-bold text-[#FA5F73]" : 
                                   isSubItem ? "text-[12px] text-[#8C6A4F] font-semibold" : 
-                                  isListItem ? "text-[11px] text-[#8C6A4F]/80 font-medium italic" :
+                                  isListItem ? "text-[11px] text-[#8C6A4F]/80 font-medium" :
                                   "text-[14px] font-bold"
                                 } text-[#5A4636] leading-relaxed flex-1`}>
                                   {content}
