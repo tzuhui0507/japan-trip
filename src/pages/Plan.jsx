@@ -32,14 +32,11 @@ import {
   X,
   Sparkles,
   Map,
-  ShoppingBag,
   Heart,
-  Circle,
-  Minus,
   Star,
-  ArrowRight,
   Cherry,
-  BellRing // ✅ 已引入鈴鐺圖示
+  BellRing,
+  Flower2 
 } from "lucide-react";
 
 export default function Plan({ trip, setTrip, dayIndex }) {
@@ -183,7 +180,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
 
   return (
     <div className="pt-4 pb-24">
-      {/* 封面區域 */}
       <div className="mb-6 relative flex gap-1 items-stretch pr-2" style={{ height: 260 }}>
         <div className="w-10 flex flex-col items-center h-full shrink-0">
           <span className="w-2.5 h-2.5 rounded-full bg-[#C6A087] mb-2 shrink-0" />
@@ -215,7 +211,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       </div>
 
-      {/* 天氣預報 */}
       <section className="mb-1 pl-2 pr-2">
         <div className="flex items-center justify-between mb-3 px-1">
           <div>
@@ -237,7 +232,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       </section>
 
-      {/* 今日行程小提醒 */}
       {currentDay?.dayNotes && (
         <section className="px-2 mb-6">
           <div className="flex items-center gap-2 mb-2 px-1">
@@ -253,7 +247,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </section>
       )}
 
-      {/* 行程列表區域 */}
       <div className="mt-2 ml-5 mr-0 relative">
         <div className="absolute left-0 top-6 bottom-0 w-px bg-[#E5D5C5] -z-0" />
 
@@ -373,7 +366,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                 )}
                               </div>
 
-                              {/* 行程列表卡片備註區域 */}
                               {(intro || shops.length > 0) && (
                                 <div className="mt-3">
                                   {intro && (
@@ -383,30 +375,45 @@ export default function Plan({ trip, setTrip, dayIndex }) {
                                         <span className="text-[10px] font-black tracking-widest uppercase text-[#A8937C]">Notes</span>
                                       </div>
                                       
-                                      <div className="space-y-2">
+                                      <div className="space-y-2.5">
                                         {intro.split("\n").map((line, lIdx) => {
                                           const trimmed = line.trim();
                                           if (!trimmed) return null;
 
                                           const isAlert = trimmed.startsWith("!");
                                           const isSubItem = trimmed.startsWith(">");
-                                          const content = (isAlert || isSubItem) ? trimmed.substring(1).trim() : trimmed;
+                                          const isListItem = trimmed.startsWith("-");
+                                          
+                                          const content = (isAlert || isSubItem || isListItem) ? trimmed.substring(1).trim() : trimmed;
 
                                           return (
-                                            <div key={lIdx} className={`flex items-start gap-2 ${isSubItem ? "pl-4" : ""}`}>
-                                              {isAlert ? (
-                                                <BellRing className="w-3.5 h-3.5 text-[#FA5F73] mt-1 shrink-0 animate-pulse" />
-                                              ) : isSubItem ? (
-                                                <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1.5 shrink-0" />
-                                              ) : (
-                                                <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-1 shrink-0" />
-                                              )}
+                                            <div 
+                                              key={lIdx} 
+                                              className={`flex items-start ${
+                                                isSubItem ? "pl-4" : isListItem ? "pl-8" : ""
+                                              }`}
+                                            >
+                                              {/* 統一寬度的容器，解決對齊問題 */}
+                                              <div className="w-5 flex-shrink-0 flex justify-center">
+                                                {isAlert ? (
+                                                  <BellRing className="w-3.5 h-3.5 text-[#FA5F73] mt-1 animate-pulse" />
+                                                ) : isSubItem ? (
+                                                  <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1.5" />
+                                                ) : isListItem ? (
+                                                  <Flower2 className="w-2.5 h-2.5 text-[#FDBA74] mt-1.5" />
+                                                ) : (
+                                                  <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-1" />
+                                                )}
+                                              </div>
+                                              
                                               <p className={`flex-1 ${
                                                 isAlert 
-                                                  ? "text-[12px] font-bold text-[#FA5F73]" // 可愛提醒色
+                                                  ? "text-[12px] font-bold text-[#E11D48]" 
                                                   : isSubItem 
-                                                    ? "text-[11px] text-[#8C6A4F]"
-                                                    : "text-[12px] font-bold text-[#5A4636]"
+                                                    ? "text-[11px] text-[#8C6A4F] font-semibold"
+                                                    : isListItem
+                                                      ? "text-[11px] text-[#8C6A4F]/90 font-medium italic"
+                                                      : "text-[12px] font-bold text-[#5A4636]"
                                               }`}>
                                                 {content}
                                               </p>
@@ -495,7 +502,6 @@ export default function Plan({ trip, setTrip, dayIndex }) {
         </div>
       )}
 
-      {/* 店家詳情頁彈窗 - 同步符號邏輯 */}
       {selectedShop && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-3 bg-black/50 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setSelectedShop(null)}>
           <div className="w-[95%] max-w-[340px] bg-[#FFF9F2] rounded-[2.2rem] border border-[#E5D5C5] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
@@ -539,20 +545,32 @@ export default function Plan({ trip, setTrip, dayIndex }) {
 
                             const isAlert = trimmed.startsWith("!");
                             const isSubItem = trimmed.startsWith(">");
-                            const content = (isAlert || isSubItem) ? trimmed.substring(1).trim() : trimmed;
+                            const isListItem = trimmed.startsWith("-");
+                            const content = (isAlert || isSubItem || isListItem) ? trimmed.substring(1).trim() : trimmed;
 
                             return (
-                              <div key={lIdx} className={`flex items-start gap-2 ${isSubItem ? "pl-4" : ""}`}>
-                                {isAlert ? (
-                                  <BellRing className="w-3.5 h-3.5 text-[#FA5F73] mt-1 shrink-0 animate-pulse" />
-                                ) : isSubItem ? (
-                                  <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1.5 shrink-0" />
-                                ) : (
-                                  <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-1 shrink-0" />
-                                )}
+                              <div 
+                                key={lIdx} 
+                                className={`flex items-start ${
+                                  isSubItem ? "pl-4" : isListItem ? "pl-8" : ""
+                                }`}
+                              >
+                                {/* 詳情彈窗也同步對齊 logic */}
+                                <div className="w-5 flex-shrink-0 flex justify-center">
+                                  {isAlert ? (
+                                    <BellRing className="w-3.5 h-3.5 text-[#F43F5E] mt-1 animate-pulse" />
+                                  ) : isSubItem ? (
+                                    <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1.5" />
+                                  ) : isListItem ? (
+                                    <Flower2 className="w-2.5 h-2.5 text-[#FDBA74] mt-1.5" />
+                                  ) : (
+                                    <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-1" />
+                                  )}
+                                </div>
                                 <p className={`${
-                                  isAlert ? "text-[14px] font-bold text-[#FA5F73]" : 
-                                  isSubItem ? "text-[12px] text-[#8C6A4F]" : 
+                                  isAlert ? "text-[14px] font-bold text-[#E11D48]" : 
+                                  isSubItem ? "text-[12px] text-[#8C6A4F] font-semibold" : 
+                                  isListItem ? "text-[11px] text-[#8C6A4F]/80 font-medium italic" :
                                   "text-[14px] font-bold"
                                 } text-[#5A4636] leading-relaxed flex-1`}>
                                   {content}
