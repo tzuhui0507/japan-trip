@@ -33,7 +33,7 @@ const CATEGORY_STYLES = {
   other: { color: "#B7A2BC", light: "#F5F1F7", icon: MoreHorizontal, en: "OTHERS" },
 };
 
-// 奶茶色底色點點背景 (#FFF9F2)
+// 修正：內容底色奶茶色 (#FFF9F2)
 const dottedBg = {
   backgroundColor: "#FFF9F2", 
   backgroundImage: "radial-gradient(#E8E1DA 1px, transparent 1px)",
@@ -52,14 +52,14 @@ const compressImage = (file) => {
       img.src = event.target.result;
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        const MAX_WIDTH = 1100;
+        const MAX_WIDTH = 1000;
         let width = img.width;
         let height = img.height;
         if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
         canvas.width = width; canvas.height = height;
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL("image/jpeg", 0.7));
+        resolve(canvas.toDataURL("image/jpeg", 0.6));
       };
     };
   });
@@ -170,15 +170,24 @@ export default function Shopping({ trip, setTrip }) {
     );
   };
 
-  const activeCategoryData = shopping.find(c => c.id === activeTab);
+  const activeCategoryIndex = shopping.findIndex(c => c.id === activeTab);
   const activeStyle = CATEGORY_STYLES[activeTab];
 
   return (
     <div className="pt-2 pb-24 space-y-5 px-4" onClick={() => setMenuOpenId(null)}>
       <PageHeader icon={ShoppingBag} title="購物清單" subtitle="SHOPPING LIST" />
 
-      {/* 頁籤導覽：加寬、加高，並優化文字與圖示比例 */}
-      <div className="bg-[#E8E1DA]/40 p-1.5 rounded-full flex relative border border-white/40 h-[48px] items-stretch z-30 shadow-inner">
+      {/* 修正 Tab 導覽列：採用穩定的百分比佈局 */}
+      <div className="bg-[#E8E1DA]/40 p-1 rounded-full grid grid-cols-4 relative border border-white/40 h-[46px] items-stretch shadow-inner">
+        {/* 滑動膠囊背景：精確鎖定 */}
+        <div 
+          className="absolute top-1 bottom-1 transition-all duration-300 bg-white rounded-full shadow-md z-0 border border-[#EDE3D8]"
+          style={{ 
+            width: "calc(25% - 2px)", 
+            left: `calc(${activeCategoryIndex * 25}% + 1px)`,
+          }}
+        />
+        
         {shopping.map((cat) => {
           const isActive = activeTab === cat.id;
           const catStyle = CATEGORY_STYLES[cat.id];
@@ -186,64 +195,59 @@ export default function Shopping({ trip, setTrip }) {
             <button
               key={cat.id}
               onClick={(e) => { e.stopPropagation(); setActiveTab(cat.id); }}
-              className={`flex-1 text-[13px] font-black transition-all duration-300 relative z-10 flex items-center justify-center gap-1.5`}
+              className={`relative z-10 flex items-center justify-center gap-1.5 transition-colors duration-300`}
               style={{ color: isActive ? catStyle.color : "#8C6A4F99" }}
             >
-              {React.createElement(catStyle.icon, { className: "w-4 h-4 shrink-0" })}
-              {cat.title}
+              {React.createElement(catStyle.icon, { className: "w-3.5 h-3.5 shrink-0" })}
+              <span className="text-[12.5px] font-black">{cat.title}</span>
             </button>
           );
         })}
-        {/* 滑動藥丸背景：配合高度增加進行微調 */}
-        <div 
-          className="absolute top-1 bottom-1 transition-all duration-300 bg-white rounded-full shadow-md z-0 border border-[#EDE3D8]"
-          style={{ width: "calc(25% - 8px)", left: `${shopping.findIndex(c => c.id === activeTab) * 25 + 1}%` }}
-        />
       </div>
 
       {/* 內容卡片 */}
       <div className="rounded-[24px] border border-[#EDE3D8] shadow-sm bg-white animate-in fade-in duration-300 relative overflow-visible z-20">
-        {activeCategoryData && (
+        {shopping[activeCategoryIndex] && (
           <>
-            <div className="px-5 py-4 flex items-center justify-between rounded-t-[24px]" style={{ backgroundColor: activeStyle.light }}>
+            <div className="px-5 py-3.5 flex items-center justify-between rounded-t-[24px]" style={{ backgroundColor: activeStyle.light }}>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm" style={{ backgroundColor: activeStyle.color }}>
-                   {React.createElement(activeStyle.icon, { className: "w-5 h-5" })}
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-sm" style={{ backgroundColor: activeStyle.color }}>
+                   {React.createElement(activeStyle.icon, { className: "w-4.5 h-4.5" })}
                 </div>
-                <div>
-                  <h3 className="font-bold text-[#5A4636] text-[15.5px] leading-tight">{activeCategoryData.title}</h3>
+                <div className="flex flex-col">
+                  <h3 className="font-bold text-[#5A4636] text-[15.5px] leading-tight">{shopping[activeCategoryIndex].title}</h3>
                   <p className="text-[9px] text-[#8C6A4F] uppercase tracking-wider opacity-60 font-black">
                     {activeStyle.en}
                   </p>
                 </div>
               </div>
-              <button onClick={(e) => { e.stopPropagation(); addItem(activeCategoryData.id); }} className="w-8.5 h-8.5 rounded-full bg-white flex items-center justify-center active:scale-90 transition-transform shadow-sm border border-[#F0E3D5]">
+              <button onClick={(e) => { e.stopPropagation(); addItem(activeTab); }} className="w-8 h-8 rounded-full bg-white flex items-center justify-center active:scale-90 transition-transform shadow-sm border border-[#F0E3D5]">
                 <Plus className="w-4.5 h-4.5 text-[#8C6A4F]" />
               </button>
             </div>
 
             {/* 內容區域：奶茶色底點點背景樣式 */}
-            <div className="p-3.5 space-y-2 min-h-[380px] rounded-b-[24px]" style={dottedBg}>
-              {activeCategoryData.items.length === 0 ? (
-                <div className="h-48 flex flex-col items-center justify-center text-[#A8937C] opacity-30 text-sm">
+            <div className="p-3 space-y-2 min-h-[380px] rounded-b-[24px]" style={dottedBg}>
+              {shopping[activeCategoryIndex].items.length === 0 ? (
+                <div className="h-48 flex flex-col items-center justify-center text-[#A8937C] opacity-30 text-xs">
                   <ShoppingBasket className="w-10 h-10 mb-2 stroke-[1px]" />
                   尚未加入任何商品
                 </div>
               ) : (
-                [...activeCategoryData.items]
+                [...shopping[activeCategoryIndex].items]
                   .sort((a, b) => Number(a.checked) - Number(b.checked))
                   .map((item, index, arr) => {
-                    const shouldOpenUp = index >= arr.length - 2 && arr.length > 2;
+                    const shouldOpenUp = index >= arr.length - 5 && arr.length > 5;
 
                     return (
                       <React.Fragment key={item.id}>
-                        <div className={`relative flex items-center h-[54px] px-3.5 rounded-2xl transition-all ${item.checked ? "bg-[#F7F1EB]/60 opacity-80" : "bg-white border border-[#F0E3D5] shadow-sm"}`}>
-                          <input type="checkbox" className="shrink-0 w-5 h-5 accent-[#D8C2AE] cursor-pointer rounded-full" checked={item.checked} onChange={(e) => updateItem(activeCategoryData.id, item.id, { checked: e.target.checked })} />
-                          <span className={`ml-4 flex-1 text-[14px] truncate transition ${item.checked ? "line-through text-[#A8937C]" : "text-[#5A4636] font-bold"}`}>
+                        <div className={`relative flex items-center h-[52px] px-3.5 rounded-2xl transition-all ${item.checked ? "bg-[#F7F1EB]/60 opacity-80" : "bg-white border border-[#F0E3D5] shadow-sm"}`}>
+                          <input type="checkbox" className="shrink-0 w-4.5 h-4.5 accent-[#D8C2AE] cursor-pointer rounded-full" checked={item.checked} onChange={(e) => updateItem(activeTab, item.id, { checked: e.target.checked })} />
+                          <span className={`ml-3.5 flex-1 text-[13.5px] truncate transition ${item.checked ? "line-through text-[#A8937C]" : "text-[#5A4636] font-bold"}`}>
                             {item.name}
                           </span>
                           {typeof item.price === "number" && item.quantity > 0 && (
-                            <div className="mr-3 text-right leading-tight tabular-nums">
+                            <div className="mr-2.5 text-right leading-tight tabular-nums">
                               <div className="text-[11.5px] font-black text-[#5A4636]">¥{(item.price * item.quantity).toLocaleString()}</div>
                               <div className="text-[8.5px] text-[#A8937C] font-bold">¥{item.price.toLocaleString()} × {item.quantity}</div>
                             </div>
@@ -258,31 +262,36 @@ export default function Shopping({ trip, setTrip }) {
                           {menuOpenId === item.id && (
                             <div 
                               className={`absolute right-1 z-[110] w-38 bg-white border border-[#E5D5C5] rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden ${
-                                shouldOpenUp ? "bottom-[58px]" : "top-[52px]"
+                                shouldOpenUp ? "bottom-[54px]" : "top-[48px]"
                               }`}
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-[#F7F1EB] w-full text-[#5A4636] font-medium" onClick={() => { setEditingItem({ catId: activeCategoryData.id, item }); setEditingField("name"); setDraftValue(item.name); setMenuOpenId(null); }}>
-                                <Pencil className="w-4 h-4 text-[#C6A087]" /> 名稱
+                              <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-[#F7F1EB] w-full text-[#5A4636] font-medium" onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("name"); setDraftValue(item.name); setMenuOpenId(null); }}>
+                                <div className="w-5 flex-shrink-0"><Pencil className="w-4 h-4 text-[#C6A087]" /></div>
+                                <span className="ml-1">名稱</span>
                               </button>
-                              <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-[#F7F1EB] w-full text-[#5A4636] font-medium" onClick={() => { setEditingItem({ catId: activeCategoryData.id, item }); setEditingField("price"); setDraftValue(item.price != null ? String(item.price) : ""); setMenuOpenId(null); }}>
-                                <CircleDollarSign className="w-4 h-4 text-[#C6A087]" /> 單價
+                              <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-[#F7F1EB] w-full text-[#5A4636] font-medium" onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("price"); setDraftValue(item.price != null ? String(item.price) : ""); setMenuOpenId(null); }}>
+                                <div className="w-5 flex-shrink-0"><CircleDollarSign className="w-4 h-4 text-[#C6A087]" /></div>
+                                <span className="ml-1">單價</span>
                               </button>
-                              <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-[#F7F1EB] w-full text-[#5A4636] font-medium" onClick={() => { setEditingItem({ catId: activeCategoryData.id, item }); setEditingField("quantity"); setDraftValue(item.quantity != null ? String(item.quantity) : "1"); setMenuOpenId(null); }}>
-                                <ShoppingBasket className="w-4 h-4 text-[#C6A087]" /> 數量
+                              <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-[#F7F1EB] w-full text-[#5A4636] font-medium" onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("quantity"); setDraftValue(item.quantity != null ? String(item.quantity) : "1"); setMenuOpenId(null); }}>
+                                <div className="w-5 flex-shrink-0"><ShoppingBasket className="w-4 h-4 text-[#C6A087]" /></div>
+                                <span className="ml-1">數量</span>
                               </button>
                               <label className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-[#F7F1EB] w-full text-[#5A4636] font-medium cursor-pointer">
-                                <ImageIcon className="w-4 h-4 text-[#C6A087]" /> 照片
-                                <input type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0], activeCategoryData.id, item.id, item.imageId); setMenuOpenId(null); }} />
+                                <div className="w-5 flex-shrink-0"><ImageIcon className="w-4 h-4 text-[#C6A087]" /></div>
+                                <span className="ml-1">照片</span>
+                                <input type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0], activeTab, item.id, item.imageId); setMenuOpenId(null); }} />
                               </label>
-                              <div className="h-px bg-[#F0E3D5] my-1.5 mx-2" />
-                              <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] text-red-500 font-black hover:bg-red-50 w-full" onClick={() => { deleteItem(activeCategoryData.id, item.id, item.imageId); setMenuOpenId(null); }}>
-                                <Trash2 className="w-4 h-4" /> 刪除
+                              <div className="h-px bg-[#F0E3D5] my-1 mx-2" />
+                              <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] text-red-500 font-black hover:bg-red-50 w-full" onClick={() => { deleteItem(activeTab, item.id, item.imageId); setMenuOpenId(null); }}>
+                                <div className="w-5 flex-shrink-0"><Trash2 className="w-4 h-4" /></div>
+                                <span className="ml-1">刪除</span>
                               </button>
                             </div>
                           )}
                         </div>
-                        {arr[index + 1]?.checked && !item.checked && <div className="my-2 h-[1.5px] rounded-full bg-[#E5D5C5]/60" />}
+                        {arr[index + 1]?.checked && !item.checked && <div className="my-1.5 h-[1.5px] rounded-full bg-[#E5D5C5]/60" />}
                       </React.Fragment>
                     );
                   })
@@ -296,18 +305,18 @@ export default function Shopping({ trip, setTrip }) {
       {editingItem && (
         <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-[#FFF9F2] rounded-[2rem] border border-[#E5D5C5] shadow-2xl p-6 w-full max-w-[300px] animate-in zoom-in-95 duration-200">
-            <h3 className="text-[13.5px] font-bold mb-4 text-[#5A4636] uppercase tracking-widest text-center">編輯清單</h3>
-            <div className="bg-white rounded-xl border border-[#E5D5C5] px-4 py-3 shadow-inner">
-              <input autoFocus type={editingField === "name" ? "text" : "number"} value={draftValue} onChange={(e) => setDraftValue(e.target.value)} className="w-full text-center text-[16.5px] font-bold bg-transparent outline-none text-[#5A4636]" />
+            <h3 className="text-[13px] font-bold mb-4 text-[#5A4636] uppercase tracking-widest text-center">編輯屬性</h3>
+            <div className="bg-white rounded-xl border border-[#E5D5C5] px-4 py-2.5 shadow-inner">
+              <input autoFocus type={editingField === "name" ? "text" : "number"} value={draftValue} onChange={(e) => setDraftValue(e.target.value)} className="w-full text-center text-[16px] font-bold bg-transparent outline-none text-[#5A4636]" />
             </div>
             <div className="grid grid-cols-2 gap-3 mt-6">
-              <button onClick={() => setEditingItem(null)} className="py-3 rounded-xl border border-[#E5D5C5] text-[12.5px] font-bold text-[#8C6A4F] bg-white active:scale-95 transition-all">取消</button>
+              <button onClick={() => setEditingItem(null)} className="py-3 rounded-xl border border-[#E5D5C5] text-[12px] font-bold text-[#8C6A4F] bg-white active:scale-95 transition-all">取消</button>
               <button onClick={() => {
                   if (editingField === "price") updateItem(editingItem.catId, editingItem.item.id, { price: Number(draftValue) });
                   else if (editingField === "quantity") updateItem(editingItem.catId, editingItem.item.id, { quantity: Number(draftValue) });
                   else updateItem(editingItem.catId, editingItem.item.id, { name: draftValue });
                   setEditingItem(null);
-                }} className="py-3 bg-[#C6A087] text-white rounded-xl flex items-center justify-center gap-1 text-[12.5px] font-bold shadow-md active:scale-95 transition-all">確定</button>
+                }} className="py-3 bg-[#C6A087] text-white rounded-xl flex items-center justify-center gap-1 text-[12px] font-bold shadow-md active:scale-95 transition-all">確定</button>
             </div>
           </div>
         </div>
@@ -317,7 +326,7 @@ export default function Shopping({ trip, setTrip }) {
       {previewImage && (
         <div className="fixed inset-0 z-[250] bg-black/70 backdrop-blur-xl flex items-center justify-center p-4" onClick={() => setPreviewImage(null)}>
           <div className="relative max-w-full" onClick={e => e.stopPropagation()}>
-             <button onClick={() => setPreviewImage(null)} className="absolute -top-10 right-0 text-white flex items-center gap-1 text-[12px] font-bold">關閉 <X className="w-4.5 h-4.5" /></button>
+             <button onClick={() => setPreviewImage(null)} className="absolute -top-10 right-0 text-white flex items-center gap-1 text-[11px] font-bold">關閉 <X className="w-4.5 h-4.5" /></button>
              <img src={previewImage} alt="" className="max-w-[85vw] max-h-[70vh] rounded-[24px] shadow-2xl border-4 border-white/20" />
           </div>
         </div>
