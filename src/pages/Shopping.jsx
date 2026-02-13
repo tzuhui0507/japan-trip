@@ -174,14 +174,14 @@ export default function Shopping({ trip, setTrip }) {
   const activeStyle = CATEGORY_STYLES[activeTab];
 
   return (
-    <div className="pt-2 pb-24 space-y-5 px-4" onClick={() => setMenuOpenId(null)}>
+    <div className="pt-2 pb-24 space-y-4 px-4" onClick={() => setMenuOpenId(null)}>
       <PageHeader icon={ShoppingBag} title="購物清單" subtitle="SHOPPING LIST" />
 
       {/* 修正 Tab 導覽列：採用穩定的百分比佈局 */}
       <div className="bg-[#E8E1DA]/40 p-1 rounded-full grid grid-cols-4 relative border border-white/40 h-[46px] items-stretch shadow-inner">
         {/* 滑動膠囊背景：精確鎖定 */}
         <div 
-          className="absolute top-1 bottom-1 transition-all duration-300 bg-white rounded-full shadow-md z-0 border border-[#EDE3D8]"
+          className="absolute top-1.5 bottom-1.5 transition-all duration-300 bg-white rounded-full shadow-md z-0 border border-[#EDE3D8]"
           style={{ 
             width: "calc(25% - 2px)", 
             left: `calc(${activeCategoryIndex * 25}% + 1px)`,
@@ -237,7 +237,8 @@ export default function Shopping({ trip, setTrip }) {
                 [...shopping[activeCategoryIndex].items]
                   .sort((a, b) => Number(a.checked) - Number(b.checked))
                   .map((item, index, arr) => {
-                    const shouldOpenUp = index >= arr.length - 5 && arr.length > 5;
+                    // 修改邏輯：前三個(0,1,2)往下，從第四個(3開始)一律往上
+                    const shouldOpenUp = index >= 3;
 
                     return (
                       <React.Fragment key={item.id}>
@@ -248,7 +249,7 @@ export default function Shopping({ trip, setTrip }) {
                           </span>
                           {typeof item.price === "number" && item.quantity > 0 && (
                             <div className="mr-2.5 text-right leading-tight tabular-nums">
-                              <div className="text-[11.5px] font-black text-[#5A4636]">¥{(item.price * item.quantity).toLocaleString()}</div>
+                              <div className="text-[11px] font-black text-[#5A4636]">¥{(item.price * item.quantity).toLocaleString()}</div>
                               <div className="text-[8.5px] text-[#A8937C] font-bold">¥{item.price.toLocaleString()} × {item.quantity}</div>
                             </div>
                           )}
@@ -310,13 +311,13 @@ export default function Shopping({ trip, setTrip }) {
               <input autoFocus type={editingField === "name" ? "text" : "number"} value={draftValue} onChange={(e) => setDraftValue(e.target.value)} className="w-full text-center text-[16px] font-bold bg-transparent outline-none text-[#5A4636]" />
             </div>
             <div className="grid grid-cols-2 gap-3 mt-6">
-              <button onClick={() => setEditingItem(null)} className="py-3 rounded-xl border border-[#E5D5C5] text-[12px] font-bold text-[#8C6A4F] bg-white active:scale-95 transition-all">取消</button>
+              <button onClick={() => setEditingItem(null)} className="py-2.5 rounded-xl border border-[#E5D5C5] text-[12px] font-bold text-[#8C6A4F] bg-white active:scale-95 transition-all">取消</button>
               <button onClick={() => {
                   if (editingField === "price") updateItem(editingItem.catId, editingItem.item.id, { price: Number(draftValue) });
                   else if (editingField === "quantity") updateItem(editingItem.catId, editingItem.item.id, { quantity: Number(draftValue) });
                   else updateItem(editingItem.catId, editingItem.item.id, { name: draftValue });
                   setEditingItem(null);
-                }} className="py-3 bg-[#C6A087] text-white rounded-xl flex items-center justify-center gap-1 text-[12px] font-bold shadow-md active:scale-95 transition-all">確定</button>
+                }} className="py-2.5 bg-[#C6A087] text-white rounded-xl flex items-center justify-center gap-1 text-[12px] font-bold shadow-md active:scale-95 transition-all">確定</button>
             </div>
           </div>
         </div>
