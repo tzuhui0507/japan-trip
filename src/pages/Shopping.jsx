@@ -33,7 +33,7 @@ const CATEGORY_STYLES = {
   other: { color: "#B7A2BC", light: "#F5F1F7", icon: MoreHorizontal, en: "OTHERS" },
 };
 
-// 修正：內容底色奶茶色 (#FFF9F2)
+// 內容區域：奶茶色底點點背景
 const dottedBg = {
   backgroundColor: "#FFF9F2", 
   backgroundImage: "radial-gradient(#E8E1DA 1px, transparent 1px)",
@@ -177,14 +177,14 @@ export default function Shopping({ trip, setTrip }) {
     <div className="pt-2 pb-24 space-y-4 px-4" onClick={() => setMenuOpenId(null)}>
       <PageHeader icon={ShoppingBag} title="購物清單" subtitle="SHOPPING LIST" />
 
-      {/* 修正 Tab 導覽列：採用穩定的百分比佈局 */}
-      <div className="bg-[#E8E1DA]/40 p-1 rounded-full grid grid-cols-4 relative border border-white/40 h-[46px] items-stretch shadow-inner">
-        {/* 滑動膠囊背景：精確鎖定 */}
+      {/* 修改：方圓角 Tab 導覽列 */}
+      <div className="bg-[#E8E1DA]/40 p-1 rounded-2xl grid grid-cols-4 relative border border-white/40 h-[46px] items-stretch shadow-inner overflow-hidden">
+        {/* 修改：縮短後的滑動膠囊，保持方圓角並縮短寬度 */}
         <div 
-          className="absolute top-1.5 bottom-1.5 transition-all duration-300 bg-white rounded-full shadow-md z-0 border border-[#EDE3D8]"
+          className="absolute top-1.5 bottom-1.5 transition-all duration-300 bg-white rounded-xl shadow-md z-0 border border-[#EDE3D8]"
           style={{ 
-            width: "calc(25% - 2px)", 
-            left: `calc(${activeCategoryIndex * 25}% + 1px)`,
+            width: "calc(25% - 12px)", // 縮短寬度，離邊緣遠一點
+            left: `calc(${activeCategoryIndex * 25}% + 6px)`, // 配合寬度調整位移，精準置中
           }}
         />
         
@@ -215,7 +215,7 @@ export default function Shopping({ trip, setTrip }) {
                    {React.createElement(activeStyle.icon, { className: "w-4.5 h-4.5" })}
                 </div>
                 <div className="flex flex-col">
-                  <h3 className="font-bold text-[#5A4636] text-[15.5px] leading-tight">{shopping[activeCategoryIndex].title}</h3>
+                  <h3 className="font-bold text-[#5A4636] text-[15px] leading-tight">{shopping[activeCategoryIndex].title}</h3>
                   <p className="text-[9px] text-[#8C6A4F] uppercase tracking-wider opacity-60 font-black">
                     {activeStyle.en}
                   </p>
@@ -226,7 +226,6 @@ export default function Shopping({ trip, setTrip }) {
               </button>
             </div>
 
-            {/* 內容區域：奶茶色底點點背景樣式 */}
             <div className="p-3 space-y-2 min-h-[380px] rounded-b-[24px]" style={dottedBg}>
               {shopping[activeCategoryIndex].items.length === 0 ? (
                 <div className="h-48 flex flex-col items-center justify-center text-[#A8937C] opacity-30 text-xs">
@@ -237,7 +236,6 @@ export default function Shopping({ trip, setTrip }) {
                 [...shopping[activeCategoryIndex].items]
                   .sort((a, b) => Number(a.checked) - Number(b.checked))
                   .map((item, index, arr) => {
-                    // 修改邏輯：前三個(0,1,2)往下，從第四個(3開始)一律往上
                     const shouldOpenUp = index >= 3;
 
                     return (
@@ -308,16 +306,16 @@ export default function Shopping({ trip, setTrip }) {
           <div className="bg-[#FFF9F2] rounded-[2rem] border border-[#E5D5C5] shadow-2xl p-6 w-full max-w-[300px] animate-in zoom-in-95 duration-200">
             <h3 className="text-[13px] font-bold mb-4 text-[#5A4636] uppercase tracking-widest text-center">編輯屬性</h3>
             <div className="bg-white rounded-xl border border-[#E5D5C5] px-4 py-2.5 shadow-inner">
-              <input autoFocus type={editingField === "name" ? "text" : "number"} value={draftValue} onChange={(e) => setDraftValue(e.target.value)} className="w-full text-center text-[16px] font-bold bg-transparent outline-none text-[#5A4636]" />
+              <input autoFocus type={editingField === "name" ? "text" : "number"} value={draftValue} onChange={(e) => setDraftValue(e.target.value)} className="w-full text-center text-[15px] font-bold bg-transparent outline-none text-[#5A4636]" />
             </div>
-            <div className="grid grid-cols-2 gap-3 mt-6">
-              <button onClick={() => setEditingItem(null)} className="py-2.5 rounded-xl border border-[#E5D5C5] text-[12px] font-bold text-[#8C6A4F] bg-white active:scale-95 transition-all">取消</button>
+            <div className="grid grid-cols-2 gap-2 mt-5">
+              <button onClick={() => setEditingItem(null)} className="py-2 rounded-xl border border-[#E5D5C5] text-[11px] font-bold text-[#8C6A4F] bg-white active:scale-95 transition-all">取消</button>
               <button onClick={() => {
                   if (editingField === "price") updateItem(editingItem.catId, editingItem.item.id, { price: Number(draftValue) });
                   else if (editingField === "quantity") updateItem(editingItem.catId, editingItem.item.id, { quantity: Number(draftValue) });
                   else updateItem(editingItem.catId, editingItem.item.id, { name: draftValue });
                   setEditingItem(null);
-                }} className="py-2.5 bg-[#C6A087] text-white rounded-xl flex items-center justify-center gap-1 text-[12px] font-bold shadow-md active:scale-95 transition-all">確定</button>
+                }} className="py-2 bg-[#C6A087] text-white rounded-xl flex items-center justify-center gap-1 text-[11px] font-bold shadow-md active:scale-95 transition-all">確定</button>
             </div>
           </div>
         </div>
@@ -327,7 +325,7 @@ export default function Shopping({ trip, setTrip }) {
       {previewImage && (
         <div className="fixed inset-0 z-[250] bg-black/70 backdrop-blur-xl flex items-center justify-center p-4" onClick={() => setPreviewImage(null)}>
           <div className="relative max-w-full" onClick={e => e.stopPropagation()}>
-             <button onClick={() => setPreviewImage(null)} className="absolute -top-10 right-0 text-white flex items-center gap-1 text-[11px] font-bold">關閉 <X className="w-4.5 h-4.5" /></button>
+             <button onClick={() => setPreviewImage(null)} className="absolute -top-10 right-0 text-white flex items-center gap-1 text-[11px] font-bold">關閉 <X className="w-4 h-4" /></button>
              <img src={previewImage} alt="" className="max-w-[85vw] max-h-[70vh] rounded-[24px] shadow-2xl border-4 border-white/20" />
           </div>
         </div>
