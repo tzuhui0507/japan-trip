@@ -116,7 +116,7 @@ export default function Header({ trip, setTrip, currentTab }) {
     } catch { alert("❌ 匯出失敗"); }
   };
 
-  // ✅ 升級：智慧合併匯入邏輯
+  // ✅ 修正：智慧合併匯入邏輯 (包含 INFO)
   const handleImportFile = (e) => {
     const file = e.target.files?.[0];
     if (!file || file.type !== "application/json") return;
@@ -126,28 +126,26 @@ export default function Header({ trip, setTrip, currentTab }) {
         const importedData = JSON.parse(reader.result);
         
         setTrip(prevTrip => {
-          // 建立合併後的資料
           const mergedTrip = {
-            ...prevTrip,             // 1. 保留目前所有資料 (包含朋友打好的行李清單 checklist、購物清單 shoppingList)
+            ...prevTrip,             // 1. 保留原本資料
             title: importedData.title || prevTrip.title,
             startDate: importedData.startDate || prevTrip.startDate,
             endDate: importedData.endDate || prevTrip.endDate,
             days: importedData.days || prevTrip.days,       // 2. 覆蓋行程 (PLAN)
             tickets: importedData.tickets || prevTrip.tickets, // 3. 覆蓋票券 (TICKET)
+            info: importedData.info || prevTrip.info,       // 4. 新增：覆蓋資訊 (INFO)
             shareMode: prevTrip.shareMode // 強制維持目前的權限模式
           };
 
-          // 存入本地暫存
           localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedTrip));
           return mergedTrip;
         });
 
         setShowImport(false);
-        alert("📥 行程與票券已智慧合併成功！(已保留既有清單)");
+        alert("📥 行程、票券與 INFO 已智慧合併成功！(已保留既有清單)");
       } catch { alert("❌ 檔案格式錯誤"); }
     };
     reader.readAsText(file);
-    // 清除 input 值，確保同一個檔案可以連續匯入
     e.target.value = "";
   };
 
@@ -264,8 +262,8 @@ export default function Header({ trip, setTrip, currentTab }) {
       {showImport && (
         <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center">
           <div className="w-full max-w-lg mx-4 bg-[#FFF9F2] rounded-2xl border border-[#E5D5C5] p-5 text-center">
-            <h2 className="text-sm font-bold text-[#5A4636] mb-2">匯入行程與票券資料</h2>
-            <p className="text-[11px] text-[#8C6A4F] mb-4">匯入將會覆蓋目前的行程 (PLAN) 與票券 (TICKET)，<br/>但會保留您目前打好的行李與購物清單。</p>
+            <h2 className="text-sm font-bold text-[#5A4636] mb-2">匯入行程與資訊資料</h2>
+            <p className="text-[11px] text-[#8C6A4F] mb-4">匯入將會覆蓋目前的行程 (PLAN)、票券 (TICKET) 與資訊 (INFO)，<br/>但會保留您目前打好的行李與購物清單。</p>
             <input type="file" accept="application/json" onChange={handleImportFile} className="w-full border border-[#E5D5C5] rounded-xl p-3 text-sm bg-white mb-5" />
             <button onClick={() => setShowImport(false)} className="px-6 py-2 text-xs rounded-full border border-[#E5D5C5] text-[#5A4636]">取消</button>
           </div>

@@ -16,7 +16,6 @@ import {
   Shapes,
   Sparkles, 
   Settings2,
-  // 標題專用圖示
   Palette,
   Eye,
   Wand2,
@@ -37,14 +36,8 @@ const CATEGORY_CONFIG = {
   other: { color: "#B197B4", light: "#F8F2F9", en: "MAKEUP", icon: Sparkles },
 };
 
-// 標題專用 Icon 對照表
 const HEADER_ICONS = {
-  h1: Palette,     // 底妝
-  h2: Eye,         // 眼妝
-  h3: Wand2,       // 修容打亮
-  h4: Smile,       // 唇妝
-  h5: Brush,       // 工具小物
-  h6: HouseHeart,  // 補妝急救
+  h1: Palette, h2: Eye, h3: Wand2, h4: Smile, h5: Brush, h6: HouseHeart,
 };
 
 const dottedBg = {
@@ -89,7 +82,8 @@ function createDefaultLuggage() {
         { id: "sunglasses", label: "太陽眼鏡", checked: false },
       ]},
       { id: "toiletries", title: "盥洗用品", items: [
-        { id: "wash-set", label: "洗髮、潤髮、沐浴乳", checked: false },
+        { id: "wash-set", label: "洗髮、潤髮", checked: false },
+        { id: "Shower", label: "沐浴乳", checked: false },
         { id: "tooth-set", label: "牙膏、牙刷", checked: false },
         { id: "towel", label: "浴巾 / 毛巾", checked: false },
         { id: "remover", label: "卸妝用品", checked: false },
@@ -133,8 +127,8 @@ function createDefaultLuggage() {
       { id: "base4", label: "定妝蜜粉 / 噴霧", checked: false },
       { id: "h2", label: "眼妝 Eye Makeup", isHeader: true },
       { id: "eye1", label: "眉筆 / 眉粉", checked: false },
-      { id: "eye2", label: "眼影盤", checked: false },
-      { id: "eye3", label: "眼線筆", checked: false },
+      { id: "eye2", label: "眼線筆", checked: false },
+      { id: "eye3", label: "眼影盤", checked: false },
       { id: "eye4", label: "睫毛膏", checked: false },
       { id: "eye5", label: "睫毛夾 / 燙睫毛器", checked: false },
       { id: "h3", label: "修容打亮 Contouring", isHeader: true },
@@ -174,35 +168,27 @@ export default function ListTab({ trip, setTrip }) {
 
   const luggage = isViewer ? (viewerLuggage || createDefaultLuggage()) : (trip.luggage || createDefaultLuggage());
 
-  // --- 通用補丁邏輯：同時修復「使用者」與「檢視者」的舊資料 ---
   const patchLuggageData = (currentData) => {
     const defaultData = createDefaultLuggage();
     let needsUpdate = false;
     const newData = { ...currentData };
-
-    // 1. 修復化妝品分組
     if (!newData.otherCustom || newData.otherCustom.length < defaultData.otherCustom.length) {
       newData.otherCustom = defaultData.otherCustom;
       needsUpdate = true;
     }
-
-    // 2. 修復各分類內容
     newData.categories = newData.categories.map((cat, idx) => {
       const defaultCat = defaultData.categories[idx];
       if (defaultCat && cat.items.length < defaultCat.items.length) {
         needsUpdate = true;
-        // 合併邏輯：保留舊的勾選狀態，補入新的項目
         const existingIds = new Set(cat.items.map(i => i.id));
         const newItems = defaultCat.items.filter(i => !existingIds.has(i.id));
         return { ...cat, items: [...cat.items, ...newItems] };
       }
       return cat;
     });
-
     return needsUpdate ? newData : null;
   };
 
-  // 使用者補丁
   useEffect(() => {
     if (!isViewer && trip.luggage) {
       const patched = patchLuggageData(trip.luggage);
@@ -210,7 +196,6 @@ export default function ListTab({ trip, setTrip }) {
     }
   }, [trip.luggage, isViewer, setTrip]);
 
-  // 檢視者補丁與初始化
   useEffect(() => {
     if (!isViewer) return;
     const raw = localStorage.getItem(VIEWER_LUGGAGE_KEY);
@@ -321,7 +306,7 @@ export default function ListTab({ trip, setTrip }) {
   const activeConfig = CATEGORY_CONFIG[activeTab];
 
   return (
-    <div className="pt-2 pb-24 space-y-4 px-4" onClick={() => setMenuOpenId(null)}>
+    <div className="pt-2 pb-24 space-y-4 px-4 select-none" onClick={() => setMenuOpenId(null)}>
       <PageHeader icon={LuggageHeaderIcon} title="行李清單" subtitle="LUGGAGE CHECKLIST" />
 
       {/* ===== 行李資訊區塊 ===== */}
@@ -367,7 +352,6 @@ export default function ListTab({ trip, setTrip }) {
         )}
       </section>
 
-      {/* ===== 3*2 固定網格頁籤 ===== */}
       <div className="grid grid-cols-3 gap-2 bg-[#E8E1DA]/30 p-2 rounded-[20px] border border-white/50 shadow-inner">
         {[...categories, { id: "other", title: "化妝用品" }].map((cat) => {
           const isActive = activeTab === cat.id;
@@ -382,7 +366,7 @@ export default function ListTab({ trip, setTrip }) {
         })}
       </div>
 
-      {/* ===== 內容卡片：沉浸式化妝分組標題 ===== */}
+      {/* ===== 內容卡片：手機優化拖拽邏輯 ===== */}
       <div className="rounded-[28px] border border-[#EDE3D8] shadow-sm bg-white animate-in fade-in duration-300 relative overflow-visible z-20">
         {activeCategoryData && (
           <>
@@ -404,15 +388,12 @@ export default function ListTab({ trip, setTrip }) {
             <div className="p-4 pt-2 rounded-b-[28px] pb-4" style={dottedBg}>
               <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
                 {activeCategoryData.items.map((item, index) => {
-                  // 分組標題樣式優化：靠左對齊 + Lucide Icon + 後方延伸線
                   if (item.isHeader) {
                     const HeaderIcon = HEADER_ICONS[item.id] || Sparkles;
                     return (
                       <div key={item.id} className="col-span-2 flex items-center gap-2.5 mt-4 mb-2">
                         <HeaderIcon className="w-3.5 h-3.5 text-[#B197B4]" />
-                        <span className="text-[11px] font-black text-[#B197B4] uppercase tracking-wider whitespace-nowrap">
-                          {item.label}
-                        </span>
+                        <span className="text-[11px] font-black text-[#B197B4] uppercase tracking-wider whitespace-nowrap">{item.label}</span>
                         <div className="h-[1px] flex-1 bg-[#B197B4]/30 ml-2" />
                       </div>
                     );
@@ -421,8 +402,12 @@ export default function ListTab({ trip, setTrip }) {
                   const checked = item.checked;
                   const isBeingDragged = draggedIndex === index;
                   return (
-                    <div key={item.id} className={`relative group transition-all ${isBeingDragged ? "opacity-30 scale-95" : "opacity-100"}`} onDragOver={(e) => handleDragOver(e, index)}>
-                      <div className="flex items-center h-8.5 px-1 rounded-xl active:bg-black/5 group">
+                    <div 
+                      key={item.id} 
+                      className={`relative group transition-all ${isBeingDragged ? "opacity-30 scale-95" : "opacity-100"}`}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                    >
+                      <div className="flex items-center h-8.5 px-1 rounded-xl active:bg-black/5">
                         <button onClick={() => toggleItem(activeTab === "other" ? null : activeTab, item.id, activeTab === "other")} className="flex-1 flex items-center gap-2 text-left min-w-0">
                           <span className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all shrink-0 ${checked ? "bg-[#91867A] border-[#91867A]" : "bg-white border-[#D5C7B8]"}`}>
                             {checked && <Check className="w-2.5 h-2.5 text-white stroke-[3.5]" />}
@@ -430,11 +415,13 @@ export default function ListTab({ trip, setTrip }) {
                           <span className={`text-[12.5px] font-medium transition-all truncate ${checked ? "text-[#B3A496] line-through" : "text-[#4F3B2B]"}`}>{item.label}</span>
                         </button>
 
+                        {/* 修正：增加手機拖拽兼容性，利用 GripVertical 作為唯一觸發點 */}
                         <div 
                           draggable 
                           onDragStart={() => handleDragStart(index)} 
                           onDragEnd={handleDragEnd}
-                          className="w-6 h-6 flex items-center justify-center rounded-full bg-white/40 opacity-0 group-active:opacity-100 group-hover:opacity-100 transition-opacity cursor-move touch-none"
+                          style={{ WebkitTouchCallout: 'none' }}
+                          className="w-6 h-6 flex items-center justify-center rounded-full bg-white/40 opacity-0 group-active:opacity-100 group-hover:opacity-100 transition-opacity cursor-grab touch-none"
                           onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}
                         >
                           <Settings2 className="w-3 h-3 text-[#8C6A4F]/40" />
