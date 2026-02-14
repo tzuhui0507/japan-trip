@@ -10,7 +10,7 @@ import {
   Plug,
   MoreHorizontal,
   X,
-  Pencil,
+  PencilLine,
   CircleDollarSign,
   ShoppingBasket,
   Loader2,
@@ -266,7 +266,7 @@ export default function Shopping({ trip, setTrip }) {
                               onClick={(e) => e.stopPropagation()}
                             >
                               <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-[#F7F1EB] w-full text-[#5A4636] font-medium" onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("name"); setDraftValue(item.name); setMenuOpenId(null); }}>
-                                <div className="w-5 flex-shrink-0"><Pencil className="w-4 h-4 text-[#C6A087]" /></div>
+                                <div className="w-5 flex-shrink-0"><PencilLine className="w-4 h-4 text-[#C6A087]" /></div>
                                 <span className="ml-1">名稱</span>
                               </button>
                               <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-[#F7F1EB] w-full text-[#5A4636] font-medium" onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("price"); setDraftValue(item.price != null ? String(item.price) : ""); setMenuOpenId(null); }}>
