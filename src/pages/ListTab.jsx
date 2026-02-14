@@ -17,18 +17,15 @@ import {
   Sparkles, 
   Settings2,
   GripVertical,
-  // 新增標題用 icon
+  // 標題專用圖示
   Palette,
   Eye,
-  Brush,
-  Smile,
   Wand2,
-  Stethoscope,
+  Smile,
+  Brush,
   HouseHeart
 } from "lucide-react";
 import LuggageEditModal from "../components/LuggageEditModal";
-
-// Header 用 icon
 import { Luggage as LuggageHeaderIcon } from "lucide-react";
 
 /* ================== 完美馬卡龍配色 CONFIG ================== */
@@ -48,7 +45,7 @@ const HEADER_ICONS = {
   h3: Wand2,       // 修容打亮
   h4: Smile,       // 唇妝
   h5: Brush,       // 工具小物
-  h6: HouseHeart, // 補妝急救
+  h6: HouseHeart,  // 補妝急救
 };
 
 const dottedBg = {
@@ -137,8 +134,8 @@ function createDefaultLuggage() {
       { id: "base4", label: "定妝蜜粉 / 噴霧", checked: false },
       { id: "h2", label: "眼妝 Eye Makeup", isHeader: true },
       { id: "eye1", label: "眉筆 / 眉粉", checked: false },
-      { id: "eye2", label: "眼影盤", checked: false },
-      { id: "eye3", label: "眼線筆", checked: false },
+      { id: "eye2", label: "眼線筆", checked: false },
+      { id: "eye3", label: "眼影盤", checked: false },
       { id: "eye4", label: "睫毛膏", checked: false },
       { id: "eye5", label: "睫毛夾 / 燙睫毛器", checked: false },
       { id: "h3", label: "修容打亮 Contouring", isHeader: true },
@@ -177,6 +174,35 @@ export default function ListTab({ trip, setTrip }) {
   const [draggedIndex, setDraggedIndex] = useState(null);
 
   const luggage = isViewer ? (viewerLuggage || createDefaultLuggage()) : (trip.luggage || createDefaultLuggage());
+
+  // --- 自動補丁邏輯：解決新版本內容未出現的問題 ---
+  useEffect(() => {
+    if (!isViewer && trip.luggage) {
+      const defaultData = createDefaultLuggage();
+      let needsUpdate = false;
+      const updatedLuggage = { ...trip.luggage };
+
+      // 檢查 otherCustom 是否需要更新（例如舊資料沒有分組標題）
+      if (!updatedLuggage.otherCustom || updatedLuggage.otherCustom.length < defaultData.otherCustom.length) {
+        updatedLuggage.otherCustom = defaultData.otherCustom;
+        needsUpdate = true;
+      }
+
+      // 同步檢查各分類內容 (例如隨身用品新增的駕照等)
+      updatedLuggage.categories = updatedLuggage.categories.map((cat, idx) => {
+        const defaultCat = defaultData.categories[idx];
+        if (defaultCat && cat.items.length < defaultCat.items.length) {
+          needsUpdate = true;
+          return defaultCat; // 如果數量不對，直接更新為最新預設
+        }
+        return cat;
+      });
+
+      if (needsUpdate) {
+        setTrip(prev => ({ ...prev, luggage: updatedLuggage }));
+      }
+    }
+  }, [trip.luggage, isViewer, setTrip]);
 
   useEffect(() => {
     if (!isViewer) return;
@@ -366,16 +392,16 @@ export default function ListTab({ trip, setTrip }) {
             <div className="p-4 pt-2 rounded-b-[28px] pb-4" style={dottedBg}>
               <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
                 {activeCategoryData.items.map((item, index) => {
-                  // 分組標題樣式優化：靠左 + Icon + 後方線條
+                  // 分組標題樣式優化：靠左對齊 + Lucide Icon + 後方延伸線
                   if (item.isHeader) {
                     const HeaderIcon = HEADER_ICONS[item.id] || Sparkles;
                     return (
-                      <div key={item.id} className="col-span-2 flex items-center gap-2.5 mt-4 mb-2">
+                      <div key={item.id} className="col-span-2 flex items-center gap-2 mt-4 mb-2">
                         <HeaderIcon className="w-3.5 h-3.5 text-[#B197B4]" />
                         <span className="text-[11px] font-black text-[#B197B4] uppercase tracking-wider whitespace-nowrap">
                           {item.label}
                         </span>
-                        <div className="h-[1px] flex-1 bg-[#B197B4]/50" />
+                        <div className="h-[1px] flex-1 bg-[#B197B4]/30 ml-2" />
                       </div>
                     );
                   }
