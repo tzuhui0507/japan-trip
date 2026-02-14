@@ -16,7 +16,6 @@ import {
   Shapes,
   Sparkles, 
   Settings2,
-  GripVertical,
   // 標題專用圖示
   Palette,
   Eye,
@@ -134,8 +133,8 @@ function createDefaultLuggage() {
       { id: "base4", label: "定妝蜜粉 / 噴霧", checked: false },
       { id: "h2", label: "眼妝 Eye Makeup", isHeader: true },
       { id: "eye1", label: "眉筆 / 眉粉", checked: false },
-      { id: "eye2", label: "眼線筆", checked: false },
-      { id: "eye3", label: "眼影盤", checked: false },
+      { id: "eye2", label: "眼影盤", checked: false },
+      { id: "eye3", label: "眼線筆", checked: false },
       { id: "eye4", label: "睫毛膏", checked: false },
       { id: "eye5", label: "睫毛夾 / 燙睫毛器", checked: false },
       { id: "h3", label: "修容打亮 Contouring", isHeader: true },
@@ -175,44 +174,59 @@ export default function ListTab({ trip, setTrip }) {
 
   const luggage = isViewer ? (viewerLuggage || createDefaultLuggage()) : (trip.luggage || createDefaultLuggage());
 
-  // --- 自動補丁邏輯：解決新版本內容未出現的問題 ---
+  // --- 通用補丁邏輯：同時修復「使用者」與「檢視者」的舊資料 ---
+  const patchLuggageData = (currentData) => {
+    const defaultData = createDefaultLuggage();
+    let needsUpdate = false;
+    const newData = { ...currentData };
+
+    // 1. 修復化妝品分組
+    if (!newData.otherCustom || newData.otherCustom.length < defaultData.otherCustom.length) {
+      newData.otherCustom = defaultData.otherCustom;
+      needsUpdate = true;
+    }
+
+    // 2. 修復各分類內容
+    newData.categories = newData.categories.map((cat, idx) => {
+      const defaultCat = defaultData.categories[idx];
+      if (defaultCat && cat.items.length < defaultCat.items.length) {
+        needsUpdate = true;
+        // 合併邏輯：保留舊的勾選狀態，補入新的項目
+        const existingIds = new Set(cat.items.map(i => i.id));
+        const newItems = defaultCat.items.filter(i => !existingIds.has(i.id));
+        return { ...cat, items: [...cat.items, ...newItems] };
+      }
+      return cat;
+    });
+
+    return needsUpdate ? newData : null;
+  };
+
+  // 使用者補丁
   useEffect(() => {
     if (!isViewer && trip.luggage) {
-      const defaultData = createDefaultLuggage();
-      let needsUpdate = false;
-      const updatedLuggage = { ...trip.luggage };
-
-      // 檢查 otherCustom 是否需要更新（例如舊資料沒有分組標題）
-      if (!updatedLuggage.otherCustom || updatedLuggage.otherCustom.length < defaultData.otherCustom.length) {
-        updatedLuggage.otherCustom = defaultData.otherCustom;
-        needsUpdate = true;
-      }
-
-      // 同步檢查各分類內容 (例如隨身用品新增的駕照等)
-      updatedLuggage.categories = updatedLuggage.categories.map((cat, idx) => {
-        const defaultCat = defaultData.categories[idx];
-        if (defaultCat && cat.items.length < defaultCat.items.length) {
-          needsUpdate = true;
-          return defaultCat; // 如果數量不對，直接更新為最新預設
-        }
-        return cat;
-      });
-
-      if (needsUpdate) {
-        setTrip(prev => ({ ...prev, luggage: updatedLuggage }));
-      }
+      const patched = patchLuggageData(trip.luggage);
+      if (patched) setTrip(prev => ({ ...prev, luggage: patched }));
     }
   }, [trip.luggage, isViewer, setTrip]);
 
+  // 檢視者補丁與初始化
   useEffect(() => {
     if (!isViewer) return;
     const raw = localStorage.getItem(VIEWER_LUGGAGE_KEY);
-    if (raw) setViewerLuggage(JSON.parse(raw));
-    else {
-      const init = trip.luggage || createDefaultLuggage();
-      localStorage.setItem(VIEWER_LUGGAGE_KEY, JSON.stringify(init));
-      setViewerLuggage(init);
+    let initData;
+    if (raw) {
+      initData = JSON.parse(raw);
+      const patched = patchLuggageData(initData);
+      if (patched) {
+        initData = patched;
+        localStorage.setItem(VIEWER_LUGGAGE_KEY, JSON.stringify(initData));
+      }
+    } else {
+      initData = trip.luggage || createDefaultLuggage();
+      localStorage.setItem(VIEWER_LUGGAGE_KEY, JSON.stringify(initData));
     }
+    setViewerLuggage(initData);
   }, [isViewer]);
 
   useEffect(() => {
@@ -255,9 +269,7 @@ export default function ListTab({ trip, setTrip }) {
 
   const toggleItem = (categoryId, itemId, isOther = false) => {
     updateLuggage((prev) => {
-      if (isOther) {
-        return { ...prev, otherCustom: prev.otherCustom.map((it) => it.id === itemId ? { ...it, checked: !it.checked } : it) };
-      }
+      if (isOther) return { ...prev, otherCustom: prev.otherCustom.map((it) => it.id === itemId ? { ...it, checked: !it.checked } : it) };
       return {
         ...prev,
         categories: prev.categories.map((cat) => cat.id === categoryId
@@ -396,7 +408,7 @@ export default function ListTab({ trip, setTrip }) {
                   if (item.isHeader) {
                     const HeaderIcon = HEADER_ICONS[item.id] || Sparkles;
                     return (
-                      <div key={item.id} className="col-span-2 flex items-center gap-2 mt-4 mb-2">
+                      <div key={item.id} className="col-span-2 flex items-center gap-2.5 mt-4 mb-2">
                         <HeaderIcon className="w-3.5 h-3.5 text-[#B197B4]" />
                         <span className="text-[11px] font-black text-[#B197B4] uppercase tracking-wider whitespace-nowrap">
                           {item.label}
