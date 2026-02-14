@@ -127,8 +127,8 @@ function createDefaultLuggage() {
       { id: "base4", label: "定妝蜜粉 / 噴霧", checked: false },
       { id: "h2", label: "眼妝 Eye Makeup", isHeader: true },
       { id: "eye1", label: "眉筆 / 眉粉", checked: false },
-      { id: "eye2", label: "眼線筆", checked: false },
-      { id: "eye3", label: "眼影盤", checked: false },
+      { id: "eye2", label: "眼影盤", checked: false },
+      { id: "eye3", label: "眼線筆", checked: false },
       { id: "eye4", label: "睫毛膏", checked: false },
       { id: "eye5", label: "睫毛夾 / 燙睫毛器", checked: false },
       { id: "h3", label: "修容打亮 Contouring", isHeader: true },
@@ -237,20 +237,40 @@ export default function ListTab({ trip, setTrip }) {
     }));
   };
 
-  const handleDragStart = (index) => setDraggedIndex(index);
-  const handleDragOver = (e, index) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === index) return;
+  /* ================== 核心移動邏輯優化 ================== */
+  const moveItem = (fromIndex, toIndex) => {
+    if (fromIndex === toIndex) return;
     updateLuggage((prev) => {
       const next = JSON.parse(JSON.stringify(prev));
       const targetItems = activeTab === "other" ? next.otherCustom : next.categories.find(c => c.id === activeTab).items;
-      const itemToMove = targetItems.splice(draggedIndex, 1)[0];
-      targetItems.splice(index, 0, itemToMove);
-      setDraggedIndex(index);
+      const [movedItem] = targetItems.splice(fromIndex, 1);
+      targetItems.splice(toIndex, 0, movedItem);
       return next;
     });
+    setDraggedIndex(toIndex);
+  };
+
+  const handleDragStart = (index) => setDraggedIndex(index);
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedIndex === null) return;
+    moveItem(draggedIndex, index);
   };
   const handleDragEnd = () => setDraggedIndex(null);
+
+  // 手機版觸控拖拽模擬
+  const handleTouchMove = (e) => {
+    if (draggedIndex === null) return;
+    const touch = e.touches[0];
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    const itemContainer = element?.closest("[data-drag-index]");
+    if (itemContainer) {
+      const targetIndex = parseInt(itemContainer.getAttribute("data-drag-index"), 10);
+      if (!isNaN(targetIndex) && targetIndex !== draggedIndex) {
+        moveItem(draggedIndex, targetIndex);
+      }
+    }
+  };
 
   const toggleItem = (categoryId, itemId, isOther = false) => {
     updateLuggage((prev) => {
@@ -366,7 +386,7 @@ export default function ListTab({ trip, setTrip }) {
         })}
       </div>
 
-      {/* ===== 內容卡片：手機優化拖拽邏輯 ===== */}
+      {/* ===== 內容卡片：手機優化移動邏輯 ===== */}
       <div className="rounded-[28px] border border-[#EDE3D8] shadow-sm bg-white animate-in fade-in duration-300 relative overflow-visible z-20">
         {activeCategoryData && (
           <>
@@ -404,8 +424,9 @@ export default function ListTab({ trip, setTrip }) {
                   return (
                     <div 
                       key={item.id} 
-                      className={`relative group transition-all ${isBeingDragged ? "opacity-30 scale-95" : "opacity-100"}`}
+                      data-drag-index={index}
                       onDragOver={(e) => handleDragOver(e, index)}
+                      className={`relative group transition-all ${isBeingDragged ? "opacity-30 scale-95" : "opacity-100"}`}
                     >
                       <div className="flex items-center h-8.5 px-1 rounded-xl active:bg-black/5">
                         <button onClick={() => toggleItem(activeTab === "other" ? null : activeTab, item.id, activeTab === "other")} className="flex-1 flex items-center gap-2 text-left min-w-0">
@@ -415,12 +436,15 @@ export default function ListTab({ trip, setTrip }) {
                           <span className={`text-[12.5px] font-medium transition-all truncate ${checked ? "text-[#B3A496] line-through" : "text-[#4F3B2B]"}`}>{item.label}</span>
                         </button>
 
-                        {/* 修正：增加手機拖拽兼容性，利用 GripVertical 作為唯一觸發點 */}
+                        {/* 修正：增加專門針對手機觸控的模擬移動監聽 */}
                         <div 
                           draggable 
                           onDragStart={() => handleDragStart(index)} 
                           onDragEnd={handleDragEnd}
-                          style={{ WebkitTouchCallout: 'none' }}
+                          onTouchStart={() => handleDragStart(index)}
+                          onTouchMove={(e) => handleTouchMove(e)}
+                          onTouchEnd={handleDragEnd}
+                          style={{ touchAction: 'none', WebkitTouchCallout: 'none' }}
                           className="w-6 h-6 flex items-center justify-center rounded-full bg-white/40 opacity-0 group-active:opacity-100 group-hover:opacity-100 transition-opacity cursor-grab touch-none"
                           onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}
                         >
