@@ -16,6 +16,7 @@ import {
   Shapes,
   Sparkles, 
   Settings2,
+  GripVertical,
   Palette,
   Eye,
   Wand2,
@@ -127,8 +128,8 @@ function createDefaultLuggage() {
       { id: "base4", label: "定妝蜜粉 / 噴霧", checked: false },
       { id: "h2", label: "眼妝 Eye Makeup", isHeader: true },
       { id: "eye1", label: "眉筆 / 眉粉", checked: false },
-      { id: "eye2", label: "眼影盤", checked: false },
-      { id: "eye3", label: "眼線筆", checked: false },
+      { id: "eye2", label: "眼線筆", checked: false },
+      { id: "eye3", label: "眼影盤", checked: false },
       { id: "eye4", label: "睫毛膏", checked: false },
       { id: "eye5", label: "睫毛夾 / 燙睫毛器", checked: false },
       { id: "h3", label: "修容打亮 Contouring", isHeader: true },
@@ -169,23 +170,37 @@ export default function ListTab({ trip, setTrip }) {
   const luggage = isViewer ? (viewerLuggage || createDefaultLuggage()) : (trip.luggage || createDefaultLuggage());
 
   const patchLuggageData = (currentData) => {
+    if (!currentData) return createDefaultLuggage();
     const defaultData = createDefaultLuggage();
     let needsUpdate = false;
-    const newData = { ...currentData };
+    const newData = JSON.parse(JSON.stringify(currentData));
+
     if (!newData.otherCustom || newData.otherCustom.length < defaultData.otherCustom.length) {
       newData.otherCustom = defaultData.otherCustom;
       needsUpdate = true;
     }
-    newData.categories = newData.categories.map((cat, idx) => {
-      const defaultCat = defaultData.categories[idx];
-      if (defaultCat && cat.items.length < defaultCat.items.length) {
-        needsUpdate = true;
-        const existingIds = new Set(cat.items.map(i => i.id));
-        const newItems = defaultCat.items.filter(i => !existingIds.has(i.id));
-        return { ...cat, items: [...cat.items, ...newItems] };
-      }
-      return cat;
-    });
+
+    if (!newData.categories) {
+      newData.categories = defaultData.categories;
+      needsUpdate = true;
+    } else {
+      newData.categories = newData.categories.map((cat, idx) => {
+        const defaultCat = defaultData.categories[idx];
+        if (defaultCat && (!cat.items || cat.items.length < defaultCat.items.length)) {
+          needsUpdate = true;
+          const existingIds = new Set((cat.items || []).map(i => i.id));
+          const newItems = defaultCat.items.filter(i => !existingIds.has(i.id));
+          return { ...cat, items: [...(cat.items || []), ...newItems] };
+        }
+        return cat;
+      });
+    }
+
+    if (!newData.bags) {
+      newData.bags = defaultData.bags;
+      needsUpdate = true;
+    }
+
     return needsUpdate ? newData : null;
   };
 
@@ -201,18 +216,22 @@ export default function ListTab({ trip, setTrip }) {
     const raw = localStorage.getItem(VIEWER_LUGGAGE_KEY);
     let initData;
     if (raw) {
-      initData = JSON.parse(raw);
-      const patched = patchLuggageData(initData);
-      if (patched) {
-        initData = patched;
-        localStorage.setItem(VIEWER_LUGGAGE_KEY, JSON.stringify(initData));
+      try {
+        initData = JSON.parse(raw);
+        const patched = patchLuggageData(initData);
+        if (patched) {
+          initData = patched;
+          localStorage.setItem(VIEWER_LUGGAGE_KEY, JSON.stringify(initData));
+        }
+      } catch (e) {
+        initData = createDefaultLuggage();
       }
     } else {
       initData = trip.luggage || createDefaultLuggage();
       localStorage.setItem(VIEWER_LUGGAGE_KEY, JSON.stringify(initData));
     }
     setViewerLuggage(initData);
-  }, [isViewer]);
+  }, [isViewer, trip.luggage]);
 
   useEffect(() => {
     if (isViewer) return;
@@ -237,12 +256,12 @@ export default function ListTab({ trip, setTrip }) {
     }));
   };
 
-  /* ================== 核心移動邏輯優化 ================== */
   const moveItem = (fromIndex, toIndex) => {
-    if (fromIndex === toIndex) return;
+    if (fromIndex === toIndex || fromIndex === null || toIndex === null) return;
     updateLuggage((prev) => {
       const next = JSON.parse(JSON.stringify(prev));
-      const targetItems = activeTab === "other" ? next.otherCustom : next.categories.find(c => c.id === activeTab).items;
+      const targetItems = activeTab === "other" ? next.otherCustom : next.categories.find(c => c.id === activeTab)?.items;
+      if (!targetItems) return prev;
       const [movedItem] = targetItems.splice(fromIndex, 1);
       targetItems.splice(toIndex, 0, movedItem);
       return next;
@@ -258,7 +277,6 @@ export default function ListTab({ trip, setTrip }) {
   };
   const handleDragEnd = () => setDraggedIndex(null);
 
-  // 手機版觸控拖拽模擬
   const handleTouchMove = (e) => {
     if (draggedIndex === null) return;
     const touch = e.touches[0];
@@ -274,11 +292,11 @@ export default function ListTab({ trip, setTrip }) {
 
   const toggleItem = (categoryId, itemId, isOther = false) => {
     updateLuggage((prev) => {
-      if (isOther) return { ...prev, otherCustom: prev.otherCustom.map((it) => it.id === itemId ? { ...it, checked: !it.checked } : it) };
+      if (isOther) return { ...prev, otherCustom: (prev.otherCustom || []).map((it) => it.id === itemId ? { ...it, checked: !it.checked } : it) };
       return {
         ...prev,
-        categories: prev.categories.map((cat) => cat.id === categoryId
-          ? { ...cat, items: cat.items.map((it) => it.id === itemId ? { ...it, checked: !it.checked } : it) }
+        categories: (prev.categories || []).map((cat) => cat.id === categoryId
+          ? { ...cat, items: (cat.items || []).map((it) => it.id === itemId ? { ...it, checked: !it.checked } : it) }
           : cat
         ),
       };
@@ -288,42 +306,44 @@ export default function ListTab({ trip, setTrip }) {
   const addItem = (categoryId) => {
     const newId = `item-${Date.now()}`;
     updateLuggage((prev) => {
-      if (categoryId === "other") return { ...prev, otherCustom: [...prev.otherCustom, { id: newId, label: "新項目", checked: false }] };
+      if (categoryId === "other") return { ...prev, otherCustom: [...(prev.otherCustom || []), { id: newId, label: "新項目", checked: false }] };
       return {
         ...prev,
-        categories: prev.categories.map((cat) => cat.id === categoryId ? { ...cat, items: [...cat.items, { id: newId, label: "新項目", checked: false }] } : cat),
+        categories: (prev.categories || []).map((cat) => cat.id === categoryId ? { ...cat, items: [...(cat.items || []), { id: newId, label: "新項目", checked: false }] } : cat),
       };
     });
   };
 
   const updateItemLabel = (categoryId, itemId, newLabel) => {
     updateLuggage((prev) => {
-      if (categoryId === "other" || !categoryId) return { ...prev, otherCustom: prev.otherCustom.map((it) => it.id === itemId ? { ...it, label: newLabel } : it) };
+      if (categoryId === "other" || !categoryId) return { ...prev, otherCustom: (prev.otherCustom || []).map((it) => it.id === itemId ? { ...it, label: newLabel } : it) };
       return {
         ...prev,
-        categories: prev.categories.map((cat) => cat.id === categoryId ? { ...cat, items: cat.items.map((it) => it.id === itemId ? { ...it, label: newLabel } : it) } : cat),
+        categories: (prev.categories || []).map((cat) => cat.id === categoryId ? { ...cat, items: (cat.items || []).map((it) => it.id === itemId ? { ...it, label: newLabel } : it) } : cat),
       };
     });
   };
 
   const deleteItem = (categoryId, itemId) => {
     updateLuggage((prev) => {
-      if (!categoryId || categoryId === "other") return { ...prev, otherCustom: prev.otherCustom.filter((it) => it.id !== itemId) };
+      if (!categoryId || categoryId === "other") return { ...prev, otherCustom: (prev.otherCustom || []).filter((it) => it.id !== itemId) };
       return {
         ...prev,
-        categories: prev.categories.map((cat) => cat.id === categoryId ? { ...cat, items: cat.items.filter((it) => it.id !== itemId) } : cat),
+        categories: (prev.categories || []).map((cat) => cat.id === categoryId ? { ...cat, items: (cat.items || []).filter((it) => it.id !== itemId) } : cat),
       };
     });
   };
 
   const saveBag = (updatedBag) => {
-    updateLuggage((prev) => ({ ...prev, bags: prev.bags.map((b) => (b.id === updatedBag.id ? updatedBag : b)) }));
+    updateLuggage((prev) => ({ ...prev, bags: (prev.bags || []).map((b) => (b.id === updatedBag.id ? updatedBag : b)) }));
     setEditingBag(null);
   };
 
-  const { categories, otherCustom, bags } = luggage;
-  const activeCategoryData = activeTab === "other" ? { id: "other", title: "化妝用品", items: otherCustom } : categories.find(c => c.id === activeTab);
-  const activeConfig = CATEGORY_CONFIG[activeTab];
+  const { categories = [], otherCustom = [], bags = [] } = luggage || {};
+  const activeCategoryData = activeTab === "other" 
+    ? { id: "other", title: "化妝用品", items: otherCustom } 
+    : (categories.find(c => c.id === activeTab) || { id: activeTab, title: "未知", items: [] });
+  const activeConfig = CATEGORY_CONFIG[activeTab] || CATEGORY_CONFIG.other;
 
   return (
     <div className="pt-2 pb-24 space-y-4 px-4 select-none" onClick={() => setMenuOpenId(null)}>
@@ -375,7 +395,7 @@ export default function ListTab({ trip, setTrip }) {
       <div className="grid grid-cols-3 gap-2 bg-[#E8E1DA]/30 p-2 rounded-[20px] border border-white/50 shadow-inner">
         {[...categories, { id: "other", title: "化妝用品" }].map((cat) => {
           const isActive = activeTab === cat.id;
-          const config = CATEGORY_CONFIG[cat.id];
+          const config = CATEGORY_CONFIG[cat.id] || CATEGORY_CONFIG.other;
           const Icon = config.icon;
           return (
             <button key={cat.id} onClick={() => setActiveTab(cat.id)} className={`py-2 rounded-xl text-[11.5px] font-black transition-all duration-300 border flex items-center justify-center gap-1.5 ${isActive ? "bg-white border-[#EDE3D8] shadow-md scale-[1.02]" : "bg-white/40 border-transparent text-[#8C6A4F]/50"}`} style={{ color: isActive ? config.color : undefined }}>
@@ -386,7 +406,6 @@ export default function ListTab({ trip, setTrip }) {
         })}
       </div>
 
-      {/* ===== 內容卡片：手機優化移動邏輯 ===== */}
       <div className="rounded-[28px] border border-[#EDE3D8] shadow-sm bg-white animate-in fade-in duration-300 relative overflow-visible z-20">
         {activeCategoryData && (
           <>
@@ -407,11 +426,11 @@ export default function ListTab({ trip, setTrip }) {
 
             <div className="p-4 pt-2 rounded-b-[28px] pb-4" style={dottedBg}>
               <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
-                {activeCategoryData.items.map((item, index) => {
+                {(activeCategoryData.items || []).map((item, index) => {
                   if (item.isHeader) {
                     const HeaderIcon = HEADER_ICONS[item.id] || Sparkles;
                     return (
-                      <div key={item.id} className="col-span-2 flex items-center gap-2.5 mt-4 mb-2">
+                      <div key={item.id} className="col-span-2 flex items-center gap-2 mt-4 mb-2">
                         <HeaderIcon className="w-3.5 h-3.5 text-[#B197B4]" />
                         <span className="text-[11px] font-black text-[#B197B4] uppercase tracking-wider whitespace-nowrap">{item.label}</span>
                         <div className="h-[1px] flex-1 bg-[#B197B4]/30 ml-2" />
@@ -436,7 +455,6 @@ export default function ListTab({ trip, setTrip }) {
                           <span className={`text-[12.5px] font-medium transition-all truncate ${checked ? "text-[#B3A496] line-through" : "text-[#4F3B2B]"}`}>{item.label}</span>
                         </button>
 
-                        {/* 修正：增加專門針對手機觸控的模擬移動監聽 */}
                         <div 
                           draggable 
                           onDragStart={() => handleDragStart(index)} 
