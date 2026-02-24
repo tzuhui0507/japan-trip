@@ -116,7 +116,7 @@ export default function Header({ trip, setTrip, currentTab }) {
     } catch { alert("❌ 匯出失敗"); }
   };
 
-  // ✅ 修正：智慧合併匯入邏輯 (包含 INFO)
+  // ✅ 修正：智慧合併匯入邏輯 (包含 LUGGAGE INFO - bags)
   const handleImportFile = (e) => {
     const file = e.target.files?.[0];
     if (!file || file.type !== "application/json") return;
@@ -133,7 +133,14 @@ export default function Header({ trip, setTrip, currentTab }) {
             endDate: importedData.endDate || prevTrip.endDate,
             days: importedData.days || prevTrip.days,       // 2. 覆蓋行程 (PLAN)
             tickets: importedData.tickets || prevTrip.tickets, // 3. 覆蓋票券 (TICKET)
-            info: importedData.info || prevTrip.info,       // 4. 新增：覆蓋資訊 (INFO)
+            info: importedData.info || prevTrip.info,       // 4. 覆蓋資訊 (INFO)
+            
+            // 5. 特別處理 LUGGAGE INFO (bags) 但保留既有清單項目
+            luggage: {
+              ...prevTrip.luggage,
+              bags: importedData.luggage?.bags || prevTrip.luggage?.bags // 強制同步托運/隨身/備註
+            },
+            
             shareMode: prevTrip.shareMode // 強制維持目前的權限模式
           };
 
@@ -142,7 +149,7 @@ export default function Header({ trip, setTrip, currentTab }) {
         });
 
         setShowImport(false);
-        alert("📥 行程、票券與 INFO 已智慧合併成功！(已保留既有清單)");
+        alert("📥 行程、票券與行李資訊 (INFO) 已智慧合併成功！");
       } catch { alert("❌ 檔案格式錯誤"); }
     };
     reader.readAsText(file);
@@ -263,7 +270,7 @@ export default function Header({ trip, setTrip, currentTab }) {
         <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center">
           <div className="w-full max-w-lg mx-4 bg-[#FFF9F2] rounded-2xl border border-[#E5D5C5] p-5 text-center">
             <h2 className="text-sm font-bold text-[#5A4636] mb-2">匯入行程與資訊資料</h2>
-            <p className="text-[11px] text-[#8C6A4F] mb-4">匯入將會覆蓋目前的行程 (PLAN)、票券 (TICKET) 與資訊 (INFO)，<br/>但會保留您目前打好的行李與購物清單。</p>
+            <p className="text-[11px] text-[#8C6A4F] mb-4">匯入將會覆蓋目前的行程 (PLAN)、票券 (TICKET) 與行李資訊，<br/>但會保留您目前打好的行李與購物清單項目。</p>
             <input type="file" accept="application/json" onChange={handleImportFile} className="w-full border border-[#E5D5C5] rounded-xl p-3 text-sm bg-white mb-5" />
             <button onClick={() => setShowImport(false)} className="px-6 py-2 text-xs rounded-full border border-[#E5D5C5] text-[#5A4636]">取消</button>
           </div>
