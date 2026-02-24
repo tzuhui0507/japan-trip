@@ -3,16 +3,15 @@ import React, { useState, useEffect } from "react";
 import { Link, Upload, Download, Plus, Check, X, Calendar } from "lucide-react";
 
 const STORAGE_KEY = "trip_local_v1";
+const VIEWER_LUGGAGE_KEY = "viewer_luggage_v1"; // 必須與 ListTab.jsx 一致
 
 export default function Header({ trip, setTrip, currentTab }) {
   if (!trip) return null;
 
-  // ===== 基礎變數 =====
   const startDateObj = new Date(trip.startDate);
   const isViewer = trip.shareMode === "viewer";
   const isPlan = currentTab === "PLAN";
 
-  // ===== 1. 標題編輯邏輯 =====
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [tempTitle, setTempTitle] = useState(trip.title);
   const [showRangeModal, setShowRangeModal] = useState(false);
@@ -30,68 +29,43 @@ export default function Header({ trip, setTrip, currentTab }) {
     setIsEditingTitle(false);
   };
 
-  // ===== 2. 核心功能：設定旅遊區間（連動更新天數） =====
   const handleUpdateRange = (newStart, newEnd) => {
     const start = new Date(newStart);
     const end = new Date(newEnd);
-    
     if (end < start) {
       alert("結束日期不能早於開始日期");
       return;
     }
-
     const diffTime = Math.abs(end - start);
     const targetDayCount = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
     setTrip(prev => {
       const next = structuredClone(prev);
       const currentDayCount = next.days.length;
-
       if (targetDayCount < currentDayCount) {
         const confirmDelete = window.confirm(`縮短日期區間將會刪除最後 ${currentDayCount - targetDayCount} 天的行程，確定嗎？`);
         if (!confirmDelete) return prev;
       }
-
       next.startDate = newStart;
       next.endDate = newEnd;
-
       const newDays = [];
       const weekdays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-
       for (let i = 0; i < targetDayCount; i++) {
         const d = new Date(next.startDate);
         d.setDate(d.getDate() + i);
         const dateStr = d.toISOString().split('T')[0];
-
         if (next.days[i]) {
-          newDays.push({
-            ...next.days[i],
-            date: dateStr,
-            weekday: weekdays[d.getDay()],
-            dayNumber: d.getDate()
-          });
+          newDays.push({ ...next.days[i], date: dateStr, weekday: weekdays[d.getDay()], dayNumber: d.getDate() });
         } else {
-          newDays.push({
-            id: `day-${Date.now()}-${i}`,
-            date: dateStr,
-            weekday: weekdays[d.getDay()],
-            dayNumber: d.getDate(),
-            items: [],
-            heroTitle: `第 ${i + 1} 天`,
-            heroImage: "",
-            heroLocation: "",
-            weatherLocation: "未設定地點"
-          });
+          newDays.push({ id: `day-${Date.now()}-${i}`, date: dateStr, weekday: weekdays[d.getDay()], dayNumber: d.getDate(), items: [], heroTitle: `第 ${i + 1} 天`, heroImage: "", heroLocation: "", weatherLocation: "未設定地點" });
         }
       }
-
       next.days = newDays;
       return next;
     });
     setShowRangeModal(false);
   };
 
-  // ===== 3. 匯入/匯出/分享 邏輯 =====
   const [showImport, setShowImport] = useState(false);
 
   const handleShare = async () => {
@@ -116,7 +90,7 @@ export default function Header({ trip, setTrip, currentTab }) {
     } catch { alert("❌ 匯出失敗"); }
   };
 
-  // ✅ 修正：智慧合併匯入邏輯 (包含 LUGGAGE INFO - bags)
+  // ✅ 修正：同步更新 Viewer 的快照資料
   const handleImportFile = (e) => {
     const file = e.target.files?.[0];
     if (!file || file.type !== "application/json") return;
@@ -127,29 +101,33 @@ export default function Header({ trip, setTrip, currentTab }) {
         
         setTrip(prevTrip => {
           const mergedTrip = {
-            ...prevTrip,             // 1. 保留原本資料
+            ...prevTrip,
             title: importedData.title || prevTrip.title,
             startDate: importedData.startDate || prevTrip.startDate,
             endDate: importedData.endDate || prevTrip.endDate,
-            days: importedData.days || prevTrip.days,       // 2. 覆蓋行程 (PLAN)
-            tickets: importedData.tickets || prevTrip.tickets, // 3. 覆蓋票券 (TICKET)
-            info: importedData.info || prevTrip.info,       // 4. 覆蓋資訊 (INFO)
-            
-            // 5. 特別處理 LUGGAGE INFO (bags) 但保留既有清單項目
+            days: importedData.days || prevTrip.days,
+            tickets: importedData.tickets || prevTrip.tickets,
+            info: importedData.info || prevTrip.info,
             luggage: {
               ...prevTrip.luggage,
-              bags: importedData.luggage?.bags || prevTrip.luggage?.bags // 強制同步托運/隨身/備註
+              bags: importedData.luggage?.bags || prevTrip.luggage?.bags // 同步 Luggage Info (Bags)
             },
-            
-            shareMode: prevTrip.shareMode // 強制維持目前的權限模式
+            shareMode: prevTrip.shareMode
           };
+
+          // 核心修正：如果當前是 Viewer 模式匯入，必須同時更新 Viewer 的快照
+          if (isViewer) {
+            localStorage.setItem(VIEWER_LUGGAGE_KEY, JSON.stringify(mergedTrip.luggage));
+            // 強制重新整理頁面以重新加載 Viewer 資料
+            window.location.reload(); 
+          }
 
           localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedTrip));
           return mergedTrip;
         });
 
         setShowImport(false);
-        alert("📥 行程、票券與行李資訊 (INFO) 已智慧合併成功！");
+        if (!isViewer) alert("📥 行程、票券與 Luggage Info 已智慧合併成功！");
       } catch { alert("❌ 檔案格式錯誤"); }
     };
     reader.readAsText(file);
@@ -160,8 +138,6 @@ export default function Header({ trip, setTrip, currentTab }) {
     <>
       <header className={`fixed top-0 left-0 w-full z-50 bg-[#F8F5F1] ${isPlan ? "" : "border-b border-[#E8E1DA]"}`}>
         <div className="relative py-6 text-center">
-
-          {/* 右上角操作區 */}
           <div className="absolute top-3 right-3 flex items-center gap-2">
             {!isViewer && (
               <button onClick={handleShare} className="w-8 h-8 rounded-full border border-[#D8CFC4] bg-white flex items-center justify-center hover:bg-[#F7F1EB]">
@@ -185,30 +161,16 @@ export default function Header({ trip, setTrip, currentTab }) {
           <div className="flex justify-center items-center gap-2 px-10">
             {isEditingTitle && !isViewer ? (
               <div className="flex items-center gap-1">
-                <input
-                  autoFocus
-                  className="text-2xl font-bold text-[#5A3F2E] bg-transparent outline-none border-b border-[#C6A087] min-w-[120px] text-center"
-                  value={tempTitle}
-                  onChange={(e) => setTempTitle(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSaveTitle()}
-                />
+                <input autoFocus className="text-2xl font-bold text-[#5A3F2E] bg-transparent outline-none border-b border-[#C6A087] min-w-[120px] text-center" value={tempTitle} onChange={(e) => setTempTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSaveTitle()} />
                 <button onClick={handleSaveTitle} className="p-1"><Check className="w-4 h-4 text-green-600" /></button>
                 <button onClick={() => setIsEditingTitle(false)} className="p-1"><X className="w-4 h-4 text-red-400" /></button>
               </div>
             ) : (
-              <h1 
-                className={`text-2xl font-bold text-[#5A3F2E] ${!isViewer ? 'cursor-pointer' : ''}`}
-                onClick={() => !isViewer && setIsEditingTitle(true)}
-              >
+              <h1 className={`text-2xl font-bold text-[#5A3F2E] ${!isViewer ? 'cursor-pointer' : ''}`} onClick={() => !isViewer && setIsEditingTitle(true)}>
                 {trip.title || "日本自由行"}
               </h1>
             )}
-
-            <button 
-              onClick={() => !isViewer && setShowRangeModal(true)}
-              className="px-3 py-[2px] text-[12px] border border-[#D8CFC4] rounded-full bg-white text-[#5A3F2E] tracking-wider hover:bg-[#F7F1EB] transition-colors shrink-0"
-              title={!isViewer ? "點擊更換日期與天數" : ""}
-            >
+            <button onClick={() => !isViewer && setShowRangeModal(true)} className="px-3 py-[2px] text-[12px] border border-[#D8CFC4] rounded-full bg-white text-[#5A3F2E] tracking-wider hover:bg-[#F7F1EB] transition-colors shrink-0">
               {startDateObj.getFullYear()}
             </button>
           </div>
@@ -217,55 +179,32 @@ export default function Header({ trip, setTrip, currentTab }) {
 
       {showRangeModal && (
         <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center">
-          <div className="w-full max-w-sm mx-4 bg-[#FFF9F2] rounded-2xl border border-[#E5D5C5] p-6 shadow-xl text-center">
+          <div className="w-full max-sm mx-4 bg-[#FFF9F2] rounded-2xl border border-[#E5D5C5] p-6 shadow-xl text-center">
             <h2 className="text-sm font-bold text-[#5A4636] mb-4 flex items-center justify-center gap-2 uppercase tracking-widest">
-              <Calendar className="w-4 h-4" /> 行程旅遊天數設定
+              <Calendar className="w-4 h-4" /> 行程天數設定
             </h2>
-            
             <div className="space-y-4 text-left">
               <div>
                 <label className="text-[10px] text-[#A8937C] block mb-1 font-bold">開始日期</label>
-                <input 
-                  type="date" 
-                  id="range-start"
-                  className="w-full border border-[#D8CFC4] rounded-xl p-2.5 text-sm bg-white outline-none focus:ring-1 focus:ring-[#C6A087]" 
-                  defaultValue={trip.startDate ? trip.startDate.split('T')[0] : ""} 
-                />
+                <input type="date" id="range-start" className="w-full border border-[#D8CFC4] rounded-xl p-2.5 text-sm bg-white outline-none focus:ring-1 focus:ring-[#C6A087]" defaultValue={trip.startDate ? trip.startDate.split('T')[0] : ""} />
               </div>
               <div>
                 <label className="text-[10px] text-[#A8937C] block mb-1 font-bold">結束日期</label>
-                <input 
-                  type="date" 
-                  id="range-end" 
-                  className="w-full border border-[#D8CFC4] rounded-xl p-2.5 text-sm bg-white outline-none focus:ring-1 focus:ring-[#C6A087]" 
-                  defaultValue={trip.endDate ? trip.endDate.split('T')[0] : (trip.days.length > 0 ? trip.days[trip.days.length-1].date : "")} 
-                />
+                <input type="date" id="range-end" className="w-full border border-[#D8CFC4] rounded-xl p-2.5 text-sm bg-white outline-none focus:ring-1 focus:ring-[#C6A087]" defaultValue={trip.endDate ? trip.endDate.split('T')[0] : (trip.days.length > 0 ? trip.days[trip.days.length-1].date : "")} />
               </div>
             </div>
-
             <div className="mt-6 flex justify-center gap-3">
-              <button 
-                onClick={() => setShowRangeModal(false)}
-                className="px-6 py-2 text-xs rounded-full border border-[#D8CFC4] text-[#8C6A4F] hover:bg-white"
-              >
-                取消
-              </button>
-              <button 
-                onClick={() => {
-                  const s = document.getElementById('range-start').value;
-                  const e = document.getElementById('range-end').value;
-                  if (s && e) handleUpdateRange(s, e);
-                }}
-                className="px-6 py-2 text-xs rounded-full bg-[#C6A087] text-white hover:opacity-90 transition-opacity shadow-sm"
-              >
-                確定
-              </button>
+              <button onClick={() => setShowRangeModal(false)} className="px-6 py-2 text-xs rounded-full border border-[#D8CFC4] text-[#8C6A4F] hover:bg-white">取消</button>
+              <button onClick={() => {
+                const s = document.getElementById('range-start').value;
+                const e = document.getElementById('range-end').value;
+                if (s && e) handleUpdateRange(s, e);
+              }} className="px-6 py-2 text-xs rounded-full bg-[#C6A087] text-white hover:opacity-90 transition-opacity shadow-sm">確定</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 匯入 Modal */}
       {showImport && (
         <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center">
           <div className="w-full max-w-lg mx-4 bg-[#FFF9F2] rounded-2xl border border-[#E5D5C5] p-5 text-center">
