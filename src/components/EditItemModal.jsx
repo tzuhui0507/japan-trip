@@ -11,7 +11,7 @@ const TYPE_OPTIONS = {
 };
 
 export default function EditItemModal({ item, trip, tickets = [], onSave, onClose, themeId }) {
-  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+  const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
   const ticketList = tickets?.length ? tickets : trip?.tickets || [];
 
   // 解析三段支線邏輯 (A---B---C)

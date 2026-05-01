@@ -4,7 +4,7 @@ import { X, StickyNote, ChevronDown } from "lucide-react";
 import { THEMES } from "../App";
 
 export default function LuggageEditModal({ bag, onClose, onSave, themeId }) {
-  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+  const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
   
   const [form, setForm] = useState({
     ...bag,

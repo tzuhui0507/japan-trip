@@ -80,7 +80,7 @@ export default function Shopping({ trip, setTrip, themeId }) {
   const [viewerShopping, setViewerShopping] = useState(null);
   const [activeTab, setActiveTab] = useState("drugstore");
 
-  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+  const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
 
   // 使用全局貨幣系統
   const currentCurrencyCode = trip.currency || "JPY";

@@ -3,7 +3,7 @@ import React from "react";
 import { THEMES } from "../App";
 
 export default function PageHeader({ icon: Icon, title, subtitle, themeId }) {
-  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+  const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
 
   return (
     <div className="px-4 mt-4 mb-6">

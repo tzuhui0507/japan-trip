@@ -44,7 +44,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
   if (!trip) return null;
 
   const isViewer = trip.shareMode === "viewer";
-  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+  const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
 
   const numberToChinese = (num) => {
     const map = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];

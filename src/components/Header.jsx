@@ -35,7 +35,7 @@ export default function Header({ trip, setTrip, currentTab, themeId, setThemeId 
   const [showThemeSub, setShowThemeSub] = useState(false);
   const [showCurrencySub, setShowCurrencySub] = useState(false);
 
-  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+  const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [tempTitle, setTempTitle] = useState(trip.title);

@@ -4,7 +4,7 @@ import { X, Check, MapPin, Image as ImageIcon, Type, Loader2, StickyNote } from 
 import { THEMES } from "../App";
 
 export default function EditHeroModal({ dayData, onSave, onClose, themeId }) {
-  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+  const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
   
   const [form, setForm] = useState({
     heroTitle: dayData.heroTitle || "",

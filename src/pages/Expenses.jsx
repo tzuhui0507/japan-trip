@@ -56,7 +56,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
   if (!trip) return null;
 
   const isViewer = trip?.shareMode === "viewer";
-  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+  const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
   const [viewerData, setViewerData] = useState(null);
 
   const baseCurrency = trip.currency || "JPY";

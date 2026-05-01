@@ -57,7 +57,7 @@ function createNewCard() {
 
 export default function Currency({ trip, setTrip, themeId }) {
   const isViewer = trip?.shareMode === "viewer";
-  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+  const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
 
   const baseCurrency = typeof trip.currency === 'string' ? trip.currency : "JPY";
   const currencyInfo = CURRENCIES[baseCurrency] || CURRENCIES.JPY;

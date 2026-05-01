@@ -50,7 +50,7 @@ const SHINKANSEN_COLORS = {
 };
 
 function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex = 0, themeId, trip }) {
-  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+  const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
   
   // 接入全局貨幣符號
   const currencySymbol = CURRENCY_MAP[trip?.currency] || "¥";

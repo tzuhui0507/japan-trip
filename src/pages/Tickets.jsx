@@ -53,7 +53,7 @@ export default function Tickets({ trip, setTrip, themeId }) {
   const isReadOnly = trip?.shareMode === "viewer";
   
   // 獲取當前主題配置
-  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+  const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
 
   // ===============================
   // state

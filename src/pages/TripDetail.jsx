@@ -54,7 +54,7 @@ export default function TripDetail({ themeId, setThemeId }) {
   const [tab, setTab] = useState("PLAN");
 
   /* 獲取目前主題配色 */
-  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+  const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
 
   /* viewer 專用 day index */
   const [viewerDayIndex, setViewerDayIndex] = useState(0);

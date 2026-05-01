@@ -35,7 +35,7 @@ const DEFAULT_INFO = {
 export default function Info({ trip, setTrip, themeId }) {
   if (!trip) return null;
   const isReadOnly = trip?.shareMode === "viewer";
-  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+  const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
 
   useEffect(() => {
     if (!trip.info && !isReadOnly) {

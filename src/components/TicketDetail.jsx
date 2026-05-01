@@ -43,7 +43,7 @@ const TYPE_META = {
 };
 
 export default function TicketDetail({ ticket, onClose, themeId }) {
-  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+  const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
   if (!ticket) return null;
 
   const meta = TYPE_META[ticket.type] || TYPE_META.ATTRACTION;

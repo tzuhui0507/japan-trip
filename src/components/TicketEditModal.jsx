@@ -21,7 +21,7 @@ const TYPE_OPTIONS = [
 ];
 
 export default function TicketEditModal({ ticket, onClose, onSave, themeId }) {
-  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+  const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
   const [form, setForm] = useState({
     ...ticket,
   });

@@ -151,7 +151,7 @@ function createDefaultLuggage() {
 
 export default function ListTab({ trip, setTrip, themeId }) {
   const isViewer = trip?.shareMode === "viewer";
-  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+  const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
   const VIEWER_LUGGAGE_KEY = "viewer_luggage_v1";
   
   const [viewerLuggage, setViewerLuggage] = useState(null);
