@@ -5,24 +5,24 @@ import {
   Wallet,
   Luggage,
   Info,
-  Languages,
   Ticket,
   Coins,
   ShoppingBag,
   Download,
   Folder,
-  FileText,
+  Ellipsis,
+  FileDown,
 } from "lucide-react";
 
 import Header from "../components/Header";
 import { ShareModeProvider } from "../context/ShareModeContext";
+import { THEMES } from "../App"; 
 
 import Plan from "./Plan";
 import Expenses from "./Expenses";
 import ListTab from "./ListTab";
 import InfoTab from "./Info";
 import Tickets from "./Tickets";
-import Phrasebook from "./Phrasebook";
 import Currency from "./Currency";
 import Shopping from "./Shopping";
 import TicketDetail from "../components/TicketDetail";
@@ -43,27 +43,28 @@ function createViewerTrip() {
   };
 }
 
-export default function TripDetail() {
+export default function TripDetail({ themeId, setThemeId }) {
   const params = new URLSearchParams(window.location.search);
   const modeFromUrl = params.get("mode");
-  const dataFromUrl = params.get("data"); // ⭐ JSON 來源
+  const dataFromUrl = params.get("data"); 
   const shareMode = modeFromUrl === "viewer" ? "viewer" : "owner";
   const isViewer = shareMode === "viewer";
 
   const [trip, setTrip] = useState(null);
   const [tab, setTab] = useState("PLAN");
 
-  /* viewer 專用 day index（只影響畫面） */
+  /* 獲取目前主題配色 */
+  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+
+  /* viewer 專用 day index */
   const [viewerDayIndex, setViewerDayIndex] = useState(0);
 
-  // ✅ ADD HERE：第一次打開提示（只給 viewer）
   const [showViewerHint, setShowViewerHint] = useState(false); 
 
   /* ================================
-     初次載入
+      初次載入
   ================================= */
   useEffect(() => {
-    // 🔵 viewer：優先吃 URL JSON
     if (isViewer && dataFromUrl) {
       try {
         const decoded = decodeURIComponent(dataFromUrl);
@@ -77,7 +78,6 @@ export default function TripDetail() {
       }
     }
 
-    // 🟢 owner：讀 localStorage
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
@@ -85,16 +85,14 @@ export default function TripDetail() {
       return;
     }
 
-    // 🟡 viewer 保底
     if (isViewer) {
       setTrip(createViewerTrip());
     }
 
-    // 🔴 owner 保底（iOS 主畫面第一次開會走到這裡）
     if (!isViewer) {
       setTrip({
         shareMode: "owner",
-        title: "日本自由行",
+        title: "我的旅行手冊",
         startDate: new Date().toISOString(),
         activeDayIndex: 0,
         days: [],
@@ -107,9 +105,8 @@ export default function TripDetail() {
     }
   }, [shareMode, isViewer, dataFromUrl]);
 
-  // ✅ ADD HERE：Viewer 第一次打開提示（只出現一次）
   useEffect(() => {
-    if (!trip) return;                // 等 trip 載入後再判斷
+    if (!trip) return;
     if (trip.shareMode !== "viewer") return;
 
     const key = "trip_viewer_hint_seen";
@@ -121,9 +118,6 @@ export default function TripDetail() {
     }
   }, [trip]);
 
-  /* ================================
-     自動存 localStorage（owner only）
-  ================================= */
   useEffect(() => {
     if (!trip) return;
     if (trip.shareMode === "viewer") return;
@@ -132,19 +126,17 @@ export default function TripDetail() {
 
   if (!trip) return null;
 
-  /* 統一 day index */
   const currentDayIndex = isViewer
     ? viewerDayIndex
     : trip.activeDayIndex ?? 0;
 
-  /* Tabs */
+  /* Tabs - 已移除 PHRASEBOOK */
   const TABS = [
     { key: "PLAN", short: "PLAN", icon: Route },
     { key: "EXPENSES", short: "COST", icon: Wallet },
     { key: "LIST", short: "PACK", icon: Luggage },
     { key: "SHOPPING", short: "LIST", icon: ShoppingBag },
     { key: "TICKETS", short: "TICKET", icon: Ticket },
-    { key: "PHRASEBOOK", short: "JP", icon: Languages },
     { key: "CURRENCY", short: "RATE", icon: Coins },
     { key: "INFO", short: "INFO", icon: Info },
   ];
@@ -157,23 +149,22 @@ export default function TripDetail() {
             key={currentDayIndex}
             trip={trip}
             setTrip={setTrip}
-            dayIndex={currentDayIndex} 
+            dayIndex={currentDayIndex}
+            themeId={themeId}
           />
         );
       case "EXPENSES":
-        return <Expenses trip={trip} setTrip={setTrip} />;
+        return <Expenses trip={trip} setTrip={setTrip} themeId={themeId} />;
       case "LIST":
-        return <ListTab trip={trip} setTrip={setTrip} />;
+        return <ListTab trip={trip} setTrip={setTrip} themeId={themeId} />;
       case "SHOPPING":
-        return <Shopping trip={trip} setTrip={setTrip} />;
+        return <Shopping trip={trip} setTrip={setTrip} themeId={themeId} />;
       case "TICKETS":
-        return <Tickets trip={trip} setTrip={setTrip} />;
-      case "PHRASEBOOK":
-        return <Phrasebook trip={trip} setTrip={setTrip} />;
+        return <Tickets trip={trip} setTrip={setTrip} themeId={themeId} />;
       case "CURRENCY":
-        return <Currency trip={trip} setTrip={setTrip} />;
+        return <Currency trip={trip} setTrip={setTrip} themeId={themeId} />;
       case "INFO":
-        return <InfoTab trip={trip} setTrip={setTrip} />;
+        return <InfoTab trip={trip} setTrip={setTrip} themeId={themeId} />;
       default:
         return null;
     }
@@ -181,121 +172,92 @@ export default function TripDetail() {
 
   return (
     <ShareModeProvider mode={trip.shareMode}>
-      <Header trip={trip} setTrip={setTrip} currentTab={tab} />
+      <Header 
+        trip={trip} 
+        setTrip={setTrip} 
+        currentTab={tab} 
+        themeId={themeId} 
+        setThemeId={setThemeId} 
+      />
 
-      {/* ✅ PLACE HERE：Viewer 第一次提示（只出現一次） */}
       {showViewerHint && trip.shareMode === "viewer" && (
         <div className="fixed inset-0 z-[150] bg-black/40 backdrop-blur-sm flex items-center justify-center">
-          <div className="w-full max-w-sm mx-4 bg-[#FFF9F2] rounded-2xl border border-[#E5D5C5] p-5">
-            
-            {/* 標題 */}
-            <h3 className="text-sm font-bold text-[#5A4636] mb-2 tracking-[0.15em] text-center">
-              ようこそ *⸜♡⸝*
+          <div 
+            className="w-full max-w-sm mx-4 rounded-2xl border p-5 shadow-2xl animate-in zoom-in-95 duration-300"
+            style={{ backgroundColor: currentTheme.card, borderColor: currentTheme.border }}
+          >
+            <h3 className="text-sm font-bold mb-2 tracking-[0.15em] text-center" style={{ color: currentTheme.text }}>
+              Hiiii~ 泥好 *⸜( ˶´ ˘ `˶ )⸝*
             </h3>
 
-            <p className="text-xs text-[#8C6A4F] text-center mb-4">
-              這是為這趟旅程準備的小小旅行手冊 *⸜( ˶´ ˘ `˶ )⸝*
+            <p className="text-xs text-center mb-4 opacity-80" style={{ color: currentTheme.accent }}>
+              這是為這趟旅程準備的小小旅行手冊 *⸜♡⸝*
             </p>
 
-            {/* Viewer 說明 */}
-            <div className="bg-white rounded-xl border border-[#E5D5C5] px-4 py-3 text-xs text-[#8C6A4F] space-y-2 leading-relaxed">
+            <div 
+              className="rounded-xl border px-4 py-3 text-xs space-y-2 leading-relaxed"
+              style={{ backgroundColor: 'white', borderColor: currentTheme.border, color: currentTheme.accent }}
+            >
               <p>
-                目前為 <span className="font-semibold text-[#5A4636]">觀看模式 ( ˘͈ ᵕ ˘͈ )</span>
+                目前為 <span className="font-semibold" style={{ color: currentTheme.text }}>觀看模式 ( ˘͈ ᵕ ˘͈ )</span>
               </p>
               <p>
                 有些內容無法編輯，但可以自由瀏覽行程資訊 (´･ᴗ･`)
               </p>
             </div>
 
-            {/* 教學區塊 */}
-            <div className="mt-4 space-y-2 text-xs text-[#5A4636]">
-              <p className="font-semibold text-[#8C6A4F] text-center">
-                可以看看以下內容 ✿
+            <div className="mt-4 space-y-2 text-xs" style={{ color: currentTheme.text }}>
+              <p className="font-semibold text-center opacity-70">
+                ✿ 可以看看以下內容 ✿
               </p>
 
               <ul className="space-y-1.5 leading-relaxed">
-                <li className="flex items-center gap-2">
-                  <Route className="w-4 h-4 text-[#8C6A4F]" />
-                  <span>PLAN｜每日行程與天氣安排</span>
-                </li>
-
-                <li className="flex items-center gap-2">
-                  <Wallet className="w-4 h-4 text-[#8C6A4F]" />
-                  <span>COST｜旅費記帳與分帳（這裡可以自由編輯 ⸝⸝꙳）</span>
-                </li>
-
-                <li className="flex items-center gap-2">
-                  <Luggage className="w-4 h-4 text-[#8C6A4F]" />
-                  <span>PACK｜行李清單（這裡可以自由編輯 ⸝⸝꙳）</span>
-                </li>
-
-                <li className="flex items-center gap-2">
-                  <ShoppingBag className="w-4 h-4 text-[#8C6A4F]" />
-                  <span>LIST｜購物清單（這裡可以自由編輯 ⸝⸝꙳）</span>
-                </li>
-
-                <li className="flex items-center gap-2">
-                  <Ticket className="w-4 h-4 text-[#8C6A4F]" />
-                  <span>TICKET｜票券資訊與 QR Code</span>
-                </li>
-
-                <li className="flex items-center gap-2">
-                  <Languages className="w-4 h-4 text-[#8C6A4F]" />
-                  <span>JP｜常用日文會話（可點擊發音）</span>
-                </li>
-
-                <li className="flex items-center gap-2">
-                  <Coins className="w-4 h-4 text-[#8C6A4F]" />
-                  <span>RATE｜匯率換算（這裡可以自由編輯 ⸝⸝꙳）</span>
-                </li>
-
-                <li className="flex items-center gap-2">
-                  <Info className="w-4 h-4 text-[#8C6A4F]" />
-                  <span>INFO｜航班、住宿、VJW與緊急聯絡資訊</span>
-                </li>
+                {[
+                  { icon: Route, label: "PLAN｜每日行程與天氣安排" },
+                  { icon: Wallet, label: "COST｜旅費記帳與分帳（這裡可以自由編輯 ⸝⸝꙳）" },
+                  { icon: Luggage, label: "PACK｜行李清單（這裡可以自由編輯 ⸝⸝꙳）" },
+                  { icon: ShoppingBag, label: "LIST｜購物清單（這裡可以自由編輯 ⸝⸝꙳）" },
+                  { icon: Ticket, label: "TICKET｜票券資訊與 QR Code" },
+                  { icon: Coins, label: "RATE｜匯率換算（這裡可以自由編輯 ⸝⸝꙳）" },
+                  { icon: Info, label: "INFO｜航班、住宿與緊急聯絡等資訊" },
+                ].map((item, idx) => (
+                  <li key={idx} className="flex items-center gap-2">
+                    <item.icon className="w-4 h-4" style={{ color: currentTheme.main }} />
+                    <span>{item.label}</span>
+                  </li>
+                ))}
               </ul>
 
-              {/* 分隔 */}
-              <div className="pt-2 border-t border-[#E5D5C5]" />
+              <div className="pt-2 border-t" style={{ borderColor: currentTheme.border }} />
 
-              {/* 匯入教學（給觀看者） */}
-              <div className="mt-4 space-y-2 text-xs text-[#5A4636]">
-                <p className="font-semibold text-[#8C6A4F] text-center">
-                  旅行APP使用指南 ✿
+              <div className="mt-4 space-y-2 text-xs">
+                <p className="font-semibold text-center opacity-70">
+                  ✿ 使用指南 ✿
                 </p>
-
-                <ul className="space-y-1.5 leading-relaxed">
+                <ul className="space-y-1.5 leading-relaxed opacity-80">
                   <li className="flex items-start gap-2">
-                    <Folder className="w-4 h-4 mt-0.5 text-[#8C6A4F]" />
-                    <span>
-                      請先下載行程檔案（.json）
-                    </span>
+                    <Folder className="w-4 h-4 mt-0.5" style={{ color: currentTheme.main }} />
+                    <span>請先下載行程檔案（.json）</span>
                   </li>
-
                   <li className="flex items-start gap-2">
-                    <Download className="w-4 h-4 mt-0.5 text-[#8C6A4F]" />
-                    <span>
-                      回到這個頁面後，點右上角的「匯入」
-                    </span>
+                    <FileDown className="w-4 h-4 mt-0.5" style={{ color: currentTheme.main }} />
+                    <span>回到頁面後，點擊右上角「選單」後即可匯入行程。</span>
                   </li>
-
                   <li className="flex items-start gap-2">
-                    <FileText className="w-4 h-4 mt-0.5 text-[#8C6A4F]" />
-                    <span>
-                      選擇檔案後，就可以開始使用囉 ♡
-                    </span>
+                    <Ellipsis className="w-4 h-4 mt-0.5" style={{ color: currentTheme.main }} />
+                    <span>另外，「選單」還可以更換主題配色跟幣別哦！</span>
                   </li>
                 </ul>
               </div>
             </div>
 
-            {/* 按鈕 */}
             <div className="mt-5 flex justify-center">
               <button
                 onClick={() => setShowViewerHint(false)}
-                className="px-6 py-2 text-xs rounded-full bg-[#C6A087] text-white tracking-widest"
+                className="px-6 py-2 text-xs rounded-full text-white tracking-widest shadow-md active:scale-95 transition-all"
+                style={{ backgroundColor: currentTheme.main }}
               >
-                OKです ✿
+                (〃・ิ‿・ิ)ゞ ᵒᵒᵒᵒᵒᵏ.ᐟ.ᐟ
               </button>
             </div>
           </div>
@@ -303,12 +265,12 @@ export default function TripDetail() {
       )}
 
       <div className="pb-20">
-        {/* DayTab: 支援滾動且少天數自動置中版本 */}
         {tab === "PLAN" && (
-          <div className="sticky top-[96px] z-40 bg-[#F8F5F1] border-b border-[#E8E1DA]">
-            {/* 外層負責滾動 */}
+          <div 
+            className="sticky top-[96px] z-40 border-b transition-colors duration-500"
+            style={{ backgroundColor: currentTheme.bg, borderColor: currentTheme.border }}
+          >
             <div className="overflow-x-auto scrollbar-none px-6">
-              {/* 內層負責置中：使用 min-w-full 與 justify-center */}
               <div className="flex gap-6 py-3 min-w-full justify-center w-max">
                 {(trip.days || []).map((day, index) => {
                   const active = index === currentDayIndex;
@@ -328,23 +290,22 @@ export default function TripDetail() {
                       className="flex-none flex flex-col items-center min-w-[40px] shrink-0"
                     >
                       <span
-                        className={`text-[11px] tracking-[0.2em] font-medium transition-colors ${
-                          active ? "text-[#5A4636]" : "text-[#D1C2B3]"
-                        }`}
+                        className={`text-[11px] tracking-[0.2em] font-medium transition-colors`}
+                        style={{ color: active ? currentTheme.text : `${currentTheme.main}60` }}
                       >
                         {day.weekday}
                       </span>
                       <span
-                        className={`mt-1 text-xl font-semibold transition-colors ${
-                          active ? "text-[#5A4636]" : "text-[#D1C2B3]"
-                        }`}
+                        className={`mt-1 text-xl font-semibold transition-colors`}
+                        style={{ color: active ? currentTheme.text : `${currentTheme.main}60` }}
                       >
                         {day.dayNumber}
                       </span>
                       <span
-                        className={`mt-1 w-1.5 h-1.5 rounded-full bg-[#C22929] transition-all duration-300 ${
+                        className={`mt-1 w-1.5 h-1.5 rounded-full transition-all duration-300 ${
                           active ? "opacity-100 scale-100" : "opacity-0 scale-50"
                         }`}
+                        style={{ backgroundColor: "#C22929" }}
                       />
                     </button>
                   );
@@ -359,10 +320,12 @@ export default function TripDetail() {
         </div>
       </div>
 
-      {/* Bottom Nav - 兼顧纖細美感與 iPhone 安全區版本 */}
-      <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-[#E5D5C5] z-[100] pb-[env(safe-area-inset-bottom)]">
-        {/* 高度恢復為 h-14，保持纖細感 */}
-        <div className="grid grid-cols-8 h-14 items-center">
+      {/* Bottom Nav - 已調整為 7 等分 */}
+      <nav 
+        className="fixed bottom-0 left-0 w-full bg-white border-t z-[100] pb-[env(safe-area-inset-bottom)]"
+        style={{ borderColor: currentTheme.border }}
+      >
+        <div className="grid grid-cols-7 h-14 items-center">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.key;
@@ -372,16 +335,13 @@ export default function TripDetail() {
                 onClick={() => setTab(t.key)}
                 className="flex flex-col items-center justify-center transition-opacity active:opacity-60"
               >
-                {/* 圖標維持 18px，比原本大一點點增加好點度 */}
                 <Icon
-                  className={`w-[18px] h-[18px] ${
-                    active ? "text-[#8C6A4F]" : "text-[#8C6A4F]/40"
-                  }`}
+                  className={`w-[18px] h-[18px] transition-colors duration-300`}
+                  style={{ color: active ? currentTheme.main : `${currentTheme.main}40` }}
                 />
                 <span
-                  className={`text-[9px] mt-1 font-medium tracking-tight ${
-                    active ? "text-[#5A4636]" : "text-[#8C6A4F]/60"
-                  }`}
+                  className={`text-[9px] mt-1 font-medium tracking-tight transition-colors duration-300`}
+                  style={{ color: active ? currentTheme.text : `${currentTheme.accent}60` }}
                 >
                   {t.short}
                 </span>

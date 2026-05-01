@@ -9,25 +9,30 @@ import {
   Plus,
   X,
   ArrowRight,
-  JapaneseYen,
   TrainFront,
-  ChevronDown,
 } from "lucide-react";
-
-const COLORS = {
-  tea: "#C6A087",
-  milk: "#F7F1EB",
-  mocha: "#8C6A4F",
-  accent: "#E5D5C5",
-};
+import { THEMES } from "../App";
 
 const MODE_COLORS = {
   walk: "#666666",
   taxi: "#EFBF2F",
   bus: "#8B5E3C",
   plane: "#1C82D4",
-  train: COLORS.mocha,
-  shinkansen: COLORS.mocha,
+};
+
+// 貨幣符號映射表
+const CURRENCY_MAP = {
+  JPY: "¥",
+  TWD: "$",
+  USD: "$",
+  KRW: "₩",
+  THB: "฿",
+  EUR: "€",
+  HKD: "$",
+  SGD: "$",
+  VND: "₫",
+  GBP: "£",
+  CNY: "¥",
 };
 
 const JAPAN_LINE_COLORS = {
@@ -44,7 +49,12 @@ const SHINKANSEN_COLORS = {
   東海道: "#0068B7", 山陽: "#0068B7", 東北: "#00A95C", 北海道: "#00A95C", 九州: "#E6006E", 北陸: "#1B3FAB",
 };
 
-function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex = 0 }) {
+function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex = 0, themeId, trip }) {
+  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+  
+  // 接入全局貨幣符號
+  const currencySymbol = CURRENCY_MAP[trip?.currency] || "¥";
+
   const [legs, setLegs] = useState(() => {
     if (defaultData?.legs) return defaultData.legs;
     return [{ id: "1", mode: "train", duration: "" }];
@@ -65,14 +75,19 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
     onUpdate && onUpdate(id, { legs });
   };
 
-  // 強化解析：支援自動回溯到第一個方案 (如果當前方案為空)
   const parseBranchText = (text) => {
     if (!text) return "";
     const parts = text.split("---").map(p => p.trim());
-    // 如果對應索引有值就用它，否則回歸到方案 1 (parts[0])
     return (parts[branchIndex] !== undefined && parts[branchIndex] !== "") 
       ? parts[branchIndex] 
       : parts[0];
+  };
+
+  // --- 新增：價格格式化處理，包含千分位 (方法 4) ---
+  const formatLegPrice = (p) => {
+    const val = parseBranchText(p);
+    if (!val || isNaN(val)) return val;
+    return Number(val).toLocaleString();
   };
 
   const hasContentInCurrentBranch = () => {
@@ -95,7 +110,8 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
       <div className="group flex justify-center my-1 ml-4">
         <button 
           onClick={() => setIsExpanded(true)}
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-dashed border-[#C6A087]/40 text-[#C6A087]/50 hover:border-[#C6A087] hover:text-[#C6A087] transition-all text-[10px] font-bold"
+          className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-dashed transition-all text-[10px] font-bold"
+          style={{ borderColor: `${currentTheme.main}40`, color: `${currentTheme.main}60` }}
         >
           <Plus className="w-3 h-3" /> 設定交通
         </button>
@@ -113,7 +129,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
       const key = Object.keys(JAPAN_LINE_COLORS).find((k) => lineName?.includes(k)) || "";
       if (key) return JAPAN_LINE_COLORS[key];
     }
-    return MODE_COLORS[leg.mode] || COLORS.mocha;
+    return MODE_COLORS[leg.mode] || currentTheme.main;
   };
 
   const getIcon = (mode, color) => {
@@ -152,7 +168,6 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
     let totalTime = 0;
     let totalPrice = 0;
     legs.forEach(leg => {
-      // 確保只計算當前 Branch 的數值
       const d = parseBranchText(leg.duration);
       const p = parseBranchText(leg.price);
       totalTime += parseInt(d) || 0;
@@ -171,15 +186,15 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
         const from = parseBranchText(leg.fromStation);
         const to = parseBranchText(leg.toStation);
         const duration = parseBranchText(leg.duration);
-        const price = parseBranchText(leg.price);
+        const priceDisplay = formatLegPrice(leg.price); // 套用千分位格式化
 
-        if (!lineName && !from && !to && !duration && !price) return null;
+        if (!lineName && !from && !to && !duration && !priceDisplay) return null;
 
         return (
           <div key={leg.id} className="mb-2 last:mb-0">
             <div className="flex items-center gap-1" style={{ color }}>
               {getIcon(leg.mode, color)}
-              <span className="font-semibold truncate max-w-[180px]">{lineName || "未命名路線"}</span>
+              <span className="font-black truncate max-w-[180px]">{lineName || "未命名路線"}</span>
             </div>
             <div className="flex items-center gap-1 pl-5" style={{ color }}>
               <span className="truncate max-w-[120px]">{(from || "—") + " → " + (to || "—")}</span>
@@ -189,10 +204,10 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
                   <span>{duration}m</span>
                 </>
               )}
-              {price && (
+              {priceDisplay && (
                 <>
                   <span className="mx-0.5 opacity-50">｜</span>
-                  <span>¥{price}</span>
+                  <span>{currencySymbol}{priceDisplay}</span>
                 </>
               )}
             </div>
@@ -202,126 +217,154 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
     </div>
   );
 
-  const getCardStyle = () => {
-    if (branchIndex === 1) return 'border-[#C6A087]/50 bg-[#FDF9F5] shadow-sm'; 
-    if (branchIndex === 2) return 'border-[#D1D9E6] bg-[#F0F2F9]/30 shadow-sm'; 
-    return 'border-[#E5D5C5] bg-white shadow-sm'; 
+  const getCardBg = () => {
+    if (branchIndex === 1) return `${currentTheme.main}08`; 
+    if (branchIndex === 2) return '#F0F2F9'; 
+    return 'white'; 
+  };
+
+  const getCardBorder = () => {
+    if (branchIndex === 1) return `${currentTheme.main}40`; 
+    if (branchIndex === 2) return '#D1D9E6'; 
+    return `${currentTheme.main}20`; 
   };
 
   return (
-    <div className="relative flex flex-col my-3 pl-3 animate-in fade-in duration-500">
+    <div className="relative flex flex-col my-3 pl-3 animate-in fade-in duration-500 max-w-full">
       <div
         onClick={() => {
           if (!isViewer && isExpanded) commitUpdate();
           setIsExpanded((v) => !v);
         }}
-        className={`flex items-center border rounded-lg px-3 py-2 cursor-pointer w-full min-h-[54px] transition-all hover:brightness-[0.98] active:scale-[0.99] ${getCardStyle()}`}
+        className="flex items-center border rounded-2xl px-3 py-3 cursor-pointer w-full min-h-[58px] transition-all hover:brightness-[0.98] active:scale-[0.99] shadow-sm overflow-hidden"
+        style={{ backgroundColor: getCardBg(), borderColor: getCardBorder() }}
       >
-        <div className="flex-1 flex flex-col justify-center">
+        <div className="flex-1 flex flex-col justify-center min-w-0">
           {renderSummary()}
         </div>
 
-        <div className="self-stretch border-l border-dashed border-[#D7C9BD] mx-3 my-1" />
+        <div className="self-stretch border-l border-dashed mx-3 my-1 opacity-30" style={{ borderColor: currentTheme.text }} />
 
-        <div className="flex flex-col items-center justify-center min-w-[54px] text-[11px] font-bold text-[#8C6A4F] whitespace-nowrap">
+        <div className="flex flex-col items-center justify-center min-w-[54px] text-[11px] font-black whitespace-nowrap" style={{ color: currentTheme.text }}>
           {totalTime > 0 ? <span>{totalTime}分</span> : <span className="text-[9px] opacity-40">未定</span>}
           {totalPrice > 0 && (
             <>
-              <div className="w-6 border-t border-[#D7C9BD] my-1" />
-              <span>¥{totalPrice}</span>
+              <div className="w-6 border-t my-1 opacity-20" style={{ borderColor: currentTheme.text }} />
+              {/* 總額同步加上千分位 */}
+              <span>{currencySymbol}{totalPrice.toLocaleString()}</span>
             </>
           )}
         </div>
       </div>
 
       {isExpanded && !isViewer && (
-        <div className="mt-2 bg-white border border-[#E5D5C5] rounded-xl p-4 shadow-lg w-full z-10 animate-in slide-in-from-top-2 duration-300">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="text-[10px] font-bold text-[#8C6A4F] tracking-widest uppercase">
+        <div 
+          className="mt-2 bg-white border rounded-[1.5rem] p-4 shadow-xl w-full z-10 animate-in slide-in-from-top-2 duration-300 overflow-hidden"
+          style={{ borderColor: `${currentTheme.main}30` }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-[10px] font-black tracking-widest uppercase opacity-60" style={{ color: currentTheme.text }}>
               編輯交通方式
             </h4>
-            <button onClick={() => { commitUpdate(); setIsExpanded(false); }} className="text-[#C6A087] hover:text-[#8C6A4F]">
-              <X className="w-4 h-4" />
+            <button onClick={() => { commitUpdate(); setIsExpanded(false); }} style={{ color: currentTheme.main }}>
+              <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="bg-[#F7F1EB] rounded-lg p-2 mb-4">
-             <p className="text-[9px] text-[#8C6A4F] font-bold flex items-center gap-1">
-               💡 支援多方案語法：方案1 --- 方案2 --- 方案3
+          
+          <div className="rounded-xl p-3 mb-5" style={{ backgroundColor: `${currentTheme.main}08` }}>
+             <p className="text-[10px] font-black flex items-center gap-1" style={{ color: currentTheme.main }}>
+               💡 支援多方案：方案1 --- 方案2 --- 方案3
              </p>
-             <p className="text-[8px] text-[#8C6A4F]/60 mt-0.5">切換上方景點時，交通會自動跟著變換。</p>
           </div>
 
           <div className="space-y-4">
             {legs.map((leg) => {
               const color = detectColor(leg);
               return (
-                <div key={leg.id} className="rounded-xl border border-[#E5D5C5] bg-[#F7F1EB]/50 p-3 shadow-sm">
-                  <div className="flex items-center gap-3 mb-3">
-                    <button onClick={() => toggleMode(leg.id)} className="w-9 h-9 rounded-lg bg-white border border-[#E5D5C5] flex items-center justify-center shadow-sm">
+                <div 
+                  key={leg.id} 
+                  className="rounded-[1.2rem] border p-3 shadow-sm overflow-hidden"
+                  style={{ borderColor: `${currentTheme.main}20`, backgroundColor: `${currentTheme.main}05` }}
+                >
+                  <div className="flex items-center gap-2 mb-4">
+                    <button 
+                      onClick={() => toggleMode(leg.id)} 
+                      className="w-9 h-9 rounded-xl bg-white border flex items-center justify-center shadow-sm transition-all active:scale-95 shrink-0"
+                      style={{ borderColor: `${currentTheme.main}20` }}
+                    >
                       {getIcon(leg.mode, color)}
                     </button>
 
-                    <div className="relative">
+                    <div className="relative flex-1 max-w-[100px]">
                       <input
                         type="text"
                         value={leg.duration}
                         onChange={(e) => updateLeg(leg.id, "duration", e.target.value)}
-                        className="w-24 bg-white border border-[#E5D5C5] rounded-md px-2 py-1.5 text-[12px] text-center text-[#5A4636] outline-none focus:ring-1 focus:ring-[#C6A087]"
+                        className="w-full bg-white border rounded-xl px-2 py-2 text-[13px] text-center font-bold outline-none focus:ring-2"
+                        style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text, "--tw-ring-color": `${currentTheme.main}20` }}
                         placeholder="10 --- 20"
                       />
-                      <span className="absolute -right-4 top-1/2 -translate-y-1/2 text-[10px] text-[#8C6A4F]">分</span>
+                      <span className="absolute -right-5 top-1/2 -translate-y-1/2 text-[10px] font-black opacity-40">分</span>
                     </div>
 
                     {legs.length > 1 && (
-                      <button onClick={() => removeLeg(leg.id)} className="ml-auto text-[#8C6A4F]/60 hover:text-red-400">
+                      <button onClick={() => removeLeg(leg.id)} className="ml-auto opacity-30 hover:opacity-100 hover:text-red-500 transition-all p-1">
                         <X className="w-4 h-4" />
                       </button>
                     )}
                   </div>
 
-                  <div className="mb-2">
-                    <label className="text-[10px] font-bold text-[#8C6A4F]/60 mb-1 block uppercase tracking-tight px-1">路線名稱</label>
-                    <input
-                      type="text"
-                      value={leg.lineName || ""}
-                      onChange={(e) => updateLeg(leg.id, "lineName", e.target.value)}
-                      className="w-full bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[12px] text-[#5A4636] outline-none"
-                      placeholder="例：JR山手線 --- 計程車"
-                    />
-                  </div>
-
-                  <div className="mb-2">
-                    <label className="text-[10px] font-bold text-[#8C6A4F]/60 mb-1 block uppercase tracking-tight px-1">起訖站</label>
-                    <div className="flex items-center gap-2 w-full">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-[9px] font-black opacity-40 mb-1 block uppercase px-1">路線名稱</label>
                       <input
                         type="text"
-                        value={leg.fromStation || ""}
-                        onChange={(e) => updateLeg(leg.id, "fromStation", e.target.value)}
-                        className="flex-1 bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[12px] text-[#5A4636] outline-none min-w-0"
-                        placeholder="出發站 --- 其他站"
-                      />
-                      <ArrowRight className="w-4 h-4 text-[#8C6A4F]/60 shrink-0" />
-                      <input
-                        type="text"
-                        value={leg.toStation || ""}
-                        onChange={(e) => updateLeg(leg.id, "toStation", e.target.value)}
-                        className="flex-1 bg-white border border-[#E5D5C5] rounded-md px-3 py-1.5 text-[12px] text-[#5A4636] outline-none min-w-0"
-                        placeholder="到達站 --- 某門口"
+                        value={leg.lineName || ""}
+                        onChange={(e) => updateLeg(leg.id, "lineName", e.target.value)}
+                        className="w-full bg-white border rounded-xl px-3 py-2 text-[13px] font-bold outline-none focus:ring-2"
+                        style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text, "--tw-ring-color": `${currentTheme.main}10` }}
+                        placeholder="例：JR山手線 --- 計程車"
                       />
                     </div>
-                  </div>
 
-                  <div>
-                    <label className="text-[10px] font-bold text-[#8C6A4F]/60 mb-1 block uppercase tracking-tight px-1">預估價格</label>
-                    <div className="relative flex items-center">
-                      <JapaneseYen className="absolute left-2 w-3.5 h-3.5 text-[#8C6A4F]/70" />
-                      <input
-                        type="text"
-                        value={leg.price || ""}
-                        onChange={(e) => updateLeg(leg.id, "price", e.target.value)}
-                        className="w-full bg-white border border-[#E5D5C5] rounded-md pl-7 pr-3 py-1.5 text-[12px] text-[#5A4636] outline-none"
-                        placeholder="210 --- 1500"
-                      />
+                    <div>
+                      <label className="text-[9px] font-black opacity-40 mb-1 block uppercase px-1">起訖站點</label>
+                      <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+                        <input
+                          type="text"
+                          value={leg.fromStation || ""}
+                          onChange={(e) => updateLeg(leg.id, "fromStation", e.target.value)}
+                          className="flex-1 min-w-[80px] bg-white border rounded-xl px-3 py-2 text-[13px] font-bold outline-none"
+                          style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text }}
+                          placeholder="起點"
+                        />
+                        <ArrowRight className="w-4 h-4 opacity-30 shrink-0" />
+                        <input
+                          type="text"
+                          value={leg.toStation || ""}
+                          onChange={(e) => updateLeg(leg.id, "toStation", e.target.value)}
+                          className="flex-1 min-w-[80px] bg-white border rounded-xl px-3 py-2 text-[13px] font-bold outline-none"
+                          style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text }}
+                          placeholder="終點"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[9px] font-black opacity-40 mb-1 block uppercase px-1">預估價格</label>
+                      <div className="relative flex items-center">
+                        <span className="absolute left-3 text-xs font-black opacity-30" style={{ color: currentTheme.text }}>
+                          {currencySymbol}
+                        </span>
+                        <input
+                          type="text"
+                          value={leg.price || ""}
+                          onChange={(e) => updateLeg(leg.id, "price", e.target.value)}
+                          className="w-full bg-white border rounded-xl pl-9 pr-3 py-2 text-[13px] font-bold outline-none focus:ring-2"
+                          style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text, "--tw-ring-color": `${currentTheme.main}10` }}
+                          placeholder="210 --- 1500"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -331,9 +374,10 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
 
           <button
             onClick={addLeg}
-            className="w-full mt-4 py-2 border border-dashed border-[#C6A087] rounded-lg text-[11px] text-[#C6A087] font-bold flex items-center justify-center gap-1 hover:bg-[#F7F1EB]"
+            className="w-full mt-5 py-3 border-2 border-dashed rounded-xl text-[11px] font-black flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+            style={{ borderColor: `${currentTheme.main}40`, color: currentTheme.main }}
           >
-            <Plus className="w-3 h-3" /> 新增轉乘段落
+            <Plus className="w-4 h-4" /> 新增轉乘段落
           </button>
         </div>
       )}

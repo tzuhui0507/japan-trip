@@ -12,14 +12,15 @@ import {
   UtensilsCrossed,
   BedDouble,
 } from "lucide-react";
+import { THEMES } from "../App";
 
-// 與 TicketsTab 共用的類別設定（加入 icon + 背景）
+// 與 TicketsTab 共用的類別設定
 const TYPE_META = {
   ATTRACTION: {
     label: "景點",
     color: "#4A607F",
     bg: "#E7EEF9",
-    icon: Landmark, // 你可依需求加入 icon
+    icon: Landmark,
   },
   TRANSPORT: {
     label: "交通",
@@ -35,13 +36,14 @@ const TYPE_META = {
   },
   HOTEL: {
     label: "住宿",
-    color: "#9b2e87ff",
+    color: "#7A4D6E",
     bg: "#F3E3F0",
     icon: BedDouble,
   },
 };
 
-export default function TicketDetail({ ticket, onClose }) {
+export default function TicketDetail({ ticket, onClose, themeId }) {
+  const currentTheme = THEMES[themeId] || THEMES.milkTea;
   if (!ticket) return null;
 
   const meta = TYPE_META[ticket.type] || TYPE_META.ATTRACTION;
@@ -52,16 +54,22 @@ export default function TicketDetail({ ticket, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-md mx-4 bg-[#FFF9F2] rounded-3xl border border-[#E5D5C5] shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+      <div 
+        className="w-full max-w-md bg-white rounded-[2.5rem] border shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300"
+        style={{ borderColor: `${currentTheme.main}20` }}
+      >
 
         {/* Header */}
-        <div className="px-5 pt-4 pb-3 flex items-center justify-between border-b border-[#E5D5C5]">
-          <div>
-            <p className="text-[10px] tracking-[0.3em] text-[#C6A087] mb-1 font-serif">
+        <div className="px-6 pt-6 pb-4 flex items-center justify-between border-b" style={{ borderColor: `${currentTheme.main}10` }}>
+          <div className="min-w-0 pr-2">
+            <p 
+              className="text-[10px] tracking-[0.3em] mb-1 font-serif font-bold uppercase opacity-60"
+              style={{ color: currentTheme.main }}
+            >
               TICKET DETAIL
             </p>
-            <h2 className="text-base font-serif font-bold text-[#5A4636]">
+            <h2 className="text-lg font-serif font-bold truncate" style={{ color: currentTheme.text }}>
               {ticket.title}
             </h2>
           </div>
@@ -69,56 +77,58 @@ export default function TicketDetail({ ticket, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full border border-[#E5D5C5] bg-white flex items-center justify-center"
+            className="w-9 h-9 rounded-full border bg-white flex items-center justify-center shadow-sm transition-all active:scale-90"
+            style={{ borderColor: `${currentTheme.main}30` }}
           >
-            <X className="w-4 h-4 text-[#8C6A4F]" />
+            <X className="w-5 h-5" style={{ color: currentTheme.main }} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="px-5 py-4 space-y-4 text-sm">
+        <div className="px-6 py-6 space-y-5 text-sm overflow-y-auto max-h-[75vh] scrollbar-hide">
 
           {/* 類別膠囊 & 編號 */}
           <div className="flex items-center justify-between">
             <span
-             className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold"
-             style={{
-                 backgroundColor: meta.bg,
-                 color: meta.color,
-             }}
-             >
-             {meta.icon && (
-                 <meta.icon className="w-3.5 h-3.5" style={{ color: meta.color }} />
-             )}
-             {meta.label}
-             </span>
-
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold shadow-sm"
+              style={{
+                backgroundColor: meta.bg,
+                color: meta.color,
+              }}
+            >
+              {meta.icon && (
+                <meta.icon className="w-3.5 h-3.5" style={{ color: meta.color }} />
+              )}
+              {meta.label}
+            </span>
 
             {ticket.code && (
-              <span className="text-[11px] text-[#8C6A4F]">
-                編號：{ticket.code}
+              <span className="text-[11px] font-bold opacity-40 uppercase tracking-wider" style={{ color: currentTheme.text }}>
+                CODE: {ticket.code}
               </span>
             )}
           </div>
 
           {/* 副標題 */}
           {ticket.subtitle && (
-            <p className="text-xs text-[#8C6A4F]">{ticket.subtitle}</p>
+            <p className="text-xs font-medium leading-relaxed opacity-60 px-1" style={{ color: currentTheme.text }}>
+              {ticket.subtitle}
+            </p>
           )}
 
           {/* 日期時間 */}
           {(ticket.date || ticket.time) && (
-            <div className="grid grid-cols-2 gap-3 text-xs text-[#5A4636]">
+            <div className="grid grid-cols-2 gap-4 text-xs bg-gray-50/50 p-4 rounded-2xl border border-gray-100" style={{ color: currentTheme.text }}>
               {ticket.date && (
-                <div className="flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4 text-[#C6A087]" />
-                  <span>{ticket.date}</span>
+                <div className="flex items-center gap-2.5">
+                  <CalendarDays className="w-4 h-4 opacity-40" style={{ color: currentTheme.main }} />
+                  <span className="font-bold">{ticket.date}</span>
                 </div>
               )}
               {ticket.time && (
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#C6A087]" />
-                  <span>{ticket.time}</span>
+                <div className="flex items-center gap-2.5">
+                  <Clock className="w-4 h-4 opacity-40" style={{ color: currentTheme.main }} />
+                  <span className="font-bold">{ticket.time}</span>
                 </div>
               )}
             </div>
@@ -126,9 +136,9 @@ export default function TicketDetail({ ticket, onClose }) {
 
           {/* 地點 */}
           {ticket.location && (
-            <div className="flex items-start gap-2 text-xs text-[#5A4636]">
-              <MapPin className="w-4 h-4 text-[#C6A087] mt-[2px]" />
-              <p>{ticket.location}</p>
+            <div className="flex items-start gap-2.5 text-xs px-1" style={{ color: currentTheme.text }}>
+              <MapPin className="w-4 h-4 mt-0.5 opacity-40 shrink-0" style={{ color: currentTheme.main }} />
+              <p className="font-medium leading-relaxed">{ticket.location}</p>
             </div>
           )}
 
@@ -137,31 +147,38 @@ export default function TicketDetail({ ticket, onClose }) {
             <button
               type="button"
               onClick={openLink}
-              className="w-full mt-1 flex items-center justify-between px-3 py-2 rounded-xl border border-[#E5D5C5] bg-white text-xs text-[#8C6A4F] hover:bg-[#FFF3E5]"
+              className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border bg-white text-xs transition-all active:scale-95 shadow-sm hover:shadow-md"
+              style={{ borderColor: `${currentTheme.main}30`, color: currentTheme.main }}
             >
-              <span className="flex items-center gap-2">
-                <Link2 className="w-4 h-4 text-[#C6A087]" />
+              <span className="flex items-center gap-2.5 font-bold">
+                <Link2 className="w-4 h-4" />
                 <span>開啟官方連結 / 訂位頁面</span>
               </span>
             </button>
           )}
 
-          {/* 圖片 */}
+          {/* 圖片 - 修正 object-contain 確保完整顯示 */}
           {ticket.image && (
-            <div className="mt-2 border border-[#E5D5C5] rounded-2xl bg-white p-3 flex justify-center">
+            <div 
+              className="mt-2 border rounded-3xl p-1.5 flex justify-center shadow-inner"
+              style={{ borderColor: `${currentTheme.main}10`, backgroundColor: `${currentTheme.main}05` }}
+            >
               <img
                 src={ticket.image}
                 alt="Ticket"
-                className="max-h-72 object-contain rounded-xl"
+                className="max-h-80 w-full object-contain rounded-2xl"
               />
             </div>
           )}
 
           {/* 備註 */}
           {ticket.notes && (
-            <div className="mt-1 rounded-2xl bg-[#F7F1EB] px-3 py-2 flex gap-2 text-xs text-[#8C6A4F]">
-              <StickyNote className="w-4 h-4 mt-[2px]" />
-              <p>{ticket.notes}</p>
+            <div 
+              className="mt-1 rounded-2xl px-4 py-3 flex gap-3 text-xs leading-relaxed"
+              style={{ backgroundColor: `${currentTheme.main}10`, color: currentTheme.main }}
+            >
+              <StickyNote className="w-4 h-4 mt-0.5 shrink-0 opacity-60" />
+              <p className="font-medium">{ticket.notes}</p>
             </div>
           )}
         </div>

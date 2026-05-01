@@ -1,6 +1,7 @@
 // src/pages/ListTab.jsx
 import React, { useEffect, useState } from "react";
 import PageHeader from "../components/PageHeader";
+import { THEMES } from "../App"; // 引入全域主題
 import {
   Check,
   Plus,
@@ -16,16 +17,15 @@ import {
   Shapes,
   Sparkles, 
   Settings2,
-  GripVertical,
   Palette,
   Eye,
   Wand2,
   Smile,
   Brush,
-  HouseHeart
+  HouseHeart,
+  Luggage as LuggageHeaderIcon
 } from "lucide-react";
 import LuggageEditModal from "../components/LuggageEditModal";
-import { Luggage as LuggageHeaderIcon } from "lucide-react";
 
 /* ================== 完美馬卡龍配色 CONFIG ================== */
 const CATEGORY_CONFIG = {
@@ -39,12 +39,6 @@ const CATEGORY_CONFIG = {
 
 const HEADER_ICONS = {
   h1: Palette, h2: Eye, h3: Wand2, h4: Smile, h5: Brush, h6: HouseHeart,
-};
-
-const dottedBg = {
-  backgroundColor: "#FFF9F2", 
-  backgroundImage: "radial-gradient(#E8E1DA 1px, transparent 1px)",
-  backgroundSize: "12px 12px",
 };
 
 function createDefaultLuggage() {
@@ -155,9 +149,11 @@ function createDefaultLuggage() {
   };
 }
 
-export default function ListTab({ trip, setTrip }) {
+export default function ListTab({ trip, setTrip, themeId }) {
   const isViewer = trip?.shareMode === "viewer";
+  const currentTheme = THEMES[themeId] || THEMES.milkTea;
   const VIEWER_LUGGAGE_KEY = "viewer_luggage_v1";
+  
   const [viewerLuggage, setViewerLuggage] = useState(null);
   const [activeTab, setActiveTab] = useState("carry");
   const [menuOpenId, setMenuOpenId] = useState(null);
@@ -168,6 +164,18 @@ export default function ListTab({ trip, setTrip }) {
   const [draggedIndex, setDraggedIndex] = useState(null);
 
   const luggage = isViewer ? (viewerLuggage || createDefaultLuggage()) : (trip.luggage || createDefaultLuggage());
+
+  const { categories = [], otherCustom = [], bags = [] } = luggage || {};
+  const activeCategoryData = activeTab === "other" 
+    ? { id: "other", title: "化妝用品", items: otherCustom } 
+    : (categories.find(c => c.id === activeTab) || { id: activeTab, title: "未知", items: [] });
+  const activeConfig = CATEGORY_CONFIG[activeTab] || CATEGORY_CONFIG.other;
+
+  const patchedStyle = {
+    backgroundColor: "transparent", 
+    backgroundImage: `radial-gradient(${activeConfig.color}40 1.5px, transparent 1px)`,
+    backgroundSize: "12px 12px",
+  };
 
   const patchLuggageData = (currentData) => {
     if (!currentData) return createDefaultLuggage();
@@ -339,21 +347,15 @@ export default function ListTab({ trip, setTrip }) {
     setEditingBag(null);
   };
 
-  const { categories = [], otherCustom = [], bags = [] } = luggage || {};
-  const activeCategoryData = activeTab === "other" 
-    ? { id: "other", title: "化妝用品", items: otherCustom } 
-    : (categories.find(c => c.id === activeTab) || { id: activeTab, title: "未知", items: [] });
-  const activeConfig = CATEGORY_CONFIG[activeTab] || CATEGORY_CONFIG.other;
-
   return (
     <div className="pt-2 pb-24 space-y-4 px-4 select-none" onClick={() => setMenuOpenId(null)}>
-      <PageHeader icon={LuggageHeaderIcon} title="行李清單" subtitle="LUGGAGE CHECKLIST" />
+      <PageHeader icon={LuggageHeaderIcon} title="行李清單" subtitle="LUGGAGE CHECKLIST" themeId={themeId} />
 
-      {/* ===== 行李資訊區塊 ===== */}
+      {/* ===== 行機資訊區塊 ===== */}
       <section className="space-y-2 px-1">
         <div className="flex items-center gap-1.5 opacity-70">
-          <Info className="w-3 h-3 text-[#8C6A4F]" />
-          <h4 className="text-[10px] font-black text-[#8C6A4F] uppercase tracking-widest">Luggage Info</h4>
+          <Info className="w-3 h-3" style={{ color: currentTheme.text }} />
+          <h4 className="text-[10px] font-black uppercase tracking-widest" style={{ color: currentTheme.text }}>Luggage Info</h4>
         </div>
         <div className="grid grid-cols-2 gap-2">
           {bags.map((bag) => {
@@ -367,14 +369,26 @@ export default function ListTab({ trip, setTrip }) {
                 )}
                 <div 
                   onClick={() => !isViewer && setBagSlideId(isOpen ? null : bag.id)}
-                  style={{ transform: isOpen ? "translateX(-65px)" : "translateX(0)" }}
-                  className={`bg-white rounded-2xl border border-dashed border-[#E1D3C5] px-3 py-2.5 shadow-sm transition-transform flex flex-col justify-center min-h-[64px] ${isViewer ? "" : "cursor-pointer active:scale-[0.98]"}`}
+                  style={{ 
+                    transform: isOpen ? "translateX(-65px)" : "translateX(0)",
+                    borderColor: currentTheme.border,
+                    backgroundColor: "white"
+                  }}
+                  className={`rounded-2xl border border-dashed px-3 py-2.5 shadow-sm transition-transform flex flex-col justify-center min-h-[64px] ${isViewer ? "" : "cursor-pointer active:scale-[0.98]"}`}
                 >
                   <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                    <span className="inline-flex px-1.5 py-0.5 rounded-md bg-[#B7A591]/10 text-[9px] font-black text-[#8C6A4F] border border-[#B7A591]/20 uppercase tracking-tighter shrink-0">{bag.type}</span>
-                    <span className="text-[12.5px] font-bold text-[#4F3B2B] truncate leading-none">{bag.title}</span>
+                    <span className="inline-flex px-1.5 py-0.5 rounded-md text-[9px] font-black border uppercase tracking-tighter shrink-0"
+                      style={{ 
+                        backgroundColor: `${currentTheme.main}15`, 
+                        color: currentTheme.main,
+                        borderColor: `${currentTheme.main}30`
+                      }}
+                    >
+                      {bag.type}
+                    </span>
+                    <span className="text-[12.5px] font-bold truncate leading-none" style={{ color: currentTheme.text }}>{bag.title}</span>
                   </div>
-                  <p className="text-[10px] text-[#8C6A4F] truncate opacity-80 pl-0.5">{bag.subtitle}</p>
+                  <p className="text-[10px] truncate opacity-80 pl-0.5" style={{ color: currentTheme.accent }}>{bag.subtitle}</p>
                 </div>
               </div>
             );
@@ -383,22 +397,34 @@ export default function ListTab({ trip, setTrip }) {
         {bags.some(b => b.notes) && (
           <div className="space-y-1.5 mt-0.5">
             {bags.filter(b => b.notes).map(b => (
-              <div key={`note-${b.id}`} className="bg-[#FAF0E6]/80 rounded-xl px-3 py-1.5 flex items-start gap-2 border border-[#F4C289]/30">
-                <StickyNote className="w-3.5 h-3.5 shrink-0 text-[#A56A3A] mt-0.5" />
-                <p className="text-[10px] text-[#A56A3A] leading-relaxed"><span className="font-black mr-1 uppercase">[{b.type}]</span>{b.notes}</p>
+              <div key={`note-${b.id}`} className="rounded-xl px-3 py-1.5 flex items-start gap-2 border shadow-sm"
+                style={{ 
+                  backgroundColor: `${currentTheme.main}10`, 
+                  borderColor: `${currentTheme.main}20`
+                }}
+              >
+                <StickyNote className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: currentTheme.main }} />
+                <p className="text-[10px] leading-relaxed" style={{ color: currentTheme.text }}><span className="font-black mr-1 uppercase">[{b.type}]</span>{b.notes}</p>
               </div>
             ))}
           </div>
         )}
       </section>
 
-      <div className="grid grid-cols-3 gap-2 bg-[#E8E1DA]/30 p-2 rounded-[20px] border border-white/50 shadow-inner">
+      {/* 分類切換按鈕 */}
+      <div className="grid grid-cols-3 gap-2 p-2 rounded-[20px] border shadow-inner" style={{ backgroundColor: `${currentTheme.border}30`, borderColor: "white" }}>
         {[...categories, { id: "other", title: "化妝用品" }].map((cat) => {
           const isActive = activeTab === cat.id;
           const config = CATEGORY_CONFIG[cat.id] || CATEGORY_CONFIG.other;
           const Icon = config.icon;
           return (
-            <button key={cat.id} onClick={() => setActiveTab(cat.id)} className={`py-2 rounded-xl text-[11.5px] font-black transition-all duration-300 border flex items-center justify-center gap-1.5 ${isActive ? "bg-white border-[#EDE3D8] shadow-md scale-[1.02]" : "bg-white/40 border-transparent text-[#8C6A4F]/50"}`} style={{ color: isActive ? config.color : undefined }}>
+            <button key={cat.id} onClick={() => setActiveTab(cat.id)} 
+              className={`py-2 rounded-xl text-[11.5px] font-black transition-all duration-300 border flex items-center justify-center gap-1.5 ${isActive ? "bg-white shadow-md scale-[1.02]" : "bg-white/40 border-transparent"}`}
+              style={{ 
+                color: isActive ? config.color : `${currentTheme.accent}80`,
+                borderColor: isActive ? `${currentTheme.border}` : "transparent"
+              }}
+            >
               <Icon className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">{cat.title}</span>
             </button>
@@ -406,7 +432,8 @@ export default function ListTab({ trip, setTrip }) {
         })}
       </div>
 
-      <div className="rounded-[28px] border border-[#EDE3D8] shadow-sm bg-white animate-in fade-in duration-300 relative overflow-visible z-20">
+      {/* 主要內容卡片 */}
+      <div className="rounded-[28px] border shadow-sm bg-white animate-in fade-in duration-300 relative overflow-visible z-20" style={{ borderColor: currentTheme.border }}>
         {activeCategoryData && (
           <>
             <div className="px-5 py-3.5 flex items-center justify-between rounded-t-[28px]" style={{ backgroundColor: activeConfig.light }}>
@@ -415,25 +442,25 @@ export default function ListTab({ trip, setTrip }) {
                    {React.createElement(activeConfig.icon, { className: "w-4.5 h-4.5" })}
                 </div>
                 <div className="flex flex-col min-w-0 overflow-hidden">
-                  <h3 className="font-bold text-[#5A4636] text-[15px] leading-tight truncate">{activeCategoryData.title}</h3>
-                  <p className="text-[9px] text-[#8C6A4F] uppercase tracking-wider opacity-60 font-black truncate">{activeConfig.en}</p>
+                  <h3 className="font-bold text-[15px] leading-tight truncate" style={{ color: activeConfig.color }}>{activeCategoryData.title}</h3>
+                  <p className="text-[9px] uppercase tracking-wider opacity-60 font-black truncate" style={{ color: activeConfig.color }}>{activeConfig.en}</p>
                 </div>
               </div>
-              <button onClick={() => addItem(activeTab)} className="w-8 h-8 rounded-full bg-white flex items-center justify-center active:scale-90 transition-transform shadow-sm border border-[#F0E3D5] shrink-0">
-                <Plus className="w-4.5 h-4.5 text-[#8C6A4F]" />
+              <button onClick={() => addItem(activeTab)} className="w-8 h-8 rounded-full bg-white flex items-center justify-center active:scale-90 transition-transform shadow-sm border shrink-0" style={{ borderColor: `${activeConfig.color}40` }}>
+                <Plus className="w-4.5 h-4.5" style={{ color: activeConfig.color }} />
               </button>
             </div>
 
-            <div className="p-4 pt-2 rounded-b-[28px] pb-4" style={dottedBg}>
+            <div className="p-4 pt-2 rounded-b-[28px] pb-4 bg-white" style={patchedStyle}>
               <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
                 {(activeCategoryData.items || []).map((item, index) => {
                   if (item.isHeader) {
                     const HeaderIcon = HEADER_ICONS[item.id] || Sparkles;
                     return (
                       <div key={item.id} className="col-span-2 flex items-center gap-2 mt-4 mb-2">
-                        <HeaderIcon className="w-3.5 h-3.5 text-[#B197B4]" />
-                        <span className="text-[11px] font-black text-[#B197B4] uppercase tracking-wider whitespace-nowrap">{item.label}</span>
-                        <div className="h-[1px] flex-1 bg-[#B197B4]/30 ml-2" />
+                        <HeaderIcon className="w-3.5 h-3.5" style={{ color: activeConfig.color }} />
+                        <span className="text-[11px] font-black uppercase tracking-wider whitespace-nowrap" style={{ color: activeConfig.color }}>{item.label}</span>
+                        <div className="h-[1px] flex-1 ml-2" style={{ backgroundColor: `${activeConfig.color}30` }} />
                       </div>
                     );
                   }
@@ -449,10 +476,24 @@ export default function ListTab({ trip, setTrip }) {
                     >
                       <div className="flex items-center h-8.5 px-1 rounded-xl active:bg-black/5">
                         <button onClick={() => toggleItem(activeTab === "other" ? null : activeTab, item.id, activeTab === "other")} className="flex-1 flex items-center gap-2 text-left min-w-0">
-                          <span className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all shrink-0 ${checked ? "bg-[#91867A] border-[#91867A]" : "bg-white border-[#D5C7B8]"}`}>
+                          <span className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all shrink-0`}
+                            style={{ 
+                              backgroundColor: checked ? activeConfig.color : "white",
+                              borderColor: checked ? activeConfig.color : `${activeConfig.color}60`
+                            }}
+                          >
                             {checked && <Check className="w-2.5 h-2.5 text-white stroke-[3.5]" />}
                           </span>
-                          <span className={`text-[12.5px] font-medium transition-all truncate ${checked ? "text-[#B3A496] line-through" : "text-[#4F3B2B]"}`}>{item.label}</span>
+                          <span className={`text-[12.5px] font-bold transition-all truncate`} 
+                            style={{ 
+                              // 勾選前使用同色系加深，勾選後變淡加刪除線
+                              color: checked ? `${activeConfig.color}60` : activeConfig.color,
+                              filter: checked ? "none" : "brightness(0.6)",
+                              textDecoration: checked ? "line-through" : "none"
+                            }}
+                          >
+                            {item.label}
+                          </span>
                         </button>
 
                         <div 
@@ -466,16 +507,16 @@ export default function ListTab({ trip, setTrip }) {
                           className="w-6 h-6 flex items-center justify-center rounded-full bg-white/40 opacity-0 group-active:opacity-100 group-hover:opacity-100 transition-opacity cursor-grab touch-none"
                           onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}
                         >
-                          <Settings2 className="w-3 h-3 text-[#8C6A4F]/40" />
+                          <Settings2 className="w-3 h-3 opacity-40" style={{ color: activeConfig.color }} />
                         </div>
                       </div>
 
                       {menuOpenId === item.id && (
-                        <div className={`absolute right-0 z-[110] w-28 bg-white border border-[#E5D5C5] rounded-xl shadow-xl py-1 animate-in fade-in zoom-in-95 duration-200 ${index >= 12 ? "bottom-full mb-1" : "top-full mt-1"}`}>
-                          <button className="flex items-center gap-2 px-3 py-1.5 text-[11px] text-[#5A4636] font-bold hover:bg-[#F7F1EB] w-full" onClick={() => { setEditingItem({ categoryId: activeTab, item }); setDraftValue(item.label); setMenuOpenId(null); }}>
-                            <PencilLine className="w-3.5 h-3.5 text-[#C6A087]" /> 編輯
+                        <div className={`absolute right-0 z-[110] w-28 bg-white border shadow-xl py-1 animate-in fade-in zoom-in-95 duration-200 ${index >= 12 ? "bottom-full mb-1" : "top-full mt-1"}`} style={{ borderColor: `${activeConfig.color}20` }}>
+                          <button className="flex items-center gap-2 px-3 py-1.5 text-[11px] font-bold hover:bg-black/5 w-full" style={{ color: activeConfig.color }} onClick={() => { setEditingItem({ categoryId: activeTab, item }); setDraftValue(item.label); setMenuOpenId(null); }}>
+                            <PencilLine className="w-3.5 h-3.5" /> 編輯
                           </button>
-                          <div className="h-px bg-[#F0E3D5] mx-2" />
+                          <div className="h-px mx-2" style={{ backgroundColor: `${activeConfig.color}10` }} />
                           <button className="flex items-center gap-2 px-3 py-1.5 text-[11px] text-red-500 font-bold hover:bg-red-50 w-full" onClick={() => { deleteItem(activeTab === "other" ? null : activeTab, item.id); setMenuOpenId(null); }}>
                             <Trash2 className="w-3.5 h-3.5" /> 刪除
                           </button>
@@ -493,20 +534,20 @@ export default function ListTab({ trip, setTrip }) {
       {/* 編輯名稱浮層 */}
       {editingItem && (
         <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#FFF9F2] rounded-[2rem] border border-[#E5D5C5] shadow-2xl p-6 w-full max-w-[300px] animate-in zoom-in-95 duration-200">
-            <h3 className="text-[13px] font-bold mb-4 text-[#5A4636] uppercase tracking-widest text-center">修改名稱</h3>
-            <div className="bg-white rounded-xl border border-[#E5D5C5] px-4 py-2.5 shadow-inner">
-              <input autoFocus type="text" value={draftValue} onChange={(e) => setDraftValue(e.target.value)} className="w-full text-center text-[16px] font-bold bg-transparent outline-none text-[#5A4636]" />
+          <div className="rounded-[2rem] border shadow-2xl p-6 w-full max-w-[300px] animate-in zoom-in-95 duration-200" style={{ backgroundColor: "white", borderColor: `${activeConfig.color}40` }}>
+            <h3 className="text-[13px] font-bold mb-4 uppercase tracking-widest text-center" style={{ color: activeConfig.color }}>修改名稱</h3>
+            <div className="bg-white rounded-xl border px-4 py-2.5 shadow-inner" style={{ borderColor: `${activeConfig.color}20` }}>
+              <input autoFocus type="text" value={draftValue} onChange={(e) => setDraftValue(e.target.value)} className="w-full text-center text-[16px] font-bold bg-transparent outline-none" style={{ color: activeConfig.color, filter: "brightness(0.7)" }} />
             </div>
             <div className="grid grid-cols-2 gap-3 mt-6">
-              <button onClick={() => setEditingItem(null)} className="py-2.5 rounded-xl border border-[#E5D5C5] text-[12px] font-bold text-[#8C6A4F] bg-white active:scale-95 transition-all">取消</button>
-              <button onClick={() => { updateItemLabel(editingItem.categoryId, editingItem.item.id, draftValue); setEditingItem(null); }} className="py-2.5 bg-[#C6A087] text-white rounded-xl flex items-center justify-center gap-1 text-[12px] font-bold shadow-md active:scale-95 transition-all">確定</button>
+              <button onClick={() => setEditingItem(null)} className="py-2.5 rounded-xl border text-[12px] font-bold bg-white active:scale-95 transition-all" style={{ borderColor: `${activeConfig.color}20`, color: activeConfig.color }}>取消</button>
+              <button onClick={() => { updateItemLabel(editingItem.categoryId, editingItem.item.id, draftValue); setEditingItem(null); }} className="py-2.5 text-white rounded-xl flex items-center justify-center gap-1 text-[12px] font-bold shadow-md active:scale-95 transition-all" style={{ backgroundColor: activeConfig.color }}>確定</button>
             </div>
           </div>
         </div>
       )}
 
-      {editingBag && <LuggageEditModal bag={editingBag} onClose={() => setEditingBag(null)} onSave={saveBag} />}
+      {editingBag && <LuggageEditModal bag={editingBag} onClose={() => setEditingBag(null)} onSave={saveBag} themeId={themeId} />}
     </div>
   );
 }
