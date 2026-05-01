@@ -133,7 +133,9 @@ export const THEMES = {
 export default function App() {
   // 2. 初始化主題：優先從本地讀取，沒有則預設奶茶色
   const [themeId, setThemeId] = useState(() => {
-    return localStorage.getItem("user_preferred_theme") || "mochaClassic";
+    const saved = localStorage.getItem("user_preferred_theme");
+    // 額外增加檢查，確保讀取到的 saved ID 真的存在於 THEMES 中
+    return (saved && THEMES[saved]) ? saved : "mochaClassic";
   });
 
   const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
@@ -149,7 +151,6 @@ export default function App() {
       className="min-h-screen transition-colors duration-500" 
       style={{ backgroundColor: currentTheme.bg }}
     >
-      {/* 5. 將 themeId 與 setThemeId 傳下去給 TripDetail，進而傳給 Header */}
       <TripDetail themeId={themeId} setThemeId={setThemeId} />
     </div>
   );
