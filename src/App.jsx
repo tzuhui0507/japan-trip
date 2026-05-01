@@ -133,10 +133,10 @@ export const THEMES = {
 export default function App() {
   // 2. 初始化主題：優先從本地讀取，沒有則預設奶茶色
   const [themeId, setThemeId] = useState(() => {
-    return localStorage.getItem("user_preferred_theme") || "milkTea";
+    return localStorage.getItem("user_preferred_theme") || "mochaClassic";
   });
 
-  const currentTheme = THEMES[themeId] || THEMES.milkTea;
+  const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
 
   // 3. 當主題改變時，保存到 localStorage
   useEffect(() => {
