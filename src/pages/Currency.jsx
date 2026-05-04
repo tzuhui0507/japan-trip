@@ -1,5 +1,5 @@
 // src/pages/Currency.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Coins,
   RefreshCw,
@@ -63,7 +63,6 @@ export default function Currency({ trip, setTrip, themeId }) {
   const baseCurrency = typeof trip.currency === 'string' ? trip.currency : "JPY";
   const currencyInfo = CURRENCIES[baseCurrency] || CURRENCIES.JPY;
 
-  // 修正：初始化結構，避免全白報錯
   const [viewerCurrencyData, setViewerCurrencyData] = useState({
     rate: 0,
     cards: DEFAULT_CARDS,
@@ -77,9 +76,12 @@ export default function Currency({ trip, setTrip, themeId }) {
   const [operator, setOperator] = useState(null);
 
   const [cardModalOpen, setCardModalOpen] = useState(false);
-  const [keypadOpen, setKeypadOpen] = useState(false); // 新增：控制懸浮鍵盤
+  const [keypadOpen, setKeypadOpen] = useState(false);
   const [editingCardId, setEditingCardId] = useState(null);
   const [cardDraft, setCardDraft] = useState(createNewCard());
+
+  // 用於處理下滑關閉的手勢起點
+  const touchStartY = useRef(0);
 
   useEffect(() => {
     if (!trip) return;
@@ -87,21 +89,13 @@ export default function Currency({ trip, setTrip, themeId }) {
       const storageKey = VIEWER_CURRENCY_KEY;
       const rawCurrency = localStorage.getItem(storageKey);
       if (rawCurrency) { 
-        try {
-          setViewerCurrencyData(JSON.parse(rawCurrency)); 
-        } catch(e) { console.error("Viewer Data Error", e); }
+        try { setViewerCurrencyData(JSON.parse(rawCurrency)); } catch(e) { console.error(e); }
       }
     }
   }, [trip, isViewer]);
 
-  // 確保數據層級穩定
   const currencyData = isViewer ? viewerCurrencyData : (trip?.currencyData || {});
-  const { 
-    rate = 0, 
-    cards = DEFAULT_CARDS, 
-    activeCardId = "card-default", 
-    amountStr = "0" 
-  } = currencyData;
+  const { rate = 0, cards = DEFAULT_CARDS, activeCardId = "card-default", amountStr = "0" } = currencyData;
 
   const formatRate = (r) => {
     if (!r) return "--";
@@ -137,18 +131,13 @@ export default function Currency({ trip, setTrip, themeId }) {
       const json = await res.json();
       if (!json?.rates?.TWD) throw new Error();
       updateCurrencyData({ rate: json.rates.TWD });
-    } catch {
-      setRateError("匯率取得失敗");
-    } finally {
-      setLoadingRate(false);
-    }
+    } catch { setRateError("失敗"); } finally { setLoadingRate(false); }
   };
 
   useEffect(() => { fetchRate(baseCurrency); }, [baseCurrency]);
 
   const activeCard = cards.find((c) => c.id === activeCardId) || cards[0];
   const amount = parseFloat(amountStr) || 0;
-  
   const baseResultInt = Math.round(rate ? amount * rate : 0);
   const feeAmount = (baseResultInt * (activeCard?.feePercent || 0)) / 100;
   const cardResultInt = Math.round(baseResultInt + feeAmount - (baseResultInt + feeAmount) * (activeCard?.cashbackPercent || 0) / 100);
@@ -180,19 +169,25 @@ export default function Currency({ trip, setTrip, themeId }) {
     ["C", "DEL", "="],
   ];
 
-  const openEditCardModal = () => { if (!activeCard) return; setEditingCardId(activeCard.id); setCardDraft({ ...activeCard }); setCardModalOpen(true); };
+  // 下滑關閉邏輯
+  const handleTouchStart = (e) => { touchStartY.current = e.touches[0].clientY; };
+  const handleTouchEnd = (e) => {
+    const touchEndY = e.changedTouches[0].clientY;
+    if (touchEndY - touchStartY.current > 100) { setKeypadOpen(false); }
+  };
 
   return (
-    <div className="pt-4 pb-24 px-3 space-y-6 min-h-screen overflow-hidden">
+    <div className="pt-4 pb-20 px-3 space-y-4 h-[calc(100dvh-64px)] overflow-hidden flex flex-col">
       <PageHeader icon={Coins} title="匯率換算" subtitle="CURRENCY" themeId={themeId} />
 
-      <section className="relative px-1">
-        <div className="flex flex-col items-center justify-center space-y-4">
-          <div className="text-center space-y-1">
-             <div className="flex items-center justify-center gap-3 mb-2">
+      <div className="flex-1 flex flex-col justify-between">
+        <section className="relative px-1">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <div className="text-center space-y-1">
+              <div className="flex items-center justify-center gap-3 mb-1">
                 <button 
                   onClick={() => fetchRate()} 
-                  className={`flex items-center gap-2.5 px-3 py-1.5 rounded-full transition-all bg-white shadow-sm border ${loadingRate ? 'opacity-50' : 'active:scale-95'}`} 
+                  className={`flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white shadow-sm border ${loadingRate ? 'opacity-50' : 'active:scale-95'}`} 
                   style={{ color: currentTheme.main, borderColor: `${currentTheme.main}20` }}
                 >
                   <RefreshCw className={`w-3 h-3 ${loadingRate ? 'animate-spin' : ''}`} />
@@ -200,126 +195,112 @@ export default function Currency({ trip, setTrip, themeId }) {
                     1 {baseCurrency} ≈ {formatRate(rate)} TWD
                   </span>
                 </button>
-             </div>
-             <div className="flex items-baseline justify-center gap-2">
+              </div>
+              <div className="flex items-baseline justify-center gap-2">
                 <span className="text-4xl font-black tracking-tighter" style={{ color: currentTheme.text }}>{currencyInfo.symbol}</span>
                 <h2 className="text-6xl font-black tracking-tighter" style={{ color: currentTheme.text }}>{formatAmountDisplay(amountStr)}</h2>
-             </div>
-          </div>
-
-          <div className="relative flex items-center justify-center w-full px-4">
-             <div className="h-[1px] flex-1 opacity-30" style={{ background: `linear-gradient(to right, transparent, ${currentTheme.main})` }} />
-             <div className="flex gap-4 mx-4">
-               <div className="p-3 rounded-full border bg-white shadow-sm rotate-90" style={{ borderColor: `${currentTheme.main}30`, color: currentTheme.main }}>
-                  <ArrowRightLeft className="w-4 h-4" />
-               </div>
-               {/* 新增：開啟鍵盤懸浮按鈕 */}
-               <button 
-                 onClick={() => setKeypadOpen(true)}
-                 className="p-3 rounded-full border bg-white shadow-md transition-transform active:scale-90" 
-                 style={{ borderColor: currentTheme.main, color: currentTheme.main }}
-               >
-                  <Calculator className="w-4 h-4" />
-               </button>
-             </div>
-             <div className="h-[1px] flex-1 opacity-30" style={{ background: `linear-gradient(to left, transparent, ${currentTheme.main})` }} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 w-full">
-             <div className="bg-white rounded-[2rem] p-4 border shadow-sm flex flex-col items-center justify-center relative overflow-hidden" 
-                  style={{ borderColor: `${currentTheme.main}20` }}>
-                    <div className="absolute -bottom-3 -left-2 opacity-[0.15] pointer-events-none rotate-12">
-                   <BadgeDollarSign className="w-16 h-16" style={{ color: currentTheme.main }} />
-                </div>
-                <div className="flex items-center gap-1.5 mb-1 opacity-50">
-                   <BadgeDollarSign className="w-3.5 h-3.5" />
-                   <span className="text-[10px] font-black uppercase tracking-widest">現金換算</span>
-                </div>
-                <div className="flex flex-col items-center z-10">
-                   <div className="flex items-baseline gap-0.5">
-                      <span className="text-sm font-black tracking-tighter" style={{ color: currentTheme.main }}>NT$</span>
-                      <span className="text-2xl font-black tracking-tighter" style={{ color: currentTheme.main }}>{baseResultInt.toLocaleString()}</span>
-                   </div>
-                </div>
-             </div>
-             
-             <div className="bg-white rounded-[2rem] p-4 border shadow-sm flex flex-col items-center justify-center relative overflow-hidden" 
-                  style={{ borderColor: `${currentTheme.main}20` }}>
-                    <div className="absolute -bottom-3 -right-2 opacity-[0.15] pointer-events-none -rotate-12">
-                   <CreditCard className="w-16 h-16" style={{ color: currentTheme.main }} />
-                </div>
-                <button onClick={openEditCardModal} className="absolute top-2 right-4 opacity-20 hover:opacity-100"><Settings className="w-3 h-3" /></button>
-                <div className="flex items-center gap-1.5 mb-1 opacity-50">
-                   <CreditCard className="w-3.5 h-3.5" />
-                   <span className="text-[10px] font-black uppercase truncate max-w-[60px]">{activeCard?.name}</span>
-                </div>
-                <div className="flex flex-col items-center z-10">
-                   <div className="flex items-baseline gap-0.5">
-                      <span className="text-sm font-black tracking-tighter" style={{ color: currentTheme.main }}>NT$</span>
-                      <span className="text-2xl font-black tracking-tighter" style={{ color: currentTheme.main }}>{cardResultInt.toLocaleString()}</span>
-                   </div>
-                </div>
-             </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="space-y-3">
-        <div className="flex items-center gap-3 px-1">
-           <h3 className="text-[12px] font-black uppercase tracking-[0.2em] opacity-60 shrink-0" style={{ color: currentTheme.text }}>信用卡選單</h3>
-           <div className="h-[1px] flex-1 rounded-full opacity-30" style={{ background: `linear-gradient(to right, ${currentTheme.main}, transparent)` }} />
-        </div>
-        <div className="flex gap-3 overflow-x-auto scrollbar-hide py-1">
-          {cards.map((c) => (
-            <button key={c.id} onClick={() => updateCurrencyData({ activeCardId: c.id })}
-                    className="relative shrink-0 w-36 h-24 rounded-[1.8rem] border-2 transition-all p-4 flex flex-col justify-between overflow-hidden shadow-sm active:scale-95"
-                    style={{ 
-                      borderColor: c.id === activeCardId ? currentTheme.main : `${currentTheme.main}10`,
-                      backgroundColor: c.id === activeCardId ? `${currentTheme.main}05` : "white"
-                    }}>
-              <div className="flex justify-between items-start">
-                <CreditCard className={`w-5 h-5 ${c.id === activeCardId ? "opacity-100" : "opacity-20"}`} style={{ color: currentTheme.main }} />
-                {c.isPrimary && <Star className="w-3 h-3 fill-current text-yellow-400" />}
               </div>
-              <div className="text-left">
-                <p className={`text-xs font-black truncate ${c.id === activeCardId ? "opacity-100" : "opacity-60"}`} style={{ color: currentTheme.text }}>{c.name}</p>
-                <div className="flex gap-1.5 text-[8px] font-bold opacity-30">
-                  <span>手續費:{c.feePercent}%</span> <span>回饋金:{c.cashbackPercent}%</span>
+            </div>
+
+            <div className="relative flex items-center justify-center w-full px-4">
+              <div className="h-[1px] flex-1 opacity-30" style={{ background: `linear-gradient(to right, transparent, ${currentTheme.main})` }} />
+              <div className="flex gap-4 mx-4">
+                <div className="p-3 rounded-full border bg-white shadow-sm rotate-90" style={{ borderColor: `${currentTheme.main}30`, color: currentTheme.main }}>
+                  <ArrowRightLeft className="w-5 h-5" />
+                </div>
+                <button 
+                  onClick={() => setKeypadOpen(true)}
+                  className="p-3 rounded-full border bg-white shadow-md transition-transform active:scale-90" 
+                  style={{ borderColor: currentTheme.main, color: currentTheme.main }}
+                >
+                  <Calculator className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="h-[1px] flex-1 opacity-30" style={{ background: `linear-gradient(to left, transparent, ${currentTheme.main})` }} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 w-full">
+              <div className="bg-white rounded-[2rem] p-4 border shadow-sm flex flex-col items-center justify-center relative overflow-hidden" 
+                   style={{ borderColor: `${currentTheme.main}20` }}>
+                <div className="absolute -bottom-3 -left-2 opacity-[0.15] rotate-12"><BadgeDollarSign className="w-14 h-14" style={{ color: currentTheme.main }} /></div>
+                <div className="flex items-center gap-1.5 mb-1 opacity-50"><BadgeDollarSign className="w-4 h-4" /><span className="text-[11px] font-black uppercase tracking-widest">現金換算</span></div>
+                <div className="flex flex-col items-center z-10">
+                  <div className="flex items-baseline gap-0.5">
+                    <span className="text-sm font-black tracking-tighter" style={{ color: currentTheme.main }}>NT$</span>
+                    <span className="text-2xl font-black tracking-tighter" style={{ color: currentTheme.main }}>{baseResultInt.toLocaleString()}</span>
+                  </div>
                 </div>
               </div>
-               {c.id === activeCardId && <div className="absolute -right-2 -bottom-2 w-10 h-10 rounded-full opacity-20" style={{ backgroundColor: currentTheme.main }} />}
+              
+              <div className="bg-white rounded-[2rem] p-4 border shadow-sm flex flex-col items-center justify-center relative overflow-hidden" 
+                   style={{ borderColor: `${currentTheme.main}20` }}>
+                <div className="absolute -bottom-3 -right-2 opacity-[0.15] -rotate-12"><CreditCard className="w-14 h-14" style={{ color: currentTheme.main }} /></div>
+                <button onClick={() => { if (!activeCard) return; setEditingCardId(activeCard.id); setCardDraft({ ...activeCard }); setCardModalOpen(true); }} className="absolute top-2 right-4 opacity-20 hover:opacity-100"><Settings className="w-3 h-3" /></button>
+                <div className="flex items-center gap-1.5 mb-1 opacity-50"><CreditCard className="w-4 h-4" /><span className="text-[11px] font-black uppercase truncate max-w-[60px]">{activeCard?.name}</span></div>
+                <div className="flex flex-col items-center z-10">
+                  <div className="flex items-baseline gap-0.5">
+                    <span className="text-sm font-black tracking-tighter" style={{ color: currentTheme.main }}>NT$</span>
+                    <span className="text-2xl font-black tracking-tighter" style={{ color: currentTheme.main }}>{cardResultInt.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-2 mt-4">
+          <div className="flex items-center gap-3 px-1">
+            <h3 className="text-[13px] font-black uppercase tracking-[0.2em] opacity-60 shrink-0" style={{ color: currentTheme.text }}>信用卡選單</h3>
+            <div className="h-[1px] flex-1 rounded-full opacity-30" style={{ background: `linear-gradient(to right, ${currentTheme.main}, transparent)` }} />
+          </div>
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide py-1">
+            {cards.map((c) => (
+              <button key={c.id} onClick={() => updateCurrencyData({ activeCardId: c.id })}
+                      className="relative shrink-0 w-36 h-24 rounded-[1.8rem] border-2 transition-all p-4 flex flex-col justify-between overflow-hidden shadow-sm active:scale-95"
+                      style={{ 
+                        borderColor: c.id === activeCardId ? currentTheme.main : `${currentTheme.main}10`,
+                        backgroundColor: c.id === activeCardId ? `${currentTheme.main}05` : "white"
+                      }}>
+                <div className="flex justify-between items-start">
+                  <CreditCard className={`w-5 h-5 ${c.id === activeCardId ? "opacity-100" : "opacity-20"}`} style={{ color: currentTheme.main }} />
+                  {c.isPrimary && <Star className="w-3 h-3 fill-current text-yellow-400" />}
+                </div>
+                <div className="text-left">
+                  <p className={`text-xs font-black truncate ${c.id === activeCardId ? "opacity-100" : "opacity-60"}`} style={{ color: currentTheme.text }}>{c.name}</p>
+                  <div className="flex gap-1.5 text-[8px] font-bold opacity-30"><span>{c.feePercent}%</span><span>回饋{c.cashbackPercent}%</span></div>
+                </div>
+              </button>
+            ))}
+            <button onClick={() => { setEditingCardId(null); setCardDraft(createNewCard()); setCardModalOpen(true); }} className="shrink-0 w-36 h-24 rounded-[1.8rem] border-2 border-dashed flex flex-col items-center justify-center gap-1 opacity-40 active:scale-95 transition-all" style={{ borderColor: `${currentTheme.main}40`, color: currentTheme.text }}>
+               <PlusCircle className="w-5 h-5" /><span className="text-[9px] font-black uppercase tracking-wider">新增卡片</span>
             </button>
-          ))}
-          <button onClick={() => { setEditingCardId(null); setCardDraft(createNewCard()); setCardModalOpen(true); }} className="shrink-0 w-36 h-24 rounded-[1.8rem] border-2 border-dashed flex flex-col items-center justify-center gap-1 opacity-40 active:scale-95 transition-all" style={{ borderColor: `${currentTheme.main}40`, color: currentTheme.text }}>
-             <PlusCircle className="w-5 h-5" />
-             <span className="text-[9px] font-black uppercase tracking-wider">新增卡片</span>
-          </button>
-        </div>
-      </section>
+          </div>
+        </section>
 
-      {/* 懸浮計算機門板 */}
+        <div className="flex items-center justify-center gap-2 opacity-30 py-4 text-center mt-auto">
+          <Info className="w-3 h-3 shrink-0" /><p className="text-[9px] font-bold">僅供估算，實際金額以銀行發卡機構為準。</p>
+        </div>
+      </div>
+
       {keypadOpen && (
-        <div className="fixed inset-0 z-[300] bg-black/20 flex items-end animate-in fade-in duration-200">
-           <div className="w-full bg-white rounded-t-[2.5rem] p-6 pb-10 shadow-2xl animate-in slide-in-from-bottom duration-300" 
-                style={{ backgroundColor: currentTheme.bg }}>
-              <div className="flex justify-center mb-6">
-                <button onClick={() => setKeypadOpen(false)} className="w-12 h-1.5 rounded-full bg-gray-300" />
-              </div>
+        <div className="fixed inset-0 z-[300] bg-black/20 flex items-end animate-in fade-in duration-200" onClick={() => setKeypadOpen(false)}>
+           <div className="w-full bg-white rounded-t-[2.5rem] p-6 pb-12 shadow-2xl animate-in slide-in-from-bottom duration-300" 
+                style={{ backgroundColor: currentTheme.bg }}
+                onClick={(e) => e.stopPropagation()}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}>
+              <div className="flex justify-center mb-6"><div className="w-12 h-1.5 rounded-full bg-gray-300" /></div>
               <div className="grid grid-cols-4 gap-3">
                 {keypadButtons.flat().map((key) => {
                   const isOperator = ["÷", "×", "-", "+", "="].includes(key);
                   const isSpecial = ["C", "DEL"].includes(key);
                   return (
                     <button key={key} onClick={() => handleKeypad(key)}
-                            className={`h-14 rounded-2xl text-lg font-black transition-all active:scale-90 shadow-sm flex items-center justify-center
-                              ${key === "=" ? "col-span-2" : "bg-white"}
-                            `}
+                            className={`h-14 rounded-2xl text-lg font-black transition-all active:scale-90 shadow-sm flex items-center justify-center ${key === "=" ? "col-span-2" : "bg-white"}`}
                             style={{ 
                               backgroundColor: key === "=" ? currentTheme.main : "white",
                               color: key === "=" ? "white" : (isSpecial ? "#ff5a5a" : (isOperator ? currentTheme.main : currentTheme.text)),
-                            }}>
-                      {key === "DEL" ? "⌫" : key}
-                    </button>
+                            }}>{key === "DEL" ? "⌫" : key}</button>
                   );
                 })}
               </div>
@@ -327,38 +308,17 @@ export default function Currency({ trip, setTrip, themeId }) {
         </div>
       )}
 
-      <div className="flex items-center justify-center gap-2 opacity-30 py-2 text-center">
-          <Info className="w-3 h-3 shrink-0" />
-          <p className="text-[9px] font-bold">僅供估算，實際金額以銀行發卡機構為準。</p>
-      </div>
-
-      {/* Card Modal 保持原樣 */}
       {cardModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xl flex items-end z-[400]">
           <div className="w-full bg-white rounded-t-[3rem] p-8 space-y-6 shadow-2xl border-t" style={{ borderColor: `${currentTheme.main}20` }}>
-            <div className="flex justify-between items-center">
-               <h2 className="text-xl font-black tracking-tight" style={{ color: currentTheme.text }}>{editingCardId ? "編輯支付" : "新增支付"}</h2>
-               <button onClick={() => setCardModalOpen(false)} className="p-2 rounded-full bg-gray-100"><X className="w-4 h-4 opacity-40" /></button>
-            </div>
-            
+            <div className="flex justify-between items-center"><h2 className="text-xl font-black tracking-tight" style={{ color: currentTheme.text }}>{editingCardId ? "編輯支付" : "新增支付"}</h2><button onClick={() => setCardModalOpen(false)} className="p-2 rounded-full bg-gray-100"><X className="w-4 h-4 opacity-40" /></button></div>
             <div className="space-y-4">
-               <div className="space-y-1.5">
-                  <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">卡片名稱</label>
-                  <input value={cardDraft.name} onChange={(e) => setCardDraft(p=>({...p, name: e.target.value}))} className="w-full px-5 py-3.5 rounded-xl bg-gray-50 outline-none font-black text-base" placeholder="卡片名稱" />
-               </div>
-               
+               <div className="space-y-1.5"><label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">卡片名稱</label><input value={cardDraft.name} onChange={(e) => setCardDraft(p=>({...p, name: e.target.value}))} className="w-full px-5 py-3.5 rounded-xl bg-gray-50 outline-none font-black text-base" placeholder="卡片名稱" /></div>
                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">手續費 %</label>
-                    <input type="number" value={cardDraft.feePercent} onChange={(e) => setCardDraft(p=>({...p, feePercent: e.target.value}))} className="w-full px-5 py-3.5 rounded-xl bg-gray-50 outline-none font-bold" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">回饋 %</label>
-                    <input type="number" value={cardDraft.cashbackPercent} onChange={(e) => setCardDraft(p=>({...p, cashbackPercent: e.target.value}))} className="w-full px-5 py-3.5 rounded-xl bg-gray-50 outline-none font-bold" />
-                  </div>
+                  <div className="space-y-1.5"><label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">手續費 %</label><input type="number" value={cardDraft.feePercent} onChange={(e) => setCardDraft(p=>({...p, feePercent: e.target.value}))} className="w-full px-5 py-3.5 rounded-xl bg-gray-50 outline-none font-bold" /></div>
+                  <div className="space-y-1.5"><label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">回饋 %</label><input type="number" value={cardDraft.cashbackPercent} onChange={(e) => setCardDraft(p=>({...p, cashbackPercent: e.target.value}))} className="w-full px-5 py-3.5 rounded-xl bg-gray-50 outline-none font-bold" /></div>
                </div>
             </div>
-
             <div className="flex gap-3 pt-2">
                {editingCardId && <button onClick={() => { const remain = cards.filter((c) => c.id !== editingCardId); const fallback = remain.length ? remain : DEFAULT_CARDS; updateCurrencyData({ cards: fallback, activeCardId: fallback[0].id }); setCardModalOpen(false); }} className="flex-1 py-4 rounded-2xl border border-red-100 text-red-500 text-xs font-black">刪除</button>}
                <button onClick={() => {
@@ -367,7 +327,7 @@ export default function Currency({ trip, setTrip, themeId }) {
                   if (editingCardId) { updated = updated.map((c) => c.id === editingCardId ? { ...cardDraft, id: editingCardId } : c); updateCurrencyData({ cards: updated, activeCardId: editingCardId }); }
                   else { const newCard = { ...cardDraft, id: `card-${Date.now()}` }; updated.push(newCard); updateCurrencyData({ cards: updated, activeCardId: newCard.id }); }
                   setCardModalOpen(false);
-               }} className="flex-[2] py-4 rounded-2xl text-white text-xs font-black" style={{ backgroundColor: currentTheme.main }}>確認儲存</button>
+               }} className="flex-[2] py-4 rounded-2xl text-white text-xs font-black shadow-lg" style={{ backgroundColor: currentTheme.main }}>確認儲存</button>
             </div>
           </div>
         </div>
