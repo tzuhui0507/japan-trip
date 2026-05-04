@@ -80,9 +80,6 @@ export default function Currency({ trip, setTrip, themeId }) {
   const [editingCardId, setEditingCardId] = useState(null);
   const [cardDraft, setCardDraft] = useState(createNewCard());
 
-  // 用於處理下滑關閉的手勢起點
-  const touchStartY = useRef(0);
-
   useEffect(() => {
     if (!trip) return;
     if (isViewer) {
@@ -169,18 +166,13 @@ export default function Currency({ trip, setTrip, themeId }) {
     ["C", "DEL", "="],
   ];
 
-  // 下滑關閉邏輯
-  const handleTouchStart = (e) => { touchStartY.current = e.touches[0].clientY; };
-  const handleTouchEnd = (e) => {
-    const touchEndY = e.changedTouches[0].clientY;
-    if (touchEndY - touchStartY.current > 100) { setKeypadOpen(false); }
-  };
+  const openEditCardModal = () => { if (!activeCard) return; setEditingCardId(activeCard.id); setCardDraft({ ...activeCard }); setCardModalOpen(true); };
 
   return (
     <div className="pt-4 pb-20 px-3 space-y-4 h-[calc(100dvh-64px)] overflow-hidden flex flex-col">
       <PageHeader icon={Coins} title="匯率換算" subtitle="CURRENCY" themeId={themeId} />
 
-      <div className="flex-1 flex flex-col justify-between">
+      <div className="flex-1 flex flex-col gap-6">
         <section className="relative px-1">
           <div className="flex flex-col items-center justify-center space-y-4">
             <div className="text-center space-y-1">
@@ -203,7 +195,7 @@ export default function Currency({ trip, setTrip, themeId }) {
             </div>
 
             <div className="relative flex items-center justify-center w-full px-4">
-              <div className="h-[1px] flex-1 opacity-30" style={{ background: `linear-gradient(to right, transparent, ${currentTheme.main})` }} />
+              <div className="h-[2px] flex-1 opacity-30" style={{ background: `linear-gradient(to right, transparent, ${currentTheme.main})` }} />
               <div className="flex gap-4 mx-4">
                 <div className="p-3 rounded-full border bg-white shadow-sm rotate-90" style={{ borderColor: `${currentTheme.main}30`, color: currentTheme.main }}>
                   <ArrowRightLeft className="w-5 h-5" />
@@ -216,14 +208,14 @@ export default function Currency({ trip, setTrip, themeId }) {
                   <Calculator className="w-5 h-5" />
                 </button>
               </div>
-              <div className="h-[1px] flex-1 opacity-30" style={{ background: `linear-gradient(to left, transparent, ${currentTheme.main})` }} />
+              <div className="h-[2px] flex-1 opacity-30" style={{ background: `linear-gradient(to left, transparent, ${currentTheme.main})` }} />
             </div>
 
             <div className="grid grid-cols-2 gap-3 w-full">
               <div className="bg-white rounded-[2rem] p-4 border shadow-sm flex flex-col items-center justify-center relative overflow-hidden" 
                    style={{ borderColor: `${currentTheme.main}20` }}>
                 <div className="absolute -bottom-3 -left-2 opacity-[0.15] rotate-12"><BadgeDollarSign className="w-14 h-14" style={{ color: currentTheme.main }} /></div>
-                <div className="flex items-center gap-1.5 mb-1 opacity-50"><BadgeDollarSign className="w-4 h-4" /><span className="text-[11px] font-black uppercase tracking-widest">現金換算</span></div>
+                <div className="flex items-center gap-1.5 mb-1 opacity-50"><BadgeDollarSign className="w-4 h-4" /><span className="text-[12px] font-black uppercase tracking-widest">現金換算</span></div>
                 <div className="flex flex-col items-center z-10">
                   <div className="flex items-baseline gap-0.5">
                     <span className="text-sm font-black tracking-tighter" style={{ color: currentTheme.main }}>NT$</span>
@@ -235,8 +227,8 @@ export default function Currency({ trip, setTrip, themeId }) {
               <div className="bg-white rounded-[2rem] p-4 border shadow-sm flex flex-col items-center justify-center relative overflow-hidden" 
                    style={{ borderColor: `${currentTheme.main}20` }}>
                 <div className="absolute -bottom-3 -right-2 opacity-[0.15] -rotate-12"><CreditCard className="w-14 h-14" style={{ color: currentTheme.main }} /></div>
-                <button onClick={() => { if (!activeCard) return; setEditingCardId(activeCard.id); setCardDraft({ ...activeCard }); setCardModalOpen(true); }} className="absolute top-2 right-4 opacity-20 hover:opacity-100"><Settings className="w-3 h-3" /></button>
-                <div className="flex items-center gap-1.5 mb-1 opacity-50"><CreditCard className="w-4 h-4" /><span className="text-[11px] font-black uppercase truncate max-w-[60px]">{activeCard?.name}</span></div>
+                <button onClick={openEditCardModal} className="absolute top-2 right-4 opacity-20 hover:opacity-100"><Settings className="w-3 h-3" /></button>
+                <div className="flex items-center gap-1.5 mb-1 opacity-50"><CreditCard className="w-4 h-4" /><span className="text-[12px] font-black uppercase truncate max-w-[60px]">{activeCard?.name}</span></div>
                 <div className="flex flex-col items-center z-10">
                   <div className="flex items-baseline gap-0.5">
                     <span className="text-sm font-black tracking-tighter" style={{ color: currentTheme.main }}>NT$</span>
@@ -248,10 +240,10 @@ export default function Currency({ trip, setTrip, themeId }) {
           </div>
         </section>
 
-        <section className="space-y-2 mt-4">
-          <div className="flex items-center gap-3 px-1">
+        <section className="space-y-3 px-1">
+          <div className="flex items-center gap-3">
             <h3 className="text-[13px] font-black uppercase tracking-[0.2em] opacity-60 shrink-0" style={{ color: currentTheme.text }}>信用卡選單</h3>
-            <div className="h-[1px] flex-1 rounded-full opacity-30" style={{ background: `linear-gradient(to right, ${currentTheme.main}, transparent)` }} />
+            <div className="h-[2px] flex-1 rounded-full opacity-30" style={{ background: `linear-gradient(to right, ${currentTheme.main}, transparent)` }} />
           </div>
           <div className="flex gap-3 overflow-x-auto scrollbar-hide py-1">
             {cards.map((c) => (
@@ -267,28 +259,31 @@ export default function Currency({ trip, setTrip, themeId }) {
                 </div>
                 <div className="text-left">
                   <p className={`text-xs font-black truncate ${c.id === activeCardId ? "opacity-100" : "opacity-60"}`} style={{ color: currentTheme.text }}>{c.name}</p>
-                  <div className="flex gap-1.5 text-[8px] font-bold opacity-30"><span>{c.feePercent}%</span><span>回饋{c.cashbackPercent}%</span></div>
+                  <div className="flex gap-1.5 text-[8px] font-bold opacity-30"><span>手續費:{c.feePercent}%</span><span>回饋金:{c.cashbackPercent}%</span></div>
                 </div>
+                {c.id === activeCardId && <div className="absolute -right-2 -bottom-2 w-10 h-10 rounded-full opacity-20" style={{ backgroundColor: currentTheme.main }} />}
               </button>
             ))}
             <button onClick={() => { setEditingCardId(null); setCardDraft(createNewCard()); setCardModalOpen(true); }} className="shrink-0 w-36 h-24 rounded-[1.8rem] border-2 border-dashed flex flex-col items-center justify-center gap-1 opacity-40 active:scale-95 transition-all" style={{ borderColor: `${currentTheme.main}40`, color: currentTheme.text }}>
                <PlusCircle className="w-5 h-5" /><span className="text-[9px] font-black uppercase tracking-wider">新增卡片</span>
             </button>
           </div>
+          
+          {/* 修改點：免責聲明移動到信用卡選單下方 */}
+          <div className="flex items-center justify-center gap-2 opacity-30 pt-1 text-center">
+            <Info className="w-3 h-3 shrink-0" />
+            <p className="text-[9px] font-bold">僅供估算，實際金額以銀行發卡機構為準。</p>
+          </div>
         </section>
-
-        <div className="flex items-center justify-center gap-2 opacity-30 py-4 text-center mt-auto">
-          <Info className="w-3 h-3 shrink-0" /><p className="text-[9px] font-bold">僅供估算，實際金額以銀行發卡機構為準。</p>
-        </div>
       </div>
 
       {keypadOpen && (
+        // 修改點：點擊背景遮罩關閉
         <div className="fixed inset-0 z-[300] bg-black/20 flex items-end animate-in fade-in duration-200" onClick={() => setKeypadOpen(false)}>
            <div className="w-full bg-white rounded-t-[2.5rem] p-6 pb-12 shadow-2xl animate-in slide-in-from-bottom duration-300" 
                 style={{ backgroundColor: currentTheme.bg }}
-                onClick={(e) => e.stopPropagation()}
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}>
+                onClick={(e) => e.stopPropagation()} // 防止點擊計算機本身時觸穿透關閉
+           >
               <div className="flex justify-center mb-6"><div className="w-12 h-1.5 rounded-full bg-gray-300" /></div>
               <div className="grid grid-cols-4 gap-3">
                 {keypadButtons.flat().map((key) => {
@@ -316,7 +311,7 @@ export default function Currency({ trip, setTrip, themeId }) {
                <div className="space-y-1.5"><label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">卡片名稱</label><input value={cardDraft.name} onChange={(e) => setCardDraft(p=>({...p, name: e.target.value}))} className="w-full px-5 py-3.5 rounded-xl bg-gray-50 outline-none font-black text-base" placeholder="卡片名稱" /></div>
                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5"><label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">手續費 %</label><input type="number" value={cardDraft.feePercent} onChange={(e) => setCardDraft(p=>({...p, feePercent: e.target.value}))} className="w-full px-5 py-3.5 rounded-xl bg-gray-50 outline-none font-bold" /></div>
-                  <div className="space-y-1.5"><label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">回饋 %</label><input type="number" value={cardDraft.cashbackPercent} onChange={(e) => setCardDraft(p=>({...p, cashbackPercent: e.target.value}))} className="w-full px-5 py-3.5 rounded-xl bg-gray-50 outline-none font-bold" /></div>
+                  <div className="space-y-1.5"><label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">回饋金 %</label><input type="number" value={cardDraft.cashbackPercent} onChange={(e) => setCardDraft(p=>({...p, cashbackPercent: e.target.value}))} className="w-full px-5 py-3.5 rounded-xl bg-gray-50 outline-none font-bold" /></div>
                </div>
             </div>
             <div className="flex gap-3 pt-2">
