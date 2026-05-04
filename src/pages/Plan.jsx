@@ -148,9 +148,22 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
     fetchWeather();
   }, [currentDay?.latitude, currentDay?.longitude, activeDayIndex]);
 
+  // --- 修改重點：偵測韓文並切換地圖連結 ---
   const handleNavigation = (e, address, title) => {
     e.stopPropagation();
-    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address || title)}`, "_blank");
+    const query = address || title;
+    if (!query) return;
+
+    // 判斷是否含有韓文字元 (Hangul)
+    const hasKorean = /[\uAC00-\uD7AF]/.test(query);
+    
+    if (hasKorean) {
+      // 韓國地區使用 Naver Map (Naver 對韓文地址支援度最高)
+      window.open(`https://map.naver.com/v5/search/${encodeURIComponent(query)}`, "_blank");
+    } else {
+      // 其他地區維持使用 Google Maps
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, "_blank");
+    }
   };
 
   const onDragEnd = (result) => {
@@ -381,11 +394,10 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                               {(intro || shops.length > 0) && (
                                 <div className="mt-3">
                                   {intro && (
-                                    /* --- 修改重點：左側色彩條改為全包覆虛線外框 --- */
                                     <div className="rounded-xl px-3 py-3 flex flex-col gap-2 text-[12px] leading-relaxed border-2 border-dashed shadow-sm" 
                                       style={{ 
                                         backgroundColor: `${currentTheme.light}80`, 
-                                        borderColor: `${currentTheme.main}60`, // 虛線外框
+                                        borderColor: `${currentTheme.main}60`, 
                                         color: currentTheme.accent 
                                       }}>
                                       <div className="flex items-center gap-1.5 mb-1 opacity-80">
@@ -566,7 +578,13 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
               <button 
                 onClick={() => {
                   const query = encodeURIComponent(selectedShop.name);
-                  window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank");
+                  // 同步在推薦清單內也支援自動切換韓國地圖
+                  const hasKorean = /[\uAC00-\uD7AF]/.test(selectedShop.name);
+                  if (hasKorean) {
+                    window.open(`https://map.naver.com/v5/search/${query}`, "_blank");
+                  } else {
+                    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank");
+                  }
                 }}
                 className="mt-6 w-full py-4 text-white rounded-2xl text-[14px] font-black shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 hover:opacity-90"
                 style={{ backgroundColor: currentTheme.main }}
