@@ -83,10 +83,21 @@ export default function Info({ trip, setTrip, themeId }) {
     setEmergencyModalOpen(false);
   };
 
+  // --- 修改重點：偵測韓文並動態轉換地圖網址 ---
   const handleNavigation = (e, address) => {
     e.stopPropagation();
     if (!address) return;
-    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, "_blank");
+
+    // 檢查是否含有韓文字元
+    const hasKorean = /[\uAC00-\uD7AF]/.test(address);
+
+    if (hasKorean) {
+      // 偵測到韓文地址，使用 Naver Map
+      window.open(`https://map.naver.com/v5/search/${encodeURIComponent(address)}`, "_blank");
+    } else {
+      // 其他地區維持使用 Google Maps
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, "_blank");
+    }
   };
 
   const telHref = (phone) => `tel:${phone?.replace(/\s+/g, "").replace(/[^0-9+]/g, "")}`;
