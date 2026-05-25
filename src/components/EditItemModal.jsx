@@ -1,6 +1,6 @@
 // src/components/EditItemModal.jsx
 import React, { useMemo, useState } from "react";
-import { X, Check, UtensilsCrossed, Landmark, Train, BedDouble, Ticket, Clock, Phone, Link, Layers, MapPin, StickyNote, Pin, Bookmark, CalendarOff, Trash2 } from "lucide-react";
+import { X, Check, UtensilsCrossed, Landmark, Train, BedDouble, Ticket, Clock, Phone, Link, Layers, MapPin, StickyNote, Pin, Bookmark, CalendarOff, Trash2, CalendarDays } from "lucide-react";
 import { THEMES } from "../App";
 
 const TYPE_OPTIONS = {
@@ -14,6 +14,11 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
   const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
   const ticketList = tickets?.length ? tickets : trip?.tickets || [];
 
+  // 獲取總天數清單，用於下拉選單
+  const totalDays = trip?.days || [];
+  // 找出目前這張卡片原本是第幾天 (預設為當前啟動的天數，若無則為 0)
+  const currentDayIndex = trip?.activeDayIndex ?? 0;
+
   // 解析三段支線邏輯 (A---B---C)
   const parseBranch = (val) => {
     if (typeof val !== "string") return { a: val || "", b: "", c: "" };
@@ -25,7 +30,11 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
     };
   };
 
-  const [baseForm, setBaseForm] = useState({ time: item.time || "", type: item.type || "ATTRACTION" });
+  const [baseForm, setBaseForm] = useState({ 
+    time: item.time || "", 
+    type: item.type || "ATTRACTION",
+    targetDayIndex: currentDayIndex // 用來記錄使用者選擇搬移到哪一天
+  });
   
   const initialData = useMemo(() => ({
     title: parseBranch(item.title),
@@ -88,7 +97,7 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
         : hasAnyB 
           ? `${branchTickets.A.join(",")}---${branchTickets.B.join(",")}`
           : branchTickets.A.join(",")
-    });
+    }, baseForm.targetDayIndex); 
   };
 
   const renderField = (label, key, Icon) => (
@@ -182,13 +191,14 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
 
         {/* Body */}
         <div className="px-4 sm:px-8 py-8 space-y-10 overflow-y-auto scrollbar-none pb-24 flex-1">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+          {/* --- 修改重點：改為響應式排版，手機版垂直排列，平版以上並排，徹底防止垃圾桶按鈕與天數重疊 --- */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* 時間區塊 */}
             <div className="w-full">
               <label className="flex items-center gap-1.5 text-[11px] font-bold mb-3 uppercase tracking-widest px-1 opacity-70" style={{ color: currentTheme.text }}>
                 <Clock className="w-3.5 h-3.5" style={{ color: currentTheme.main }} /> 抵達時間
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full">
                 <div 
                   className="flex-1 flex items-center justify-center border rounded-2xl bg-white shadow-sm transition-all focus-within:ring-2 h-14"
                   style={{ borderColor: `${currentTheme.main}20`, "--tw-ring-color": `${currentTheme.main}10` }}
@@ -197,46 +207,71 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
                     type="time" 
                     value={baseForm.time} 
                     onChange={(e) => setBaseForm(prev => ({ ...prev, time: e.target.value }))} 
-                    className="w-full h-full text-center text-lg font-medium outline-none bg-transparent"
+                    className="w-full h-full text-center text-base font-bold outline-none bg-transparent px-3"
                     style={{ color: currentTheme.text }}
                   />
                 </div>
                 <button 
+                  type="button"
                   onClick={() => setBaseForm(prev => ({ ...prev, time: "" }))} 
-                  className="w-14 h-14 flex items-center justify-center rounded-2xl border bg-white text-red-400 shadow-sm active:scale-90 transition-all hover:bg-red-50"
+                  className="w-14 h-14 flex items-center justify-center rounded-2xl border bg-white text-red-400 shadow-sm active:scale-90 transition-all hover:bg-red-50 shrink-0"
                   style={{ borderColor: '#FEE2E2' }}
                 >
-                  <Trash2 className="w-5 h-5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            {/* 類別區塊 */}
+            {/* 行程天數調整區塊 */}
             <div className="w-full">
               <label className="flex items-center gap-1.5 text-[11px] font-bold mb-3 uppercase tracking-widest px-1 opacity-70" style={{ color: currentTheme.text }}>
-                <Layers className="w-3.5 h-3.5" style={{ color: currentTheme.main }} /> 類別
+                <CalendarDays className="w-3.5 h-3.5" style={{ color: currentTheme.main }} /> 行程天數
               </label>
-              <div className="flex gap-2">
-                {Object.values(TYPE_OPTIONS).map((t) => {
-                  const active = baseForm.type === t.key;
-                  return (
-                    <button 
-                      key={t.key} 
-                      type="button" 
-                      onClick={() => setBaseForm(prev => ({ ...prev, type: t.key }))} 
-                      style={{ 
-                        backgroundColor: active ? t.pillBg : 'white', 
-                        color: active ? t.pillText : currentTheme.text, 
-                        borderColor: active ? t.pillText : `${currentTheme.main}20` 
-                      }} 
-                      className={`flex-1 h-14 rounded-2xl flex flex-col items-center justify-center border transition-all gap-1 shadow-sm active:scale-95 ${!active && 'opacity-40'}`}
-                    >
-                      <t.icon className={`w-5 h-5 ${active ? "scale-110" : ""}`} />
-                      <span className="text-[9px] font-bold tracking-tight">{t.label}</span>
-                    </button>
-                  );
-                })}
+              <div 
+                className="w-full flex items-center justify-center border rounded-2xl bg-white shadow-sm transition-all focus-within:ring-2 h-14 px-4"
+                style={{ borderColor: `${currentTheme.main}20`, "--tw-ring-color": `${currentTheme.main}10` }}
+              >
+                <select
+                  value={baseForm.targetDayIndex}
+                  onChange={(e) => setBaseForm(prev => ({ ...prev, targetDayIndex: parseInt(e.target.value) }))}
+                  className="w-full h-full text-left text-sm font-bold outline-none bg-transparent cursor-pointer"
+                  style={{ color: currentTheme.text }}
+                >
+                  {totalDays.map((_, idx) => (
+                    <option key={idx} value={idx}>
+                      第 {idx + 1} 天 {idx === currentDayIndex ? "(今天)" : ""}
+                    </option>
+                  ))}
+                </select>
               </div>
+            </div>
+          </div>
+
+          {/* 類別區塊 */}
+          <div className="w-full">
+            <label className="flex items-center gap-1.5 text-[11px] font-bold mb-3 uppercase tracking-widest px-1 opacity-70" style={{ color: currentTheme.text }}>
+              <Layers className="w-3.5 h-3.5" style={{ color: currentTheme.main }} /> 類別
+            </label>
+            <div className="flex flex-wrap sm:flex-nowrap gap-2">
+              {Object.values(TYPE_OPTIONS).map((t) => {
+                const active = baseForm.type === t.key;
+                return (
+                  <button 
+                    key={t.key} 
+                    type="button" 
+                    onClick={() => setBaseForm(prev => ({ ...prev, type: t.key }))} 
+                    style={{ 
+                      backgroundColor: active ? t.pillBg : 'white', 
+                      color: active ? t.pillText : currentTheme.text, 
+                      borderColor: active ? t.pillText : `${currentTheme.main}20` 
+                    }} 
+                    className={`flex-1 min-w-[70px] h-14 rounded-2xl flex flex-col items-center justify-center border transition-all gap-1 shadow-sm active:scale-95 ${!active && 'opacity-40'}`}
+                  >
+                    <t.icon className={`w-5 h-5 ${active ? "scale-110" : ""}`} />
+                    <span className="text-[9px] font-bold tracking-tight">{t.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

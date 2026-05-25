@@ -83,7 +83,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
       : parts[0];
   };
 
-  // --- 新增：價格格式化處理，包含千分位 (方法 4) ---
+  // --- 新增：價格格式化處理，包含千分位 ---
   const formatLegPrice = (p) => {
     const val = parseBranchText(p);
     if (!val || isNaN(val)) return val;
@@ -179,37 +179,46 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
   const { totalTime, totalPrice } = calculateTotal();
 
   const renderSummary = () => (
-    <div className="flex flex-col text-[10px] font-bold leading-snug justify-center transition-all duration-300">
+    <div className="flex flex-col text-[10px] font-bold leading-snug justify-center transition-all duration-300 w-full">
       {legs.map((leg) => {
         const color = detectColor(leg);
         const lineName = parseBranchText(leg.lineName);
         const from = parseBranchText(leg.fromStation);
         const to = parseBranchText(leg.toStation);
         const duration = parseBranchText(leg.duration);
-        const priceDisplay = formatLegPrice(leg.price); // 套用千分位格式化
+        const priceDisplay = formatLegPrice(leg.price);
 
         if (!lineName && !from && !to && !duration && !priceDisplay) return null;
 
         return (
-          <div key={leg.id} className="mb-2 last:mb-0">
-            <div className="flex items-center gap-1" style={{ color }}>
-              {getIcon(leg.mode, color)}
-              <span className="font-black truncate max-w-[180px]">{lineName || "未命名路線"}</span>
+          <div key={leg.id} className="mb-3 last:mb-0 w-full">
+            {/* 路線名稱列：改為 items-start 防止 Icon 因為換行而在垂直中央飄移 */}
+            <div className="flex items-start gap-1 w-full" style={{ color }}>
+              <div className="shrink-0 mt-0.5">{getIcon(leg.mode, color)}</div>
+              <span className="font-black break-words min-w-0 flex-1">{lineName || "未命名路線"}</span>
             </div>
-            <div className="flex items-center gap-1 pl-5" style={{ color }}>
-              <span className="truncate max-w-[120px]">{(from || "—") + " → " + (to || "—")}</span>
-              {duration && (
-                <>
-                  <span className="mx-0.5 opacity-50">✦</span>
-                  <span>{duration}m</span>
-                </>
-              )}
-              {priceDisplay && (
-                <>
-                  <span className="mx-0.5 opacity-50">｜</span>
-                  <span>{currencySymbol}{priceDisplay}</span>
-                </>
-              )}
+            
+            {/* 起訖站與細節資訊列：同樣改為 items-start 齊頭對齊，並啟用 break-words 允許長站名換行 */}
+            <div className="flex items-start flex-wrap gap-x-1 gap-y-0.5 pl-5 mt-0.5 w-full text-left" style={{ color }}>
+              <span className="break-words min-w-0 flex-1">
+                {(from || "—") + " → " + (to || "—")}
+              </span>
+              
+              {/* 時間與金額採用不換行 whitespace-nowrap 獨立包裹，排版更整齊 */}
+              <div className="flex items-center shrink-0 opacity-90">
+                {duration && (
+                  <>
+                    <span className="mx-0.5 opacity-50">✦</span>
+                    <span>{duration}m</span>
+                  </>
+                )}
+                {priceDisplay && (
+                  <>
+                    <span className="mx-0.5 opacity-50">｜</span>
+                    <span>{currencySymbol}{priceDisplay}</span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         );
@@ -239,18 +248,17 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
         className="flex items-center border rounded-2xl px-3 py-3 cursor-pointer w-full min-h-[58px] transition-all hover:brightness-[0.98] active:scale-[0.99] shadow-sm overflow-hidden"
         style={{ backgroundColor: getCardBg(), borderColor: getCardBorder() }}
       >
-        <div className="flex-1 flex flex-col justify-center min-w-0">
+        <div className="flex-1 flex flex-col justify-center min-w-0 pr-1">
           {renderSummary()}
         </div>
 
-        <div className="self-stretch border-l border-dashed mx-3 my-1 opacity-30" style={{ borderColor: currentTheme.text }} />
+        <div className="self-stretch border-l border-dashed mx-2 my-1 opacity-30 shrink-0" style={{ borderColor: currentTheme.text }} />
 
-        <div className="flex flex-col items-center justify-center min-w-[54px] text-[11px] font-black whitespace-nowrap" style={{ color: currentTheme.text }}>
+        <div className="flex flex-col items-center justify-center min-w-[54px] text-[11px] font-black whitespace-nowrap shrink-0" style={{ color: currentTheme.text }}>
           {totalTime > 0 ? <span>{totalTime}分</span> : <span className="text-[9px] opacity-40">未定</span>}
           {totalPrice > 0 && (
             <>
               <div className="w-6 border-t my-1 opacity-20" style={{ borderColor: currentTheme.text }} />
-              {/* 總額同步加上千分位 */}
               <span>{currencySymbol}{totalPrice.toLocaleString()}</span>
             </>
           )}
