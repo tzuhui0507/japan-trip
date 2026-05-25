@@ -173,24 +173,20 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
     });
   };
 
-  // 新增修改點：原地複製克隆行程卡片邏輯
+  // 原地複製克隆行程卡片邏輯
   const handleDuplicateItem = (e, targetItem, targetIndex) => {
     e.stopPropagation();
     if (isViewer) return;
 
     setTrip((prev) => {
       const next = structuredClone(prev);
-      // 深拷貝要複製的卡片資料
       const clonedItem = structuredClone(targetItem);
-      // 為克隆體換上全新且不重複的唯一的 ID
       clonedItem.id = `item-cloned-${Date.now()}`;
       
-      // 精準插在被複製卡片的正下方 (targetIndex + 1)
       next.days[activeDayIndex].items.splice(targetIndex + 1, 0, clonedItem);
       return next;
     });
     
-    // 複製成功後，自動把滑開的選單縮回去
     setSlideOpenId(null);
   };
 
@@ -301,12 +297,10 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                           <div className="absolute -left-[6px] top-6 w-3 h-3 bg-white border-2 rounded-full z-10" style={{ borderColor: currentTheme.main }} />
                           
                           <div className="relative overflow-visible">
-                            {/* --- 修改重點：在滑開按鈕列中注入「複製按鈕」並調整寬度 --- */}
                             <div className="absolute top-0 bottom-0 right-0 flex gap-2 items-center px-3 z-0">
                               {!isViewer && (
                                 <>
                                   <button onClick={(e) => { e.stopPropagation(); setEditingItem(item); }} className="w-8 h-8 rounded-full bg-[#F7C85C] flex items-center justify-center shadow-sm active:scale-90 transition-transform"><Pencil className="w-4 h-4 text-[#5A4636]" /></button>
-                                  {/* 藍色系高質感複製按鈕 */}
                                   <button onClick={(e) => handleDuplicateItem(e, item, index)} className="w-8 h-8 rounded-full bg-[#4A607F] flex items-center justify-center shadow-sm active:scale-90 transition-transform"><Copy className="w-3.5 h-3.5 text-white" /></button>
                                   <button onClick={(e) => { e.stopPropagation(); setTrip(prev => {
                                     const next = structuredClone(prev);
@@ -320,7 +314,6 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                             <div
                               onClick={() => !isViewer && setSlideOpenId(isOpen ? null : item.id)}
                               style={{ 
-                                // 因為加了第三顆複製按鈕，滑開的寬度從 -100px 調整到 -140px 以防擠壓
                                 transform: isOpen ? "translateX(-140px)" : "translateX(0)", 
                                 transition: "transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)",
                                 borderLeft: branch.hasBranch ? `4px solid ${currentTheme.main}` : `1px solid ${currentTheme.border}`,
@@ -596,10 +589,17 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                 </div>
               </div>
               
+              {/* --- 修改重點：全面檢查推薦店家清單的所有欄位內容，智慧切換 Naver / Google 地圖 --- */}
               <button 
                 onClick={() => {
-                  const query = encodeURIComponent(selectedShop.name);
-                  const hasKorean = /[\uAC00-\uD7AF]/.test(selectedShop.name);
+                  // 將名字、副標題、描述打包組合，連鎖偵測是否存在韓文字
+                  const fullTextContainer = `${selectedShop.name || ""} ${selectedShop.subtitle || ""} ${selectedShop.desc || ""}`;
+                  const hasKorean = /[\uAC00-\uD7AF]/.test(fullTextContainer);
+                  
+                  // 智慧優化搜尋字詞：如果是開 Naver，且副標題打的是韓文店名，優先用韓文副標題去搜尋會精準非常多！
+                  const finalSearchWord = (hasKorean && selectedShop.subtitle) ? selectedShop.subtitle : selectedShop.name;
+                  const query = encodeURIComponent(finalSearchWord);
+
                   if (hasKorean) {
                     window.open(`https://map.naver.com/v5/search/${query}`, "_blank");
                   } else {
