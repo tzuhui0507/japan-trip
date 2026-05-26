@@ -40,7 +40,7 @@ const JAPAN_LINE_COLORS = {
   東西線: "#009BBF", 半蔵門線: "#8F76D6", 千代田線: "#009B7D", 銀座線: "#FF9500",
   丸ノ内線: "#E6002C", 小田急: "#1C82D4", 京王: "#BB0066", SKYLINER: "#0047AB",
   "成田エクスプレス": "#E32636", "N'EX": "#E32636", 東武東上線: "#004A99", 日比谷線: "#B5B5AC",
-  南北線: "#00AF44", 札幌東西線: "#FF7300", 東豐線: "#007DC5", 札幌市電: "#1B5E20",
+  南北線: "#00AF44", 札幌東西線: "#FF7300", 東豐線: "#007DC5", 札幌市电: "#1B5E20",
   JR北海道: "#00AA3C", 函館本線: "#ED1C24", 千歲線: "#0072BC", 石勝線: "#7AC143",
   室蘭本線: "#F58220", "エアポート": "#0072BC",
 };
@@ -83,7 +83,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
       : parts[0];
   };
 
-  // --- 新增：價格格式化處理，包含千分位 ---
+  // 價格格式化處理，包含千分位
   const formatLegPrice = (p) => {
     const val = parseBranchText(p);
     if (!val || isNaN(val)) return val;
@@ -109,7 +109,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
     return (
       <div className="group flex justify-center my-1 ml-4">
         <button 
-          onClick={() => setIsExpanded(true)}
+          onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }}
           className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-dashed transition-all text-[10px] font-bold"
           style={{ borderColor: `${currentTheme.main}40`, color: `${currentTheme.main}60` }}
         >
@@ -191,34 +191,49 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
         if (!lineName && !from && !to && !duration && !priceDisplay) return null;
 
         return (
-          <div key={leg.id} className="mb-3 last:mb-0 w-full">
-            {/* 路線名稱列：改為 items-start 防止 Icon 因為換行而在垂直中央飄移 */}
-            <div className="flex items-start gap-1 w-full" style={{ color }}>
+          <div key={leg.id} className="mb-2.5 last:mb-0 w-full">
+            {/* 路線名稱列：防止 Icon 垂直飄移 */}
+            <div className="flex items-start gap-1 w-full mb-1" style={{ color }}>
               <div className="shrink-0 mt-0.5">{getIcon(leg.mode, color)}</div>
               <span className="font-black break-words min-w-0 flex-1">{lineName || "未命名路線"}</span>
             </div>
             
-            {/* 起訖站與細節資訊列：同樣改為 items-start 齊頭對齊，並啟用 break-words 允許長站名換行 */}
-            <div className="flex items-start flex-wrap gap-x-1 gap-y-0.5 pl-5 mt-0.5 w-full text-left" style={{ color }}>
-              <span className="break-words min-w-0 flex-1">
-                {(from || "—") + " → " + (to || "—")}
-              </span>
+            {/* 🛠️ 核心修改：從 Grid 改為彈性 Flexbox 架構，讓起訖氣泡根據字數「智慧平分/讓出寬度」 */}
+            <div className="flex flex-row items-center gap-1.5 pl-5 w-full overflow-hidden">
               
-              {/* 時間與金額採用不換行 whitespace-nowrap 獨立包裹，排版更整齊 */}
-              <div className="flex items-center shrink-0 opacity-90">
-                {duration && (
-                  <>
-                    <span className="mx-0.5 opacity-50">✦</span>
-                    <span>{duration}m</span>
-                  </>
-                )}
-                {priceDisplay && (
-                  <>
-                    <span className="mx-0.5 opacity-50">｜</span>
-                    <span>{currencySymbol}{priceDisplay}</span>
-                  </>
-                )}
+              {/* 1. 起點氣泡：支援自動擴展與縮小，最小限制 50px 防止極端狀況扁掉 */}
+              <div 
+                className="flex-auto min-w-[50px] rounded-lg px-2 py-1 text-[10px] break-words font-medium text-left bg-white"
+                style={{ backgroundColor: `${color}0C`, border: `1px solid ${color}1A`, color }}
+              >
+                {from || "—"}
               </div>
+
+              {/* 2. 中間方向箭頭：固定不縮小 */}
+              <div className="flex items-center justify-center text-[8px] opacity-30 shrink-0" style={{ color }}>
+                ➔
+              </div>
+
+              {/* 3. 終點氣泡：同樣具備彈性，字數長的時候可以自動霸佔更多寬度 */}
+              <div 
+                className="flex-auto min-w-[50px] rounded-lg px-2 py-1 text-[10px] break-words font-medium text-left bg-white"
+                style={{ backgroundColor: `${color}0C`, border: `1px solid ${color}1A`, color }}
+              >
+                {to || "—"}
+              </div>
+
+              {/* 4. 最右側貼邊細節小配件：自動靠右貼邊，不佔用任何上下高度 */}
+              {(duration || priceDisplay) && (
+                <div className="ml-auto flex flex-col items-end justify-center pl-1 text-[9px] font-bold opacity-80 shrink-0 leading-tight" style={{ color }}>
+                  {duration && (
+                    <span className="whitespace-nowrap">✦ {duration}m</span>
+                  )}
+                  {priceDisplay && (
+                    <span className="whitespace-nowrap">{currencySymbol}{priceDisplay}</span>
+                  )}
+                </div>
+              )}
+
             </div>
           </div>
         );
@@ -245,7 +260,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
           if (!isViewer && isExpanded) commitUpdate();
           setIsExpanded((v) => !v);
         }}
-        className="flex items-center border rounded-2xl px-3 py-3 cursor-pointer w-full min-h-[58px] transition-all hover:brightness-[0.98] active:scale-[0.99] shadow-sm overflow-hidden"
+        className="flex items-center border rounded-2xl px-3 py-2.5 cursor-pointer w-full min-h-[54px] transition-all hover:brightness-[0.98] active:scale-[0.99] shadow-sm overflow-hidden"
         style={{ backgroundColor: getCardBg(), borderColor: getCardBorder() }}
       >
         <div className="flex-1 flex flex-col justify-center min-w-0 pr-1">

@@ -261,15 +261,38 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
       </section>
 
       {currentDay?.dayNotes && (
-        <section className="px-2 mb-6">
-          <div className="flex items-center gap-2 mb-2 px-1">
-            <AlertCircle className="w-5 h-5" style={{ color: currentTheme.text }} />
-            <h4 className="text-m font-bold uppercase tracking-wider" style={{ color: currentTheme.text }}>今日行程提醒</h4>
+        <section className="px-2 mb-6 animate-in fade-in duration-300">
+          {/* 驚嘆號與今日行程提醒：100% 呈現深色標題色，完全不透明 */}
+          <div className="flex items-center gap-2 mb-2 px-1" style={{ color: currentTheme.text }}>
+            <AlertCircle className="w-5 h-5" />
+            <h4 className="text-[16px] font-black uppercase tracking-widest">今日行程提醒</h4>
           </div>
-          <div className="bg-white border rounded-2xl p-4 shadow-sm relative overflow-hidden" style={{ borderColor: currentTheme.border }}>
-            <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: currentTheme.main }} />
-            <p className="text-[13px] leading-relaxed whitespace-pre-wrap font-medium" style={{ color: currentTheme.text }}>
-              {currentDay.dayNotes}
+          
+          {/* 🛠️ 方案 2️⃣ 修改版：換成超級乾淨的「純淨微光白」底色 (bg-white/80) */}
+          <div 
+            className="bg-white/80 border-2 border-dashed rounded-[1.5rem] py-4 px-5 shadow-sm relative transition-all" 
+            style={{ borderColor: `${currentTheme.main}25` }} // 稍微調淡虛線邊框，讓整體更乾淨
+          >
+            <p className="text-[12px] leading-relaxed whitespace-pre-wrap font-semibold" style={{ color: currentTheme.text }}>
+              {currentDay.dayNotes.split(/(\[[^\]]+\]\(https?:\/\/[^\s)]+\))/g).map((part, pIdx) => {
+                const match = part.match(/\[([^\]]+)\]\((https?:\/\/[^\s)]+\))/);
+                if (match) {
+                  return (
+                    <a
+                      key={pIdx}
+                      href={match[2]}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-black underline underline-offset-2 inline-flex items-center gap-0.5 mx-0.5 transition-all active:scale-[0.98]"
+                      style={{ color: currentTheme.main }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {match[1]}
+                    </a>
+                  );
+                }
+                return part;
+              })}
             </p>
           </div>
         </section>
@@ -589,14 +612,11 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                 </div>
               </div>
               
-              {/* --- 修改重點：全面檢查推薦店家清單的所有欄位內容，智慧切換 Naver / Google 地圖 --- */}
               <button 
                 onClick={() => {
-                  // 將名字、副標題、描述打包組合，連鎖偵測是否存在韓文字
                   const fullTextContainer = `${selectedShop.name || ""} ${selectedShop.subtitle || ""} ${selectedShop.desc || ""}`;
                   const hasKorean = /[\uAC00-\uD7AF]/.test(fullTextContainer);
                   
-                  // 智慧優化搜尋字詞：如果是開 Naver，且副標題打的是韓文店名，優先用韓文副標題去搜尋會精準非常多！
                   const finalSearchWord = (hasKorean && selectedShop.subtitle) ? selectedShop.subtitle : selectedShop.name;
                   const query = encodeURIComponent(finalSearchWord);
 

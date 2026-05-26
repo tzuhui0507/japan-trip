@@ -13,7 +13,10 @@ import {
   Info as InfoIcon,
   BookUser,
   ShieldAlert,
-  Globe
+  Globe,
+  Plus,
+  Lightbulb, // 新增：燈泡元件
+  Heart      // 新增：愛心元件
 } from "lucide-react";
 import { THEMES } from "../App";
 
@@ -25,11 +28,38 @@ const DEFAULT_INFO = {
   hotels: [
     { id: "hotel-1", name: "OMO3 東京赤坂 by 星野集團", dateRange: "3月11日 - 3月14日", addressLine1: "〒107-0052 東京都港區赤坂4丁目3-2", addressLine2: "4 Chome-3-2 Akasaka, Minato City, Tokyo 107-0052", phone: "+81-50-3134-8895" },
   ],
-  externalLink: { title: "Visit Japan Web", subtitle: "入境審查 & 海關申報", url: "https://vjw-lp.digital.go.jp/", badge: "Must Have" },
+  externalLink: { title: "Visit Japan Web", subtitle: "填寫前可先參考 [網路操作教學](https://vjw-lp.digital.go.jp/) 喔！", url: "https://vjw-lp.digital.go.jp/", badge: "Must Have" },
+  tutorialLinks: [
+    { id: "tutor-1", title: "網路申報與操作圖解指南", url: "https://vjw-lp.digital.go.jp/" }
+  ],
   emergency110: { label: "警察 (POLICE)", number: "110" },
   emergency119: { label: "救護／火警", number: "119" },
   jnto: { title: "訪日外國人 醫療＆急難熱線", subtitle: "JAPAN VISITOR HOTLINE", phone: "050-3816-2787", note: "※ 24小時對應。" },
   taipei: { badge: "外交部", title: "台北駐日經濟文化代表處", officePhone: "03-3280-7811", officeNote: "（上班）", emergencyPhone: "080-1009-7179", emergencyNote: "（急難）" },
+};
+
+// 輔助函式：將文字中的 [名稱](網址) 解析為可點擊的連結组件
+const renderMarkdownLinks = (text) => {
+  if (!text) return "";
+  const parts = text.split(/(\[[^\]]+\]\(https?:\/\/[^\s)]+\))/g);
+  return parts.map((part, index) => {
+    const match = part.match(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/);
+    if (match) {
+      return (
+        <a
+          key={index}
+          href={match[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-500 font-bold underline hover:text-blue-600 inline-block mx-0.5"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {match[1]}
+        </a>
+      );
+    }
+    return part;
+  });
 };
 
 export default function Info({ trip, setTrip, themeId }) {
@@ -45,6 +75,8 @@ export default function Info({ trip, setTrip, themeId }) {
 
   const info = trip.info || DEFAULT_INFO;
   const linkData = info.externalLink || info.visitJapan || DEFAULT_INFO.externalLink;
+  const tutorialLinks = info.tutorialLinks || [];
+  
   const { flights, hotels, emergency110, emergency119, jnto, taipei } = info;
 
   const updateInfo = (patch) => {
@@ -60,6 +92,8 @@ export default function Info({ trip, setTrip, themeId }) {
   const [linkDraft, setLinkDraft] = useState(linkData);
   const [emergencyModalOpen, setEmergencyModalOpen] = useState(false);
   
+  const [tutorialDrafts, setTutorialDrafts] = useState(tutorialLinks);
+
   const [emDraft, setEmDraft] = useState({
     label110: emergency110?.label, number110: emergency110?.number, label119: emergency119?.label, number119: emergency119?.number,
     jntoTitle: jnto?.title, jntoSubtitle: jnto?.subtitle, jntoPhone: jnto?.phone, jntoNote: jnto?.note,
@@ -71,7 +105,15 @@ export default function Info({ trip, setTrip, themeId }) {
   const saveFlight = () => { if (isReadOnly) return; updateInfo({ flights: flights.some((f) => f.id === editingFlight.id) ? flights.map((f) => (f.id === editingFlight.id ? editingFlight : f)) : [...flights, editingFlight] }); setEditingFlight(null); };
   const openEditHotel = (h) => !isReadOnly && setEditingHotel(h || { id: `hotel-${Date.now()}`, name: "", dateRange: "", addressLine1: "", addressLine2: "", phone: "" });
   const saveHotel = () => { if (isReadOnly) return; updateInfo({ hotels: hotels.some((h) => h.id === editingHotel.id) ? hotels.map((h) => (h.id === editingHotel.id ? editingHotel : h)) : [...hotels, editingHotel] }); setEditingHotel(null); };
-  const saveLink = () => { updateInfo({ externalLink: linkDraft, visitJapan: undefined }); setLinkModalOpen(false); };
+  
+  const saveLink = () => { 
+    updateInfo({ 
+      externalLink: linkDraft, 
+      visitJapan: undefined,
+      tutorialLinks: tutorialDrafts 
+    }); 
+    setLinkModalOpen(false); 
+  };
   
   const saveEmergency = () => {
     updateInfo({
@@ -83,19 +125,13 @@ export default function Info({ trip, setTrip, themeId }) {
     setEmergencyModalOpen(false);
   };
 
-  // --- 修改重點：偵測韓文並動態轉換地圖網址 ---
   const handleNavigation = (e, address) => {
     e.stopPropagation();
     if (!address) return;
-
-    // 檢查是否含有韓文字元
     const hasKorean = /[\uAC00-\uD7AF]/.test(address);
-
     if (hasKorean) {
-      // 偵測到韓文地址，使用 Naver Map
       window.open(`https://map.naver.com/v5/search/${encodeURIComponent(address)}`, "_blank");
     } else {
-      // 其他地區維持使用 Google Maps
       window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, "_blank");
     }
   };
@@ -253,29 +289,74 @@ export default function Info({ trip, setTrip, themeId }) {
         </div>
       </section>
 
-      {/* 外部連結 */}
-      <section className="px-4 space-y-3">
+      {/* 外部連結 & 一體化實用教學區塊 */}
+      <section className="px-4 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {linkData.title.includes("Japan") ? <BookUser className="w-5 h-5" style={{ color: currentTheme.main }} /> : <Globe className="w-5 h-5" style={{ color: currentTheme.main }} />}
-            <h2 className="text-base font-semibold" style={{ color: currentTheme.text }}>入境相關連結</h2>
+            <h2 className="text-base font-semibold" style={{ color: currentTheme.text }}>入境與操作指南</h2>
           </div>
           {!isReadOnly && (
-            <button onClick={() => { setLinkDraft(linkData); setLinkModalOpen(true); }} className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border bg-white" style={{ borderColor: currentTheme.border, color: currentTheme.text }}>
-              <Pencil className="w-3 h-3" />編輯
+            <button onClick={() => { setLinkDraft(linkData); setTutorialDrafts(tutorialLinks); setLinkModalOpen(true); }} className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border bg-white shadow-sm" style={{ borderColor: currentTheme.border, color: currentTheme.text }}>
+              <Pencil className="w-3 h-3" />編輯連結區
             </button>
           )}
         </div>
-        <button onClick={() => window.open(linkData.url, "_blank")} className="w-full text-left bg-white rounded-[2rem] p-5 flex items-center justify-between shadow-sm border active:bg-black/5 transition-all" style={{ borderColor: currentTheme.border }}>
-          <div className="min-w-0 flex-1">
-            {linkData.badge && (
-              <div className="inline-flex px-2.5 py-0.5 rounded-full text-[12px] font-bold mb-2 uppercase tracking-wider" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>{linkData.badge}</div>
-            )}
-            <h3 className="text-[17px] font-bold leading-tight" style={{ color: currentTheme.text }}>{linkData.title}</h3>
-            <p className="text-[12px] mt-1 opacity-80" style={{ color: currentTheme.accent }}>{linkData.subtitle}</p>
+
+        {/* 核心整合大按鈕：將主連結與教學清單合而為一 */}
+        <div 
+          onClick={() => window.open(linkData.url, "_blank")} 
+          className="w-full text-left bg-white rounded-[2rem] p-5 shadow-sm border active:bg-black/5 transition-all cursor-pointer flex flex-col justify-between" 
+          style={{ borderColor: currentTheme.border }}
+        >
+          {/* 上半部分：原本的主連結資訊 */}
+          <div className="flex items-start justify-between w-full">
+            <div className="min-w-0 flex-1">
+              {linkData.badge && (
+                <div className="inline-flex px-2.5 py-0.5 rounded-full text-[12px] font-bold mb-2 uppercase tracking-wider" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>{linkData.badge}</div>
+              )}
+              <h3 className="text-[17px] font-bold leading-tight" style={{ color: currentTheme.text }}>{linkData.title}</h3>
+              <p className="text-[12px] mt-1.5 opacity-80 leading-relaxed font-medium" style={{ color: currentTheme.accent }}>
+                {renderMarkdownLinks(linkData.subtitle)}
+              </p>
+            </div>
+            <ExternalLink className="w-5 h-5 ml-4 shrink-0 mt-1" style={{ color: currentTheme.main }} />
           </div>
-          <ExternalLink className="w-5 h-5 ml-4 shrink-0" style={{ color: currentTheme.main }} />
-        </button>
+
+          {/* 下半部分：嵌入內部的精選教學小氣泡 */}
+          {tutorialLinks.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-dotted space-y-2.5" style={{ borderColor: `${currentTheme.main}30` }}>
+              {/* 💡 取代為 Lightbulb 元件 */}
+              <p className="text-[10px] font-black tracking-widest uppercase opacity-70 px-0.5 flex items-center gap-1" style={{ color: currentTheme.text }}>
+                <Lightbulb className="w-3.5 h-3.5" style={{ color: currentTheme.main }} /> 網路精選操作教學
+              </p>
+              
+              {/* 改為與交通卡相同的網格雙欄氣泡架構 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {tutorialLinks.map((tutor) => (
+                  <div 
+                    key={tutor.id} 
+                    onClick={(e) => { e.stopPropagation(); window.open(tutor.url, "_blank"); }}
+                    className="flex items-center justify-between py-2 px-3.5 text-left rounded-xl border transition-all active:scale-[0.98] group cursor-pointer"
+                    style={{ 
+                      backgroundColor: `${currentTheme.main}0A`, 
+                      borderColor: `${currentTheme.main}1F`
+                    }}
+                  >
+                    {/* 🔹 取代為 Heart 元件 */}
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                      <Heart className="w-3.5 h-3.5 shrink-0 fill-current" style={{ color: currentTheme.main }} />
+                      <span className="text-[12px] font-bold truncate opacity-90 group-hover:underline" style={{ color: currentTheme.text }}>
+                        {tutor.title}
+                      </span>
+                    </div>
+                    <ExternalLink className="w-3 h-3 opacity-30 shrink-0 ml-2 group-hover:opacity-60" style={{ color: currentTheme.main }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </section>
 
       {/* 緊急聯絡 */}
@@ -321,7 +402,7 @@ export default function Info({ trip, setTrip, themeId }) {
           <div className="w-full max-w-lg rounded-[2.5rem] border shadow-2xl overflow-hidden mb-10 transition-all mx-auto bg-white" style={{ borderColor: currentTheme.border }}>
             <div className="px-6 py-4 flex items-center justify-between border-b bg-white/50" style={{ borderColor: `${currentTheme.border}40` }}>
               <h2 className="text-base font-bold truncate" style={{ color: currentTheme.text }}>
-                {editingFlight ? "編輯航班資訊" : editingHotel ? "編輯住宿資訊" : linkModalOpen ? "編輯入境相關連結" : "編輯緊急聯絡資訊"}
+                {editingFlight ? "編輯航班資訊" : editingHotel ? "編輯住宿資訊" : linkModalOpen ? "編輯入境與教學連結區" : "編輯緊急聯絡資訊"}
               </h2>
               <button onClick={() => { setEditingFlight(null); setEditingHotel(null); setLinkModalOpen(false); setEmergencyModalOpen(false); }} className="w-8 h-8 rounded-full border flex items-center justify-center bg-white active:scale-95 transition-all" style={{ borderColor: currentTheme.border }}><X className="w-4 h-4" style={{ color: currentTheme.main }} /></button>
             </div>
@@ -370,11 +451,68 @@ export default function Info({ trip, setTrip, themeId }) {
               )}
               {linkModalOpen && (
                 <>
-                  <div><label className="block text-[10px] font-bold mb-1.5 uppercase tracking-widest" style={{ color: currentTheme.main }}>標籤 (例: Must Have)</label><input type="text" value={linkDraft.badge} onChange={(e) => setLinkDraft({...linkDraft, badge: e.target.value})} className="w-full border rounded-xl px-3 py-1.5 text-[13px] outline-none bg-white shadow-inner" style={{ borderColor: currentTheme.border }} /></div>
-                  <div><label className="block text-[10px] font-bold mb-1.5 uppercase tracking-widest" style={{ color: currentTheme.main }}>標題</label><input type="text" value={linkDraft.title} onChange={(e) => setLinkDraft({...linkDraft, title: e.target.value})} className="w-full border rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" style={{ borderColor: currentTheme.border }} /></div>
-                  <div><label className="block text-[10px] font-bold mb-1.5 uppercase tracking-widest" style={{ color: currentTheme.main }}>說明</label><input type="text" value={linkDraft.subtitle} onChange={(e) => setLinkDraft({...linkDraft, subtitle: e.target.value})} className="w-full border rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" style={{ borderColor: currentTheme.border }} /></div>
-                  <div><label className="block text-[10px] font-bold mb-1.5 uppercase tracking-widest" style={{ color: currentTheme.main }}>網址 (URL)</label><input type="text" value={linkDraft.url} onChange={(e) => setLinkDraft({...linkDraft, url: e.target.value})} className="w-full border rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" style={{ borderColor: currentTheme.border }} /></div>
-                  <div className="pt-2 flex gap-3"><button onClick={() => setLinkModalOpen(false)} className="flex-1 py-3 rounded-2xl border text-sm font-bold bg-white active:scale-95 transition-all" style={{ borderColor: currentTheme.border, color: currentTheme.text }}>取消</button><button onClick={saveLink} className="flex-1 py-3 rounded-2xl text-white text-sm font-bold shadow-md active:scale-95 transition-all" style={{ backgroundColor: currentTheme.main }}>儲存</button></div>
+                  <div className="space-y-4 border-b pb-4 mb-2" style={{ borderColor: `${currentTheme.border}30` }}>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: currentTheme.main }}>主要入境網站連結</p>
+                    <div><label className="block text-[10px] font-bold mb-1 uppercase tracking-widest" style={{ color: currentTheme.main }}>標籤 (例: Must Have)</label><input type="text" value={linkDraft.badge} onChange={(e) => setLinkDraft({...linkDraft, badge: e.target.value})} className="w-full border rounded-xl px-3 py-1.5 text-[13px] outline-none bg-white shadow-inner" style={{ borderColor: currentTheme.border }} /></div>
+                    <div><label className="block text-[10px] font-bold mb-1 uppercase tracking-widest" style={{ color: currentTheme.main }}>標題</label><input type="text" value={linkDraft.title} onChange={(e) => setLinkDraft({...linkDraft, title: e.target.value})} className="w-full border rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" style={{ borderColor: currentTheme.border }} /></div>
+                    <div><label className="block text-[10px] font-bold mb-1 uppercase tracking-widest" style={{ color: currentTheme.main }}>說明 (支援 Markdown 格式)</label><input type="text" value={linkDraft.subtitle} onChange={(e) => setLinkDraft({...linkDraft, subtitle: e.target.value})} className="w-full border rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" style={{ borderColor: currentTheme.border }} /></div>
+                    <div><label className="block text-[10px] font-bold mb-1 uppercase tracking-widest" style={{ color: currentTheme.main }}>網址 (URL)</label><input type="text" value={linkDraft.url} onChange={(e) => setLinkDraft({...linkDraft, url: e.target.value})} className="w-full border rounded-xl px-3 py-1.5 text-[13px] outline-none shadow-inner" style={{ borderColor: currentTheme.border }} /></div>
+                  </div>
+
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: currentTheme.main }}>網路精選操作教學清單</p>
+                      <button 
+                        type="button"
+                        onClick={() => setTutorialDrafts([...tutorialDrafts, { id: `tutor-${Date.now()}`, title: "", url: "" }])}
+                        className="text-[10px] font-bold px-2 py-1 rounded-md border flex items-center gap-1 active:scale-95 bg-gray-50"
+                        style={{ color: currentTheme.main, borderColor: currentTheme.border }}
+                      >
+                        <Plus className="w-3 h-3" /> 新增一個
+                      </button>
+                    </div>
+
+                    <div className="space-y-3 max-h-[30vh] overflow-y-auto pr-1">
+                      {tutorialDrafts.map((tutor, idx) => (
+                        <div key={tutor.id} className="p-3 border rounded-xl bg-gray-50/50 space-y-2 relative" style={{ borderColor: currentTheme.border }}>
+                          <button 
+                            type="button"
+                            onClick={() => setTutorialDrafts(tutorialDrafts.filter(x => x.id !== tutor.id))}
+                            className="absolute top-2 right-2 text-red-400 hover:text-red-600 transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                          <div>
+                            <label className="block text-[9px] font-bold opacity-50 mb-0.5">教學標題 {idx + 1}</label>
+                            <input 
+                              type="text" 
+                              placeholder="例：Visit Japan Web 完全圖解指南"
+                              value={tutor.title} 
+                              onChange={(e) => setTutorialDrafts(tutorialDrafts.map(x => x.id === tutor.id ? { ...x, title: e.target.value } : x))}
+                              className="w-[90%] border rounded-lg px-2.5 py-1 text-[12px] outline-none bg-white" 
+                              style={{ borderColor: currentTheme.border }}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-bold opacity-50 mb-0.5">教學網址 (URL)</label>
+                            <input 
+                              type="text" 
+                              placeholder="https://..."
+                              value={tutor.url} 
+                              onChange={(e) => setTutorialDrafts(tutorialDrafts.map(x => x.id === tutor.id ? { ...x, url: e.target.value } : x))}
+                              className="w-[90%] border rounded-lg px-2.5 py-1 text-[12px] outline-none bg-white" 
+                              style={{ borderColor: currentTheme.border }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                      {tutorialDrafts.length === 0 && (
+                        <p className="text-center text-xs opacity-40 italic py-2">目前沒有任何附屬教學連結</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="pt-4 flex gap-3"><button onClick={() => setLinkModalOpen(false)} className="flex-1 py-3 rounded-2xl border text-sm font-bold bg-white active:scale-95 transition-all" style={{ borderColor: currentTheme.border, color: currentTheme.text }}>取消</button><button onClick={saveLink} className="flex-1 py-3 rounded-2xl text-white text-sm font-bold shadow-md active:scale-95 transition-all" style={{ backgroundColor: currentTheme.main }}>儲存</button></div>
                 </>
               )}
               {emergencyModalOpen && (
