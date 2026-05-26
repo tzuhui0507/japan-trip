@@ -104,7 +104,7 @@ export default function TicketDetail({ ticket, onClose, themeId }) {
 
             {ticket.code && (
               <span className="text-[11px] font-bold opacity-40 uppercase tracking-wider" style={{ color: currentTheme.text }}>
-                CODE: {ticket.code}
+                編號: {ticket.code}
               </span>
             )}
           </div>
