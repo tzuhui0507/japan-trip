@@ -10,8 +10,7 @@ import {
   X,
   ArrowRight,
   TrainFront,
-  Compass,
-  Shuffle, // 🛠️ 引入靈魂配件：羅盤圖示
+  Signpost,
 } from "lucide-react";
 import { THEMES } from "../App";
 
@@ -207,7 +206,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
               {direction && (
                 <div className="flex items-center gap-1 shrink-0 font-black">
                   <span className="opacity-40 font-normal">｜</span>
-                  <Shuffle className="w-3 h-3 shrink-0" stroke={color} />
+                  <Signpost className="w-3 h-3 shrink-0" stroke={color} />
                   <span className="break-words">{direction}</span>
                 </div>
               )}
