@@ -3,7 +3,8 @@ import React, { useEffect, useState } from "react";
 import {
   Route,
   Wallet,
-  Luggage,
+  Luggage,     // 🎒 歸位：行李箱重回 PACK 行李清單的懷抱！
+  Compass,     // 🧭 新增：用優雅的指南針代表 POCKET 旅人工具箱，非常有探險百寶袋的感覺
   Info,
   Ticket,
   Coins,
@@ -12,6 +13,7 @@ import {
   Folder,
   Ellipsis,
   FileDown,
+  Smartphone,
 } from "lucide-react";
 
 import Header from "../components/Header";
@@ -25,6 +27,7 @@ import InfoTab from "./Info";
 import Tickets from "./Tickets";
 import Currency from "./Currency";
 import Shopping from "./Shopping";
+import Toolbox from "./Toolbox"; 
 import TicketDetail from "../components/TicketDetail";
 
 const STORAGE_KEY = "trip_local_v1";
@@ -40,6 +43,7 @@ function createViewerTrip() {
     shopping: null,
     currency: null,
     viewTicket: null,
+    toolbox: null, 
   };
 }
 
@@ -101,6 +105,7 @@ export default function TripDetail({ themeId, setThemeId }) {
         shopping: null,
         currency: null,
         viewTicket: null,
+        toolbox: null, 
       });
     }
   }, [shareMode, isViewer, dataFromUrl]);
@@ -130,14 +135,15 @@ export default function TripDetail({ themeId, setThemeId }) {
     ? viewerDayIndex
     : trip.activeDayIndex ?? 0;
 
-  /* Tabs - 已移除 PHRASEBOOK */
+  /* Tabs - 已完美歸位與換新裝 */
   const TABS = [
     { key: "PLAN", short: "PLAN", icon: Route },
     { key: "EXPENSES", short: "COST", icon: Wallet },
-    { key: "LIST", short: "PACK", icon: Luggage },
+    { key: "LIST", short: "PACK", icon: Luggage },     // 🎒 行李箱回到這裡囉！
     { key: "SHOPPING", short: "LIST", icon: ShoppingBag },
     { key: "TICKETS", short: "TICKET", icon: Ticket },
     { key: "CURRENCY", short: "RATE", icon: Coins },
+    { key: "TOOLBOX", short: "TOOLS", icon: Smartphone }, // 🧭 百寶袋分頁改用精緻的指南針
     { key: "INFO", short: "INFO", icon: Info },
   ];
 
@@ -163,6 +169,8 @@ export default function TripDetail({ themeId, setThemeId }) {
         return <Tickets trip={trip} setTrip={setTrip} themeId={themeId} />;
       case "CURRENCY":
         return <Currency trip={trip} setTrip={setTrip} themeId={themeId} />;
+      case "TOOLBOX": 
+        return <Toolbox trip={trip} setTrip={setTrip} themeId={themeId} />;
       case "INFO":
         return <InfoTab trip={trip} setTrip={setTrip} themeId={themeId} />;
       default:
@@ -215,10 +223,11 @@ export default function TripDetail({ themeId, setThemeId }) {
                 {[
                   { icon: Route, label: "PLAN｜每日行程與天氣安排" },
                   { icon: Wallet, label: "COST｜旅費記帳與分帳（這裡可以自由編輯 ⸝⸝꙳）" },
-                  { icon: Luggage, label: "PACK｜行李清單（這裡可以自由編輯 ⸝⸝꙳）" },
+                  { icon: Luggage, label: "PACK｜行李清單（這裡可以自由編輯 ⸝⸝꙳）" }, // 🎒 提示同步更換圖示
                   { icon: ShoppingBag, label: "LIST｜購物清單（這裡可以自由編輯 ⸝⸝꙳）" },
                   { icon: Ticket, label: "TICKET｜票券資訊與 QR Code" },
-                  { icon: Coins, label: "RATE｜匯率換算（這裡可以自由編輯 ⸝⸝꙳）" },
+                  { icon: Coins, label: "RATE｜即時匯率隨手換算（這裡可以自由編輯 ⸝⸝꙳）" },
+                  { icon: Smartphone, label: "POCKET｜必備APP、網卡與待辦（這裡可以自由編輯 ⸝⸝꙳）" }, // 🧭 提示同步更換圖示
                   { icon: Info, label: "INFO｜航班、住宿與緊急聯絡等資訊" },
                 ].map((item, idx) => (
                   <li key={idx} className="flex items-center gap-2">
@@ -257,7 +266,7 @@ export default function TripDetail({ themeId, setThemeId }) {
                 className="px-6 py-2 text-xs rounded-full text-white tracking-widest shadow-md active:scale-95 transition-all"
                 style={{ backgroundColor: currentTheme.main }}
               >
-                (〃・ิ‿・ิ)ゞ ᵒᵒᵒᵒᵒᵏ.ᐟ.ᐟ
+                (〃・ิ‿・ิ)ゞ ᵒᵒᵒᵒᵒᵒᵒᵒᵏ .ᐟ.ᐟ
               </button>
             </div>
           </div>
@@ -320,12 +329,12 @@ export default function TripDetail({ themeId, setThemeId }) {
         </div>
       </div>
 
-      {/* Bottom Nav - 已調整為 7 等分 */}
+      {/* Bottom Nav */}
       <nav 
         className="fixed bottom-0 left-0 w-full bg-white border-t z-[100] pb-[env(safe-area-inset-bottom)]"
         style={{ borderColor: currentTheme.border }}
       >
-        <div className="grid grid-cols-7 h-14 items-center">
+        <div className="grid grid-cols-8 h-14 items-center">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.key;
