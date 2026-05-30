@@ -227,7 +227,7 @@ export default function TripDetail({ themeId, setThemeId }) {
                   { icon: ShoppingBag, label: "LIST｜購物清單（這裡可以自由編輯 ⸝⸝꙳）" },
                   { icon: Ticket, label: "TICKET｜票券資訊與 QR Code" },
                   { icon: Coins, label: "RATE｜即時匯率隨手換算（這裡可以自由編輯 ⸝⸝꙳）" },
-                  { icon: Smartphone, label: "POCKET｜必備APP、網卡與待辦（這裡可以自由編輯 ⸝⸝꙳）" }, // 🧭 提示同步更換圖示
+                  { icon: Smartphone, label: "TOOLS｜必備APP、網卡與待辦（這裡可以自由編輯 ⸝⸝꙳）" }, // 🧭 提示同步更換圖示
                   { icon: Info, label: "INFO｜航班、住宿與緊急聯絡等資訊" },
                 ].map((item, idx) => (
                   <li key={idx} className="flex items-center gap-2">
