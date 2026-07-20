@@ -215,26 +215,28 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
               )}
             </div>
             
-            {/* 起訖純文字區塊 (簡約無框設計) */}
+            {/* 起訖純文字區塊 (依字數自動調整寬度，不再硬撐中間空隙) */}
             <div className="flex flex-row items-center gap-1.5 pl-5 w-full overflow-hidden">
               
-              {/* 1. 起點純文字 */}
+              {/* 1. 起點純文字 (依字數自然自適應) */}
               <div 
-                className="flex-auto min-w-[50px] text-[10px] break-words font-bold text-left"
+                className="shrink-0 max-w-[38%] truncate text-[10px] font-bold text-left"
                 style={{ color }}
+                title={from}
               >
                 {from || "—"}
               </div>
 
-              {/* 2. 中間方向箭頭 */}
+              {/* 2. 中間方向箭頭 (緊貼起點) */}
               <div className="flex items-center justify-center text-[8px] opacity-50 shrink-0" style={{ color }}>
                 ➔
               </div>
 
-              {/* 3. 終點純文字 */}
+              {/* 3. 終點純文字 (緊貼箭頭) */}
               <div 
-                className="flex-auto min-w-[50px] text-[10px] break-words font-bold text-left"
+                className="shrink-0 max-w-[38%] truncate text-[10px] font-bold text-left"
                 style={{ color }}
+                title={to}
               >
                 {to || "—"}
               </div>
