@@ -11,12 +11,14 @@ import {
   ArrowRight,
   TrainFront,
   Signpost,
+  CarFront,
 } from "lucide-react";
 import { THEMES } from "../App";
 
 const MODE_COLORS = {
   walk: "#666666",
   taxi: "#EFBF2F",
+  drive: "#E67E22", // 代表自駕/租車
   bus: "#8B5E3C",
   plane: "#1C82D4",
 };
@@ -138,6 +140,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
     switch (mode) {
       case "walk": return <Footprints className="w-4 h-4" stroke={color} />;
       case "taxi": return <Car className="w-4 h-4" stroke={color} />;
+      case "drive": return <CarFront className="w-4 h-4" stroke={color} />;
       case "bus": return <Bus className="w-4 h-4" stroke={color} />;
       case "plane": return <Plane className="w-4 h-4" stroke={color} />;
       case "shinkansen": return <TrainFront stroke={color} className="w-4 h-4" />;
@@ -162,7 +165,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
   
   const toggleMode = (legId) => {
     if (isViewer) return;
-    const MODES = ["train", "shinkansen", "walk", "taxi", "bus", "plane"];
+    const MODES = ["train", "shinkansen", "walk", "taxi", "drive", "bus", "plane"];
     setLegs((prev) => prev.map((l) => (l.id === legId ? { ...l, mode: MODES[(MODES.indexOf(l.mode) + 1) % MODES.length] } : l)));
   };
 
@@ -195,14 +198,14 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
 
         return (
           <div key={leg.id} className="mb-2.5 last:mb-0 w-full">
-            {/* 🛠️ 核心微調：一體化流線型設計「路線名稱 ｜ 🧭 方向文字」 */}
+            {/* 一體化流線型設計「路線名稱 ｜ 🧭 方向文字」 */}
             <div className="flex items-center gap-1 w-full mb-1 flex-wrap text-[10px]" style={{ color }}>
               <div className="flex items-center gap-1 min-w-0">
                 <div className="shrink-0 mt-0.5">{getIcon(leg.mode, color)}</div>
                 <span className="font-black break-words min-w-0">{lineName || "未命名路線"}</span>
               </div>
               
-              {/* 當有輸入方向時，流暢並排呈現，完全融入無違和 */}
+              {/* 當有輸入方向時，流暢並排呈現 */}
               {direction && (
                 <div className="flex items-center gap-1 shrink-0 font-black">
                   <span className="opacity-40 font-normal">｜</span>
@@ -212,26 +215,26 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
               )}
             </div>
             
-            {/* 起訖氣泡區塊 */}
+            {/* 起訖純文字區塊 (簡約無框設計) */}
             <div className="flex flex-row items-center gap-1.5 pl-5 w-full overflow-hidden">
               
-              {/* 1. 起點氣泡 */}
+              {/* 1. 起點純文字 */}
               <div 
-                className="flex-auto min-w-[50px] rounded-lg px-2 py-1 text-[10px] break-words font-medium text-left bg-white"
-                style={{ backgroundColor: `${color}0C`, border: `1px solid ${color}1A`, color }}
+                className="flex-auto min-w-[50px] text-[10px] break-words font-bold text-left"
+                style={{ color }}
               >
                 {from || "—"}
               </div>
 
               {/* 2. 中間方向箭頭 */}
-              <div className="flex items-center justify-center text-[8px] opacity-30 shrink-0" style={{ color }}>
+              <div className="flex items-center justify-center text-[8px] opacity-50 shrink-0" style={{ color }}>
                 ➔
               </div>
 
-              {/* 3. 終點氣泡 */}
+              {/* 3. 終點純文字 */}
               <div 
-                className="flex-auto min-w-[50px] rounded-lg px-2 py-1 text-[10px] break-words font-medium text-left bg-white"
-                style={{ backgroundColor: `${color}0C`, border: `1px solid ${color}1A`, color }}
+                className="flex-auto min-w-[50px] text-[10px] break-words font-bold text-left"
+                style={{ color }}
               >
                 {to || "—"}
               </div>
@@ -362,7 +365,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
                           onChange={(e) => updateLeg(leg.id, "lineName", e.target.value)}
                           className="w-full bg-white border rounded-xl px-3 py-2 text-[13px] font-bold outline-none focus:ring-2"
                           style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text, "--tw-ring-color": `${currentTheme.main}10` }}
-                          placeholder="例：JR山手線 --- 計程車"
+                          placeholder="例：JR山手線 --- 租車自駕"
                         />
                       </div>
                       <div className="sm:w-[40%]">
