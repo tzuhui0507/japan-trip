@@ -12,6 +12,7 @@ import {
   TrainFront,
   Signpost,
   CarFront,
+  Ship, // 新增：引入船圖示
 } from "lucide-react";
 import { THEMES } from "../App";
 
@@ -21,6 +22,7 @@ const MODE_COLORS = {
   drive: "#E67E22", // 代表自駕/租車
   bus: "#8B5E3C",
   plane: "#1C82D4",
+  ferry: "#10B981", // 代表船隻/渡輪
 };
 
 // 貨幣符號映射表
@@ -143,6 +145,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
       case "drive": return <CarFront className="w-4 h-4" stroke={color} />;
       case "bus": return <Bus className="w-4 h-4" stroke={color} />;
       case "plane": return <Plane className="w-4 h-4" stroke={color} />;
+      case "ferry": return <Ship className="w-4 h-4" stroke={color} />; // 新增船隻圖示
       case "shinkansen": return <TrainFront stroke={color} className="w-4 h-4" />;
       default: return <Train className="w-4 h-4" stroke={color} />;
     }
@@ -165,7 +168,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
   
   const toggleMode = (legId) => {
     if (isViewer) return;
-    const MODES = ["train", "shinkansen", "walk", "taxi", "drive", "bus", "plane"];
+    const MODES = ["train", "shinkansen", "walk", "taxi", "drive", "bus", "plane", "ferry"]; // 新增 "ferry"
     setLegs((prev) => prev.map((l) => (l.id === legId ? { ...l, mode: MODES[(MODES.indexOf(l.mode) + 1) % MODES.length] } : l)));
   };
 
