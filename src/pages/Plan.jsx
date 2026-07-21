@@ -67,6 +67,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
   const [weatherHourly, setWeatherHourly] = useState([]);
   const [branchIndexMap, setBranchIndexMap] = useState({});
   const [expandedNotes, setExpandedNotes] = useState({});
+  const [expandedCardNotes, setExpandedCardNotes] = useState({}); // 新增：卡片 Notes 展開/收合狀態
   const [selectedShop, setSelectedShop] = useState(null);
 
   const TYPE_META = {
@@ -206,8 +207,19 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
     return { intro, shops };
   };
 
-  // 共用文字階級與純換行解析器（動態行距微調版）
-  const renderFormattedLines = (rawText, delimiter = "\n") => {
+  // 判斷是否有可被收合的次要階級 (愛心、花朵、純換行)
+  const hasCollapsibleContent = (rawText, delimiter = "\n") => {
+    if (!rawText) return false;
+    const lines = rawText.split(delimiter);
+    return lines.some((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) return false;
+      return trimmed.startsWith(">") || trimmed.startsWith("-") || trimmed.startsWith(">>") || (!trimmed.startsWith("!") && !trimmed.startsWith("="));
+    });
+  };
+
+  // 共用文字階級與純換行解析器（支援折疊模式）
+  const renderFormattedLines = (rawText, delimiter = "\n", isCollapsed = false) => {
     if (!rawText) return null;
     const lines = rawText.split(delimiter);
     let currentLevel = "star"; // 預設階級
@@ -246,6 +258,11 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
 
       const activeType = type === "continue" ? currentLevel : type;
       const showIcon = type !== "continue";
+
+      // 💡 折疊模式：僅保留「星星 =」與「驚嘆號 !」
+      if (isCollapsed && activeType !== "star" && activeType !== "alert") {
+        return null;
+      }
 
       // 計算縮排
       let paddingClass = "";
@@ -387,6 +404,8 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                   const branch = getBranchData(item);
                   const linkData = getLinkDisplay(branch.link);
                   const { intro, shops } = parseNotes(branch.note);
+                  const canCollapse = hasCollapsibleContent(intro, "\n");
+                  const isNotesExpanded = !!expandedCardNotes[item.id];
 
                   return (
                     <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={isViewer}>
@@ -512,13 +531,31 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                         borderColor: `${currentTheme.main}60`, 
                                         color: currentTheme.accent 
                                       }}>
-                                      <div className="flex items-center gap-1.5 mb-1.5 opacity-80">
-                                        <StickyNote className="w-3.5 h-3.5" style={{ color: currentTheme.main }} />
-                                        <span className="text-[10px] font-black tracking-widest uppercase">Notes</span>
+                                      <div className="flex items-center justify-between mb-1.5 opacity-80">
+                                        <div className="flex items-center gap-1.5">
+                                          <StickyNote className="w-3.5 h-3.5" style={{ color: currentTheme.main }} />
+                                          <span className="text-[10px] font-black tracking-widest uppercase">Notes</span>
+                                        </div>
+
+                                        {/* 💡 折疊 / 展開切換按鈕 */}
+                                        {canCollapse && (
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setExpandedCardNotes(prev => ({ ...prev, [item.id]: !prev[item.id] }));
+                                            }}
+                                            className="flex items-center gap-0.5 text-[10px] font-black tracking-tight hover:opacity-70 transition-opacity active:scale-95"
+                                            style={{ color: currentTheme.main }}
+                                          >
+                                            <span>{isNotesExpanded ? "收合備註" : "展開完整備註"}</span>
+                                            {isNotesExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                          </button>
+                                        )}
                                       </div>
                                       
                                       <div>
-                                        {renderFormattedLines(intro, "\n")}
+                                        {renderFormattedLines(intro, "\n", !isNotesExpanded)}
                                       </div>
                                     </div>
                                   )}
@@ -642,7 +679,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                    <div className="bg-white rounded-2xl p-4 border shadow-sm" style={{ borderColor: currentTheme.border }}>
                       {selectedShop.desc ? (
                         <div>
-                          {renderFormattedLines(selectedShop.desc, "\\")}
+                          {renderFormattedLines(selectedShop.desc, "\\", false)}
                         </div>
                       ) : (
                         <p className="text-[13px] text-center italic opacity-60" style={{ color: currentTheme.accent }}>暫無詳細備註...</p>
