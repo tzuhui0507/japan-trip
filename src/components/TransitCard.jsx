@@ -22,7 +22,7 @@ const MODE_COLORS = {
   drive: "#E67E22", // 代表自駕/租車
   bus: "#8B5E3C",
   plane: "#1C82D4",
-  ferry: "#10B981", // 代表船隻/渡輪
+  ferry: "#0891B2", // 代表船隻/渡輪
 };
 
 // 貨幣符號映射表
