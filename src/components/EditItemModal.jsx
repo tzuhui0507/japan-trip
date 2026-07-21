@@ -30,6 +30,8 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
     };
   };
 
+  const [activeTab, setActiveTab] = useState("A"); // 當前選中的方案 Tab: "A" | "B" | "C"
+
   const [baseForm, setBaseForm] = useState({ 
     time: item.time || "", 
     type: item.type || "ATTRACTION",
@@ -47,7 +49,7 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
     link: parseBranch(item.link),
   }), [item]);
 
-  const [formA, setFormA] = useState({ ...initialData.title, title: initialData.title.a, subtitle: initialData.subtitle.a, address: initialData.address.a, openingHours: initialData.openingHours.a, offDay: initialData.offDay.a, phone: initialData.phone.a, notes: initialData.notes.a, link: initialData.link.a });
+  const [formA, setFormA] = useState({ title: initialData.title.a, subtitle: initialData.subtitle.a, address: initialData.address.a, openingHours: initialData.openingHours.a, offDay: initialData.offDay.a, phone: initialData.phone.a, notes: initialData.notes.a, link: initialData.link.a });
   const [formB, setFormB] = useState({ title: initialData.title.b, subtitle: initialData.subtitle.b, address: initialData.address.b, openingHours: initialData.openingHours.b, offDay: initialData.offDay.b, phone: initialData.phone.b, notes: initialData.notes.b, link: initialData.link.b });
   const [formC, setFormC] = useState({ title: initialData.title.c, subtitle: initialData.subtitle.c, address: initialData.address.c, openingHours: initialData.openingHours.c, offDay: initialData.offDay.c, phone: initialData.phone.c, notes: initialData.notes.c, link: initialData.link.c });
 
@@ -65,7 +67,13 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
     return { A: [...normalized], B: [], C: [] };
   }, [item.ticketIds]));
 
-  const [ticketMenu, setTicketMenu] = useState(null);
+  // 取得與更新當前選中 Tab 的表單資料
+  const currentForm = activeTab === "A" ? formA : activeTab === "B" ? formB : formC;
+  const setCurrentForm = (updater) => {
+    if (activeTab === "A") setFormA(updater);
+    else if (activeTab === "B") setFormB(updater);
+    else setFormC(updater);
+  };
 
   const handleSave = () => {
     const hasAnyB = Object.values(formB).some(val => val && val.trim() !== "") || branchTickets.B.length > 0;
@@ -100,61 +108,32 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
     }, baseForm.targetDayIndex); 
   };
 
-  const renderField = (label, key, Icon) => (
-    <div className="space-y-3">
+  const renderField = (label, key, Icon, isTextArea = false) => (
+    <div className="space-y-2">
       <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase px-1 tracking-widest opacity-70" style={{ color: currentTheme.text }}>
         {Icon && <Icon className="w-3.5 h-3.5" style={{ color: currentTheme.main }} />} {label}
       </label>
-      <div className="flex flex-col gap-4">
-        {/* 方案 1 */}
-        <div className="relative">
-          <span className="absolute -top-2 left-3 px-1.5 bg-white text-[9px] font-bold z-10" style={{ color: currentTheme.main }}>方案 1</span>
-          <div 
-            className="w-full border rounded-xl bg-white shadow-sm overflow-hidden transition-all focus-within:ring-2"
-            style={{ borderColor: `${currentTheme.main}30`, "--tw-ring-color": `${currentTheme.main}20` }}
-          >
-            <input 
-              value={formA[key]} 
-              onChange={(e) => setFormA(prev => ({ ...prev, [key]: e.target.value }))} 
-              className="w-full px-4 py-3 text-[14px] outline-none" 
-              placeholder={`輸入方案 1 ${label}...`}
-              style={{ color: currentTheme.text }}
-            />
-          </div>
-        </div>
-        {/* 方案 2 與 3 並列 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="relative">
-            <span className="absolute -top-2 left-3 px-1.5 bg-white text-[9px] font-bold z-10 opacity-60" style={{ color: currentTheme.text }}>方案 2</span>
-            <div 
-              className="w-full border border-dashed rounded-xl bg-gray-50/50 overflow-hidden transition-all focus-within:ring-2"
-              style={{ borderColor: `${currentTheme.main}40`, "--tw-ring-color": `${currentTheme.main}10` }}
-            >
-              <input 
-                value={formB[key]} 
-                onChange={(e) => setFormB(prev => ({ ...prev, [key]: e.target.value }))} 
-                className="w-full px-4 py-3 text-[14px] outline-none bg-transparent" 
-                placeholder="輸入方案 2..." 
-                style={{ color: currentTheme.text }}
-              />
-            </div>
-          </div>
-          <div className="relative">
-            <span className="absolute -top-2 left-3 px-1.5 bg-white text-[9px] font-bold z-10 opacity-60" style={{ color: "#4A607F" }}>方案 3</span>
-            <div 
-              className="w-full border border-dashed rounded-xl bg-gray-50/50 overflow-hidden transition-all focus-within:ring-2"
-              style={{ borderColor: "#D1D9E6", "--tw-ring-color": "#D1D9E640" }}
-            >
-              <input 
-                value={formC[key]} 
-                onChange={(e) => setFormC(prev => ({ ...prev, [key]: e.target.value }))} 
-                className="w-full px-4 py-3 text-[14px] outline-none bg-transparent" 
-                placeholder="輸入方案 3..." 
-                style={{ color: currentTheme.text }}
-              />
-            </div>
-          </div>
-        </div>
+      <div 
+        className="w-full border rounded-2xl bg-white shadow-sm overflow-hidden transition-all focus-within:ring-2"
+        style={{ borderColor: `${currentTheme.main}30`, "--tw-ring-color": `${currentTheme.main}20` }}
+      >
+        {isTextArea ? (
+          <textarea
+            value={currentForm[key] || ""}
+            onChange={(e) => setCurrentForm(prev => ({ ...prev, [key]: e.target.value }))}
+            className="w-full px-4 py-3.5 text-[14px] outline-none bg-transparent resize-y min-h-[180px] leading-relaxed"
+            placeholder={`輸入 ${label}...`}
+            style={{ color: currentTheme.text }}
+          />
+        ) : (
+          <input 
+            value={currentForm[key] || ""} 
+            onChange={(e) => setCurrentForm(prev => ({ ...prev, [key]: e.target.value }))} 
+            className="w-full px-4 py-3 text-[14px] outline-none bg-transparent" 
+            placeholder={`輸入 ${label}...`}
+            style={{ color: currentTheme.text }}
+          />
+        )}
       </div>
     </div>
   );
@@ -190,8 +169,8 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
         </div>
 
         {/* Body */}
-        <div className="px-4 sm:px-8 py-8 space-y-10 overflow-y-auto scrollbar-none pb-24 flex-1">
-          {/* --- 修改重點：改為響應式排版，手機版垂直排列，平版以上並排，徹底防止垃圾桶按鈕與天數重疊 --- */}
+        <div className="px-4 sm:px-8 py-6 space-y-8 overflow-y-auto scrollbar-none pb-24 flex-1">
+          {/* 時間與天數選擇 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* 時間區塊 */}
             <div className="w-full">
@@ -277,90 +256,103 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
 
           <div className="w-full h-px" style={{ backgroundColor: `${currentTheme.main}10` }} />
 
-          {renderField("地點名稱", "title", Pin)}
-          {renderField("副標題", "subtitle", Bookmark)}
-          {renderField("詳細地址", "address", MapPin)}
-          {renderField("營業時間", "openingHours", Clock)}
-          {renderField("公休日", "offDay", CalendarOff)}
-          {renderField("聯絡電話", "phone", Phone)}
-          {renderField("外部連結", "link", Link)}
-          
-          {/* 票券方案綁定 */}
-          <div className="border rounded-[2rem] p-6 space-y-6 shadow-sm" style={{ borderColor: `${currentTheme.main}20`, backgroundColor: `${currentTheme.main}05` }}>
-            <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest" style={{ color: currentTheme.main }}>
-              <Ticket className="w-4 h-4" /> 票券方案綁定
+          {/* 方案 Tab 切換按鈕 */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest px-1 opacity-70" style={{ color: currentTheme.text }}>
+                <Pin className="w-3.5 h-3.5" style={{ color: currentTheme.main }} /> 方案內容編輯
+              </label>
+              <div className="flex bg-gray-100 p-1 rounded-2xl gap-1">
+                {[
+                  { key: "A", label: "方案 1" },
+                  { key: "B", label: "方案 2" },
+                  { key: "C", label: "方案 3" },
+                ].map((tab) => {
+                  const isActive = activeTab === tab.key;
+                  return (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => setActiveTab(tab.key)}
+                      className={`px-3 py-1.5 rounded-xl text-[11px] font-black transition-all ${
+                        isActive ? "bg-white shadow-sm scale-105" : "opacity-50 hover:opacity-100"
+                      }`}
+                      style={{
+                        color: isActive ? currentTheme.main : currentTheme.text,
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div className="flex flex-col gap-4">
-              {['A', 'B', 'C'].map((b, idx) => (
-                <div key={b} className="p-4 rounded-2xl border border-dashed bg-white/80 backdrop-blur-sm" style={{ borderColor: b === 'C' ? '#D1D9E6' : `${currentTheme.main}30` }}>
-                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border mb-3 inline-block" style={{ color: b === 'C' ? '#4A607F' : currentTheme.main, borderColor: b === 'C' ? '#D1D9E6' : `${currentTheme.main}20`, backgroundColor: 'white' }}>方案 {idx + 1}</span>
-                  <div className="flex flex-wrap gap-2 min-h-[30px]">
-                    {branchTickets[b].map(id => (
-                      <span key={`${b}-${id}`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] bg-white border shadow-sm" style={{ borderColor: `${currentTheme.main}10`, color: currentTheme.text }}>
-                        {ticketList.find(x => x.id === id)?.title}
-                        <button onClick={() => setBranchTickets(p => ({ ...p, [b]: p[b].filter(x => x !== id) }))} className="ml-1 text-red-400 font-bold hover:text-red-600">×</button>
-                      </span>
-                    ))}
+
+            {/* 動態顯示當前選中 Tab 的詳細欄位 */}
+            <div className="space-y-5 animate-in fade-in duration-200">
+              {renderField("地點名稱", "title", Pin)}
+              {renderField("副標題", "subtitle", Bookmark)}
+              {renderField("詳細地址", "address", MapPin)}
+              {renderField("營業時間", "openingHours", Clock)}
+              {renderField("公休日", "offDay", CalendarOff)}
+              {renderField("聯絡電話", "phone", Phone)}
+              {renderField("外部連結", "link", Link)}
+              
+              {/* 票券方案綁定 */}
+              <div className="border rounded-[2rem] p-5 space-y-4 shadow-sm" style={{ borderColor: `${currentTheme.main}20`, backgroundColor: `${currentTheme.main}05` }}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest" style={{ color: currentTheme.main }}>
+                    <Ticket className="w-4 h-4" /> 票券綁定 ({activeTab === "A" ? "方案 1" : activeTab === "B" ? "方案 2" : "方案 3"})
                   </div>
                 </div>
-              ))}
-            </div>
-            {/* 加入票券選單 */}
-            <div className="pt-4 border-t flex flex-wrap gap-2" style={{ borderColor: `${currentTheme.main}10` }}>
-              {ticketList.map((t) => (
-                <div key={t.id} className="relative">
-                  <button 
-                    type="button" 
-                    onClick={() => setTicketMenu(ticketMenu === t.id ? null : t.id)} 
-                    className={`px-4 py-2 rounded-xl text-[11px] border transition-all active:scale-95 shadow-sm
-                      ${ticketMenu === t.id ? "text-white" : "bg-white"}
-                    `}
-                    style={{ 
-                      backgroundColor: ticketMenu === t.id ? currentTheme.main : 'white',
-                      borderColor: `${currentTheme.main}30`,
-                      color: ticketMenu === t.id ? 'white' : currentTheme.main
-                    }}
-                  >
-                    ＋ {t.title}
-                  </button>
-                  {ticketMenu === t.id && (
-                    <div className="absolute bottom-full left-0 mb-3 z-[110] bg-white border rounded-2xl shadow-2xl p-1.5 flex flex-col min-w-[140px] animate-in fade-in slide-in-from-bottom-2" style={{ borderColor: `${currentTheme.main}20` }}>
-                      {['A', 'B', 'C'].map((b, idx) => (
-                        <button key={b} onClick={() => { setBranchTickets(p => ({ ...p, [b]: Array.from(new Set([...p[b], t.id])) })); setTicketMenu(null); }} className="px-4 py-2.5 text-[12px] text-left hover:bg-gray-50 rounded-xl font-medium" style={{ color: currentTheme.text }}>加入方案 {idx + 1}</button>
-                      ))}
-                    </div>
+
+                {/* 已選票券標籤 */}
+                <div className="flex flex-wrap gap-2 min-h-[36px] items-center bg-white p-3 rounded-2xl border" style={{ borderColor: `${currentTheme.main}15` }}>
+                  {branchTickets[activeTab].length > 0 ? (
+                    branchTickets[activeTab].map(id => (
+                      <span key={`${activeTab}-${id}`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] bg-white border shadow-sm font-bold" style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text }}>
+                        {ticketList.find(x => x.id === id)?.title}
+                        <button onClick={() => setBranchTickets(p => ({ ...p, [activeTab]: p[activeTab].filter(x => x !== id) }))} className="ml-1 text-red-400 font-bold hover:text-red-600">×</button>
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-[11px] opacity-40 italic">尚未綁定票券...</span>
                   )}
                 </div>
-              ))}
-            </div>
-          </div>
 
-          {/* 補充備註 */}
-          <div className="space-y-4">
-            <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase px-1 tracking-widest opacity-70" style={{ color: currentTheme.text }}>
-              <StickyNote className="w-3.5 h-3.5" style={{ color: currentTheme.main }} /> 補充備註
-            </label>
-            <div className="flex flex-col gap-4">
-              <div className="relative">
-                <span className="absolute -top-2 left-3 px-1.5 bg-white text-[9px] font-bold z-10" style={{ color: currentTheme.main }}>方案 1</span>
-                <div className="w-full border rounded-2xl bg-white shadow-sm focus-within:ring-2 transition-all" style={{ borderColor: `${currentTheme.main}20`, "--tw-ring-color": `${currentTheme.main}10` }}>
-                  <textarea value={formA.notes} onChange={(e) => setFormA(prev => ({ ...prev, notes: e.target.value }))} className="w-full px-4 py-4 text-[14px] outline-none bg-transparent resize-none min-h-[100px]" style={{ color: currentTheme.text }} />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="relative">
-                  <span className="absolute -top-2 left-3 px-1.5 bg-white text-[9px] font-bold z-10 opacity-60" style={{ color: currentTheme.text }}>方案 2</span>
-                  <div className="w-full border border-dashed rounded-2xl bg-gray-50/50 shadow-sm focus-within:ring-2 transition-all" style={{ borderColor: `${currentTheme.main}40`, "--tw-ring-color": `${currentTheme.main}10` }}>
-                    <textarea value={formB.notes} onChange={(e) => setFormB(prev => ({ ...prev, notes: e.target.value }))} className="w-full px-4 py-4 text-[14px] outline-none bg-transparent resize-none min-h-[100px]" placeholder="備案 2..." style={{ color: currentTheme.text }} />
+                {/* 加入票券清單 */}
+                {ticketList.length > 0 && (
+                  <div className="pt-2 flex flex-wrap gap-2">
+                    {ticketList.map((t) => {
+                      const isAdded = branchTickets[activeTab].includes(t.id);
+                      return (
+                        <button 
+                          key={t.id} 
+                          type="button" 
+                          onClick={() => {
+                            if (isAdded) {
+                              setBranchTickets(p => ({ ...p, [activeTab]: p[activeTab].filter(x => x !== t.id) }));
+                            } else {
+                              setBranchTickets(p => ({ ...p, [activeTab]: [...p[activeTab], t.id] }));
+                            }
+                          }} 
+                          className="px-3 py-1.5 rounded-xl text-[11px] border transition-all active:scale-95 shadow-sm font-semibold"
+                          style={{ 
+                            backgroundColor: isAdded ? currentTheme.main : 'white',
+                            borderColor: `${currentTheme.main}30`,
+                            color: isAdded ? 'white' : currentTheme.main
+                          }}
+                        >
+                          {isAdded ? "✓ " : "＋ "}{t.title}
+                        </button>
+                      );
+                    })}
                   </div>
-                </div>
-                <div className="relative">
-                  <span className="absolute -top-2 left-3 px-1.5 bg-white text-[9px] font-bold z-10 opacity-60" style={{ color: "#4A607F" }}>方案 3</span>
-                  <div className="w-full border border-dashed rounded-2xl bg-gray-50/50 shadow-sm focus-within:ring-2 transition-all" style={{ borderColor: "#D1D9E6", "--tw-ring-color": "#D1D9E620" }}>
-                    <textarea value={formC.notes} onChange={(e) => setFormC(prev => ({ ...prev, notes: e.target.value }))} className="w-full px-4 py-4 text-[14px] outline-none bg-transparent resize-none min-h-[100px]" placeholder="備案 3..." style={{ color: currentTheme.text }} />
-                  </div>
-                </div>
+                )}
               </div>
+
+              {/* 補充備註（已調大輸入框高度） */}
+              {renderField("補充備註", "notes", StickyNote, true)}
             </div>
           </div>
         </div>

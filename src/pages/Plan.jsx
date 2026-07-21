@@ -206,6 +206,83 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
     return { intro, shops };
   };
 
+  // 共用文字階級與純換行解析器（動態行距微調版）
+  const renderFormattedLines = (rawText, delimiter = "\n") => {
+    if (!rawText) return null;
+    const lines = rawText.split(delimiter);
+    let currentLevel = "star"; // 預設階級
+
+    return lines.map((line, lIdx) => {
+      const trimmed = line.trim();
+      if (!trimmed) return null;
+
+      let type = "";
+      let content = "";
+
+      if (trimmed.startsWith("!")) {
+        type = "alert";
+        content = trimmed.substring(1).trim();
+        currentLevel = "alert";
+      } else if (trimmed.startsWith(">>")) {
+        type = "continue";
+        content = trimmed.substring(2).trim();
+      } else if (trimmed.startsWith(">")) {
+        type = "heart";
+        content = trimmed.substring(1).trim();
+        currentLevel = "heart";
+      } else if (trimmed.startsWith("-")) {
+        type = "flower";
+        content = trimmed.substring(1).trim();
+        currentLevel = "flower";
+      } else if (trimmed.startsWith("=")) {
+        type = "star";
+        content = trimmed.substring(1).trim();
+        currentLevel = "star";
+      } else {
+        // 沒有前綴，判定為當前階級的純換行
+        type = "continue";
+        content = trimmed;
+      }
+
+      const activeType = type === "continue" ? currentLevel : type;
+      const showIcon = type !== "continue";
+
+      // 計算縮排
+      let paddingClass = "";
+      if (activeType === "heart") paddingClass = "pl-4";
+      if (activeType === "flower") paddingClass = "pl-8";
+
+      // 動態間距：首行(lIdx === 0)無上方邊距；新標題(showIcon)拉大行距(mt-2.5)；純換行(!showIcon)縮小行距(mt-0.5)
+      const marginTopClass = lIdx === 0 ? "mt-0" : showIcon ? "mt-2.5" : "mt-0.5";
+
+      // 決定呈現圖示
+      let iconComponent = null;
+      if (showIcon) {
+        if (activeType === "alert") iconComponent = <BellRing className="w-3.5 h-3.5 text-[#FA5F73] mt-0.5 animate-pulse" />;
+        else if (activeType === "heart") iconComponent = <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1" />;
+        else if (activeType === "flower") iconComponent = <Flower2 className="w-2.5 h-2.5 text-[#FDBA74] mt-1" />;
+        else iconComponent = <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-0.5" />;
+      }
+
+      // 決定文字樣式
+      let textClass = "text-[12px] font-bold";
+      if (activeType === "alert") textClass = "text-[12px] font-bold text-[#FA5F73]";
+      else if (activeType === "heart") textClass = "text-[11px] font-semibold";
+      else if (activeType === "flower") textClass = "text-[11px] opacity-90";
+
+      return (
+        <div key={lIdx} className={`flex items-start ${paddingClass} ${marginTopClass}`}>
+          <div className="w-5 flex-shrink-0 flex justify-center">
+            {iconComponent}
+          </div>
+          <p className={`flex-1 leading-snug ${textClass}`} style={{ color: activeType !== "alert" ? currentTheme.text : undefined }}>
+            {content}
+          </p>
+        </div>
+      );
+    });
+  };
+
   return (
     <div className="pt-4 pb-24">
       <div className="mb-6 relative flex gap-1 items-stretch pr-2" style={{ height: 260 }}>
@@ -262,16 +339,14 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
 
       {currentDay?.dayNotes && (
         <section className="px-2 mb-6 animate-in fade-in duration-300">
-          {/* 驚嘆號與今日行程提醒：100% 呈現深色標題色，完全不透明 */}
           <div className="flex items-center gap-2 mb-2 px-1" style={{ color: currentTheme.text }}>
             <AlertCircle className="w-5 h-5" />
             <h4 className="text-[16px] font-black uppercase tracking-widest">今日行程提醒</h4>
           </div>
           
-          {/* 🛠️ 方案 2️⃣ 修改版：換成超級乾淨的「純淨微光白」底色 (bg-white/80) */}
           <div 
             className="bg-white/80 border-2 border-dashed rounded-[1.5rem] py-4 px-5 shadow-sm relative transition-all" 
-            style={{ borderColor: `${currentTheme.main}25` }} // 稍微調淡虛線邊框，讓整體更乾淨
+            style={{ borderColor: `${currentTheme.main}25` }}
           >
             <p className="text-[12px] leading-relaxed whitespace-pre-wrap font-semibold" style={{ color: currentTheme.text }}>
               {currentDay.dayNotes.split(/(\[[^\]]+\]\(https?:\/\/[^\s)]+\))/g).map((part, pIdx) => {
@@ -431,37 +506,19 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                               {(intro || shops.length > 0) && (
                                 <div className="mt-3">
                                   {intro && (
-                                    <div className="rounded-xl px-3 py-3 flex flex-col gap-2 text-[12px] leading-relaxed border-2 border-dashed shadow-sm" 
+                                    <div className="rounded-xl px-3 py-3 flex flex-col text-[12px] leading-relaxed border-2 border-dashed shadow-sm" 
                                       style={{ 
                                         backgroundColor: `${currentTheme.light}80`, 
                                         borderColor: `${currentTheme.main}60`, 
                                         color: currentTheme.accent 
                                       }}>
-                                      <div className="flex items-center gap-1.5 mb-1 opacity-80">
+                                      <div className="flex items-center gap-1.5 mb-1.5 opacity-80">
                                         <StickyNote className="w-3.5 h-3.5" style={{ color: currentTheme.main }} />
                                         <span className="text-[10px] font-black tracking-widest uppercase">Notes</span>
                                       </div>
                                       
-                                      <div className="space-y-2.5">
-                                        {intro.split("\n").map((line, lIdx) => {
-                                          const trimmed = line.trim();
-                                          if (!trimmed) return null;
-                                          const isAlert = trimmed.startsWith("!");
-                                          const isSubItem = trimmed.startsWith(">");
-                                          const isListItem = trimmed.startsWith("-");
-                                          const content = (isAlert || isSubItem || isListItem) ? trimmed.substring(1).trim() : trimmed;
-
-                                          return (
-                                            <div key={lIdx} className={`flex items-start ${isSubItem ? "pl-4" : isListItem ? "pl-8" : ""}`}>
-                                              <div className="w-5 flex-shrink-0 flex justify-center">
-                                                {isAlert ? <BellRing className="w-3.5 h-3.5 text-[#FA5F73] mt-1 animate-pulse" /> : isSubItem ? <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1.5" /> : isListItem ? <Flower2 className="w-2.5 h-2.5 text-[#FDBA74] mt-1.5" /> : <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-1" />}
-                                              </div>
-                                              <p className={`flex-1 ${isAlert ? "text-[12px] font-bold text-[#FA5F73]" : isSubItem ? "text-[11px] font-semibold" : isListItem ? "text-[11px] opacity-90" : "text-[12px] font-bold"}`} style={{ color: !isAlert ? currentTheme.text : undefined }}>
-                                                {content}
-                                              </p>
-                                            </div>
-                                          );
-                                        })}
+                                      <div>
+                                        {renderFormattedLines(intro, "\n")}
                                       </div>
                                     </div>
                                   )}
@@ -584,26 +641,8 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                    </div>
                    <div className="bg-white rounded-2xl p-4 border shadow-sm" style={{ borderColor: currentTheme.border }}>
                       {selectedShop.desc ? (
-                        <div className="space-y-3">
-                          {selectedShop.desc.split("\\").map((line, lIdx) => {
-                            const trimmed = line.trim();
-                            if (!trimmed) return null;
-                            const isAlert = trimmed.startsWith("!");
-                            const isSubItem = trimmed.startsWith(">");
-                            const isListItem = trimmed.startsWith("-");
-                            const content = (isAlert || isSubItem || isListItem) ? trimmed.substring(1).trim() : trimmed;
-
-                            return (
-                              <div key={lIdx} className={`flex items-start ${isSubItem ? "pl-4" : isListItem ? "pl-8" : ""}`}>
-                                <div className="w-5 flex-shrink-0 flex justify-center">
-                                  {isAlert ? <BellRing className="w-3.5 h-3.5 text-[#FA5F73] mt-1 animate-pulse" /> : isSubItem ? <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1.5" /> : isListItem ? <Flower2 className="w-2.5 h-2.5 text-[#FDBA74] mt-1.5" /> : <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-1" />}
-                                </div>
-                                <p className={`${isAlert ? "text-[14px] font-bold text-[#FA5F73]" : isSubItem ? "text-[12px] font-semibold" : isListItem ? "text-[11px] opacity-80" : "text-[14px] font-bold"} leading-relaxed flex-1`} style={{ color: !isAlert ? currentTheme.text : undefined }}>
-                                  {content}
-                                </p>
-                              </div>
-                            );
-                          })}
+                        <div>
+                          {renderFormattedLines(selectedShop.desc, "\\")}
                         </div>
                       ) : (
                         <p className="text-[13px] text-center italic opacity-60" style={{ color: currentTheme.accent }}>暫無詳細備註...</p>
