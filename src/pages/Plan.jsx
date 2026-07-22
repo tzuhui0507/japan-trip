@@ -4,13 +4,14 @@ import TransitCard from "../components/TransitCard";
 import EditItemModal from "../components/EditItemModal";
 import EditHeroModal from "../components/EditHeroModal";
 import TicketDetail from "../components/TicketDetail";
+import ShopListModal from "../components/ShopListModal";
 import { THEMES } from "../App"; 
 
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import {
   Pencil,
   Trash2,
-  Copy, // 新增：引入複製圖示
+  Copy,
   SunMedium,
   Cloud,
   CloudRain,
@@ -25,20 +26,20 @@ import {
   BedDouble,
   Ticket,
   Link,
-  ArrowLeftRight,
   AlertCircle,
   CalendarOff,
   ChevronDown,
   ChevronUp,
   Store, 
-  X,
-  Sparkles,
-  Map,
-  Heart,
-  Star,
   Cherry,
   BellRing,
-  Flower2 
+  Heart,
+  Star,
+  Flower2,
+  Coffee,
+  ShoppingBag,
+  Camera,
+  CameraIcon
 } from "lucide-react";
 
 export default function Plan({ trip, setTrip, dayIndex, themeId }) {
@@ -67,7 +68,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
   const [weatherHourly, setWeatherHourly] = useState([]);
   const [branchIndexMap, setBranchIndexMap] = useState({});
   const [expandedNotes, setExpandedNotes] = useState({});
-  const [expandedCardNotes, setExpandedCardNotes] = useState({}); // 新增：卡片 Notes 展開/收合狀態
+  const [expandedCardNotes, setExpandedCardNotes] = useState({});
   const [selectedShop, setSelectedShop] = useState(null);
 
   const TYPE_META = {
@@ -75,6 +76,16 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
     RESTAURANT: { label: "餐廳", pillBg: "#FBE7DF", pillText: "#8C4A2F", icon: UtensilsCrossed },
     TRANSPORT: { label: "交通", pillBg: "#E4F1E3", pillText: "#4E6B48", icon: Train },
     HOTEL: { label: "住宿", pillBg: "#F3E3F0", pillText: "#7A4D6E", icon: BedDouble },
+  };
+
+  const getShopIcon = (category) => {
+    switch (category) {
+      case "FOOD": return UtensilsCrossed;
+      case "CAFE": return Coffee;
+      case "SHOPPING": return ShoppingBag;
+      case "SPOT": return Camera;
+      default: return Store;
+    }
   };
 
   const getLinkDisplay = (text) => {
@@ -109,6 +120,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
       offDay: getVal(item.offDay),
       phone: getVal(item.phone),
       link: getVal(item.link),
+      shops: item.shops || [],
       ticketIds: typeof item.ticketIds === "string" 
         ? (split(item.ticketIds)[currentIndex] || split(item.ticketIds)[0]).split(",").filter(Boolean)
         : (Array.isArray(item.ticketIds) ? item.ticketIds : [])
@@ -174,7 +186,6 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
     });
   };
 
-  // 原地複製克隆行程卡片邏輯
   const handleDuplicateItem = (e, targetItem, targetIndex) => {
     e.stopPropagation();
     if (isViewer) return;
@@ -191,23 +202,6 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
     setSlideOpenId(null);
   };
 
-  const parseNotes = (noteText) => {
-    if (!noteText) return { intro: "", shops: [] };
-    const lines = noteText.split("\n");
-    const shops = lines.filter(l => l.trim().startsWith("*")).map(l => {
-      const parts = l.trim().substring(1).split("|").map(p => p.trim());
-      return {
-        name: parts[0] || "",
-        subtitle: parts[1] || "",
-        hours: parts[2] || "",
-        desc: parts[3] || ""
-      };
-    });
-    const intro = lines.filter(l => !l.trim().startsWith("*")).join("\n").trim();
-    return { intro, shops };
-  };
-
-  // 判斷是否有可被收合的次要階級 (愛心、花朵、純換行)
   const hasCollapsibleContent = (rawText, delimiter = "\n") => {
     if (!rawText) return false;
     const lines = rawText.split(delimiter);
@@ -218,11 +212,10 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
     });
   };
 
-  // 共用文字階級與純換行解析器（支援折疊模式）
   const renderFormattedLines = (rawText, delimiter = "\n", isCollapsed = false) => {
     if (!rawText) return null;
     const lines = rawText.split(delimiter);
-    let currentLevel = "star"; // 預設階級
+    let currentLevel = "star";
 
     return lines.map((line, lIdx) => {
       const trimmed = line.trim();
@@ -251,7 +244,6 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
         content = trimmed.substring(1).trim();
         currentLevel = "star";
       } else {
-        // 沒有前綴，判定為當前階級的純換行
         type = "continue";
         content = trimmed;
       }
@@ -259,20 +251,16 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
       const activeType = type === "continue" ? currentLevel : type;
       const showIcon = type !== "continue";
 
-      // 💡 折疊模式：僅保留「星星 =」與「驚嘆號 !」
       if (isCollapsed && activeType !== "star" && activeType !== "alert") {
         return null;
       }
 
-      // 計算縮排
       let paddingClass = "";
       if (activeType === "heart") paddingClass = "pl-4";
       if (activeType === "flower") paddingClass = "pl-8";
 
-      // 動態間距：首行(lIdx === 0)無上方邊距；新標題(showIcon)拉大行距(mt-2.5)；純換行(!showIcon)縮小行距(mt-0.5)
       const marginTopClass = lIdx === 0 ? "mt-0" : showIcon ? "mt-2.5" : "mt-0.5";
 
-      // 決定呈現圖示
       let iconComponent = null;
       if (showIcon) {
         if (activeType === "alert") iconComponent = <BellRing className="w-3.5 h-3.5 text-[#FA5F73] mt-0.5 animate-pulse" />;
@@ -281,7 +269,6 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
         else iconComponent = <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-0.5" />;
       }
 
-      // 決定文字樣式
       let textClass = "text-[12px] font-bold";
       if (activeType === "alert") textClass = "text-[12px] font-bold text-[#FA5F73]";
       else if (activeType === "heart") textClass = "text-[11px] font-semibold";
@@ -302,6 +289,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
 
   return (
     <div className="pt-4 pb-24">
+      {/* Header Banner */}
       <div className="mb-6 relative flex gap-1 items-stretch pr-2" style={{ height: 260 }}>
         <div className="w-10 flex flex-col items-center h-full shrink-0">
           <span className="w-2.5 h-2.5 rounded-full mb-2 shrink-0" style={{ backgroundColor: currentTheme.main }} />
@@ -333,6 +321,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
         </div>
       </div>
 
+      {/* Weather Forecast */}
       <section className="mb-6 pl-2 pr-2">
         <div className="flex items-center justify-between mb-3 px-1">
           <div>
@@ -354,6 +343,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
         </div>
       </section>
 
+      {/* Day Notes */}
       {currentDay?.dayNotes && (
         <section className="px-2 mb-6 animate-in fade-in duration-300">
           <div className="flex items-center gap-2 mb-2 px-1" style={{ color: currentTheme.text }}>
@@ -367,7 +357,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
           >
             <p className="text-[12px] leading-relaxed whitespace-pre-wrap font-semibold" style={{ color: currentTheme.text }}>
               {currentDay.dayNotes.split(/(\[[^\]]+\]\(https?:\/\/[^\s)]+\))/g).map((part, pIdx) => {
-                const match = part.match(/\[([^\]]+)\]\((https?:\/\/[^\s)]+\))/);
+                const match = part.match(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/);
                 if (match) {
                   return (
                     <a
@@ -390,6 +380,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
         </section>
       )}
 
+      {/* Item Drag and Drop List */}
       <div className="mt-2 ml-5 mr-0 relative">
         <div className="absolute left-0 top-6 bottom-0 w-px -z-0" style={{ backgroundColor: currentTheme.border }} />
 
@@ -403,7 +394,10 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                   const isOpen = slideOpenId === item.id;
                   const branch = getBranchData(item);
                   const linkData = getLinkDisplay(branch.link);
-                  const { intro, shops } = parseNotes(branch.note);
+                  
+                  const shopList = branch.shops || [];
+                  const intro = branch.note;
+
                   const canCollapse = hasCollapsibleContent(intro, "\n");
                   const isNotesExpanded = !!expandedCardNotes[item.id];
 
@@ -453,15 +447,13 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                           e.stopPropagation();
                                           setBranchIndexMap(prev => ({ ...prev, [item.id]: idx }));
                                         }}
-                                        className={`w-6 h-6 rounded-full text-[10px] font-black transition-all flex items-center justify-center shadow-sm ${
-                                          branch.currentIndex === idx 
-                                          ? "text-white scale-110" 
-                                          : "bg-white border text-opacity-50"
-                                        }`}
+                                        className="w-6 h-6 rounded-full text-[10px] font-black transition-all flex items-center justify-center shadow-sm active:scale-95"
                                         style={{ 
                                           backgroundColor: branch.currentIndex === idx ? currentTheme.main : "white",
-                                          borderColor: currentTheme.border,
-                                          color: branch.currentIndex === idx ? "white" : currentTheme.accent
+                                          borderColor: branch.currentIndex === idx ? currentTheme.main : currentTheme.border,
+                                          color: branch.currentIndex === idx ? "white" : currentTheme.accent,
+                                          borderWidth: "1px",
+                                          borderStyle: "solid"
                                         }}
                                       >
                                         {idx + 1}
@@ -480,122 +472,183 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                 )}
                               </div>
                               
-                              <h3 className="text-base font-bold leading-snug" style={{ color: currentTheme.text }}>{branch.title}</h3>
-                              {branch.subtitle && <p className="text-[11px] mt-0.5 opacity-70" style={{ color: currentTheme.accent }}>{branch.subtitle}</p>}
+                              {/* 💡 左右雙欄對齊核心：右側相片寬度已放大 (w-[145px] sm:w-[165px]) */}
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0 flex-1 space-y-3">
+                                  <div>
+                                    <h3 className="text-base font-bold leading-snug" style={{ color: currentTheme.text }}>{branch.title}</h3>
+                                    {branch.subtitle && <p className="text-[11px] mt-0.5 opacity-70" style={{ color: currentTheme.accent }}>{branch.subtitle}</p>}
+                                  </div>
 
-                              {branch.ticketIds?.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-3">
-                                  {branch.ticketIds.map((ticketId) => {
-                                    const ticket = trip.tickets?.find((t) => t.id === ticketId);
-                                    if (!ticket) return null;
-                                    const styleConfig = TYPE_META[ticket.type] || { pillBg: "#F7F1EB", pillText: "#8C6A4F" };
-                                    return (
-                                      <button key={ticketId} onClick={(e) => { e.stopPropagation(); setViewTicket(ticket); }} style={{ backgroundColor: styleConfig.pillBg, color: styleConfig.pillText, borderColor: `${styleConfig.pillText}20` }} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] border font-bold active:scale-95 transition-all shadow-sm">
-                                        <Ticket className="w-3 h-3" /> <span>{ticket.title}</span>
-                                      </button>
-                                    );
-                                  })}
+                                  {branch.ticketIds?.length > 0 && (
+                                    <div className="flex flex-wrap gap-1">
+                                      {branch.ticketIds.map((ticketId) => {
+                                        const ticket = trip.tickets?.find((t) => t.id === ticketId);
+                                        if (!ticket) return null;
+                                        const styleConfig = TYPE_META[ticket.type] || { pillBg: "#F7F1EB", pillText: "#8C6A4F" };
+                                        return (
+                                          <button key={ticketId} onClick={(e) => { e.stopPropagation(); setViewTicket(ticket); }} style={{ backgroundColor: styleConfig.pillBg, color: styleConfig.pillText, borderColor: `${styleConfig.pillText}20` }} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] border font-bold active:scale-95 transition-all shadow-sm">
+                                            <Ticket className="w-3 h-3" /> <span>{ticket.title}</span>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+
+                                  <div className="space-y-1.5">
+                                    {branch.address && (
+                                      <div onClick={(e) => handleNavigation(e, branch.address, branch.title)} className="flex items-start gap-1.5 text-[11px] cursor-pointer hover:opacity-70 transition-opacity" style={{ color: currentTheme.text }}>
+                                        <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: currentTheme.main }} />
+                                        <span className="break-words flex-1 font-bold underline">{branch.address}</span>
+                                      </div>
+                                    )}
+                                    {branch.openingHours && <div className="flex items-start gap-1.5 text-[11px]" style={{ color: currentTheme.text }}><Clock className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: currentTheme.main }} /><span>{branch.openingHours}</span></div>}
+                                    {branch.offDay && (
+                                      <div className="flex items-start gap-1.5 text-[11px] text-[#B43737] font-black">
+                                        <CalendarOff className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                                        <span>公休日：{branch.offDay}</span>
+                                      </div>
+                                    )}
+
+                                    {branch.phone && <div className="flex items-start gap-1.5 text-[11px]" style={{ color: currentTheme.text }}><Phone className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: currentTheme.main }} /><span>{branch.phone}</span></div>}
+                                    {linkData && (
+                                      <div onClick={(e) => { e.stopPropagation(); window.open(linkData.url, "_blank"); }} className="flex items-start gap-1.5 text-[11px] text-blue-500 font-medium cursor-pointer hover:underline transition-all">
+                                        <Link className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
+                                        <span className="truncate flex-1">{linkData.label}</span>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              )}
 
-                              <div className="space-y-1 mt-3">
-                                {branch.address && (
-                                  <div onClick={(e) => handleNavigation(e, branch.address, branch.title)} className="flex items-start gap-1.5 text-[11px] cursor-pointer hover:opacity-70 transition-opacity" style={{ color: currentTheme.text }}>
-                                    <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: currentTheme.main }} />
-                                    <span className="break-words flex-1 font-bold underline">{branch.address}</span>
-                                  </div>
-                                )}
-                                {branch.openingHours && <div className="flex items-start gap-1.5 text-[11px]" style={{ color: currentTheme.text }}><Clock className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: currentTheme.main }} /><span>{branch.openingHours}</span></div>}
-                                {branch.offDay && (
-                                  <div className="flex items-start gap-1.5 text-[11px] text-[#B43737] font-black">
-                                    <CalendarOff className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                                    <span>公休日：{branch.offDay}</span>
-                                  </div>
-                                )}
-
-                                {branch.phone && <div className="flex items-start gap-1.5 text-[11px]" style={{ color: currentTheme.text }}><Phone className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: currentTheme.main }} /><span>{branch.phone}</span></div>}
-                                {linkData && (
-                                  <div onClick={(e) => { e.stopPropagation(); window.open(linkData.url, "_blank"); }} className="flex items-start gap-1.5 text-[11px] text-blue-500 font-medium cursor-pointer hover:underline transition-all">
-                                    <Link className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
-                                    <span className="truncate flex-1">{linkData.label}</span>
+                                {item.image?.trim() && (
+                                  <div className="shrink-0 w-[145px] sm:w-[165px] bg-white p-2 pb-3 rounded-xl border border-slate-200/80 shadow-md transform rotate-2 transition-transform hover:rotate-0 self-start mt-1">
+                                    <div className="w-full h-[105px] sm:h-[120px] rounded-lg overflow-hidden bg-slate-100">
+                                      <img 
+                                        src={item.image} 
+                                        alt={branch.title} 
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          e.target.onerror = null;
+                                          e.target.parentElement.parentElement.style.display = 'none';
+                                        }}
+                                      />
+                                    </div>
+                                    <div className="mt-1.5 text-[9px] font-bold text-center opacity-60 flex items-center justify-center gap-0.5" style={{ color: currentTheme.text }}>
+                                      <CameraIcon className="w-3 h-3 opacity-90" style={{ color: currentTheme.main }} />
+                                      <span className="opacity-60">｜</span>
+                                      <span className="truncate">{branch.title}</span>
+                                    </div>
                                   </div>
                                 )}
                               </div>
 
-                              {(intro || shops.length > 0) && (
-                                <div className="mt-3">
-                                  {intro && (
-                                    <div className="rounded-xl px-3 py-3 flex flex-col text-[12px] leading-relaxed border-2 border-dashed shadow-sm" 
-                                      style={{ 
-                                        backgroundColor: `${currentTheme.light}80`, 
-                                        borderColor: `${currentTheme.main}60`, 
-                                        color: currentTheme.accent 
-                                      }}>
-                                      <div className="flex items-center justify-between mb-1.5 opacity-80">
-                                        <div className="flex items-center gap-1.5">
-                                          <StickyNote className="w-3.5 h-3.5" style={{ color: currentTheme.main }} />
-                                          <span className="text-[10px] font-black tracking-widest uppercase">Notes</span>
-                                        </div>
-
-                                        {/* 💡 折疊 / 展開切換按鈕 */}
-                                        {canCollapse && (
-                                          <button
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setExpandedCardNotes(prev => ({ ...prev, [item.id]: !prev[item.id] }));
-                                            }}
-                                            className="flex items-center gap-0.5 text-[10px] font-black tracking-tight hover:opacity-70 transition-opacity active:scale-95"
-                                            style={{ color: currentTheme.main }}
-                                          >
-                                            <span>{isNotesExpanded ? "收合備註" : "展開完整備註"}</span>
-                                            {isNotesExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                                          </button>
-                                        )}
-                                      </div>
-                                      
-                                      <div>
-                                        {renderFormattedLines(intro, "\n", !isNotesExpanded)}
-                                      </div>
+                              {/* 備註 Note 區塊 */}
+                              {intro && (
+                                <div className="mt-4 rounded-xl px-3 py-3 flex flex-col text-[12px] leading-relaxed border-2 border-dashed shadow-inner" 
+                                  style={{ 
+                                    backgroundColor: `${currentTheme.light}80`, 
+                                    borderColor: `${currentTheme.main}40`, 
+                                    color: currentTheme.accent 
+                                  }}>
+                                  <div className="flex items-center justify-between mb-1.5 opacity-80">
+                                    <div className="flex items-center gap-1.5">
+                                      <StickyNote className="w-3.5 h-3.5" style={{ color: currentTheme.main }} />
+                                      <span className="text-[10px] font-black tracking-widest uppercase">備註 Notes</span>
                                     </div>
-                                  )}
 
-                                  {shops.length > 0 && (
-                                    <div className="mt-2">
-                                      <button 
+                                    {canCollapse && (
+                                      <button
+                                        type="button"
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          setExpandedNotes(prev => ({ ...prev, [item.id]: !prev[item.id] }));
+                                          setExpandedCardNotes(prev => ({ ...prev, [item.id]: !prev[item.id] }));
                                         }}
-                                        className="w-full flex items-center justify-between px-3 py-2 bg-white border rounded-xl text-[11px] font-bold transition-colors"
-                                        style={{ borderColor: currentTheme.border, color: currentTheme.accent }}
+                                        className="flex items-center gap-0.5 text-[10px] font-black tracking-tight hover:opacity-70 transition-opacity active:scale-95"
+                                        style={{ color: currentTheme.main }}
                                       >
-                                        <div className="flex items-center gap-1.5">
-                                          <Cherry className="w-3 h-3" style={{ color: currentTheme.main }} />
-                                          <span>查看推薦清單 ({shops.length})</span>
-                                        </div>
-                                        {expandedNotes[item.id] ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                        <span>{isNotesExpanded ? "收合備註" : "展開完整備註"}</span>
+                                        {isNotesExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                                       </button>
-                                      
-                                      {expandedNotes[item.id] && (
-                                        <div className="mt-2 grid grid-cols-2 gap-2 animate-in fade-in slide-in-from-top-1 duration-300">
-                                          {shops.map((shop, sIdx) => (
-                                            <button 
-                                              key={sIdx} 
-                                              onClick={(e) => { e.stopPropagation(); setSelectedShop(shop); }}
-                                              className="bg-white border rounded-xl p-2.5 text-[11px] text-left hover:opacity-80 active:scale-95 transition-all shadow-sm flex items-center gap-2"
-                                              style={{ borderColor: currentTheme.border }}
-                                            >
-                                              <Store className="w-3.5 h-3.5 shrink-0" style={{ color: currentTheme.main }} />
-                                              <span className="font-bold truncate" style={{ color: currentTheme.text }}>{shop.name}</span>
-                                            </button>
-                                          ))}
-                                        </div>
-                                      )}
+                                    )}
+                                  </div>
+                                  
+                                  <div>
+                                    {renderFormattedLines(intro, "\n", !isNotesExpanded)}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* 推薦店家清單 */}
+                              {shopList.length > 0 && (
+                                <div className="mt-3">
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setExpandedNotes(prev => ({ ...prev, [item.id]: !prev[item.id] }));
+                                    }}
+                                    className="w-full flex items-center justify-between px-3 py-2 bg-white border rounded-xl text-[11px] font-bold transition-all shadow-sm hover:shadow active:scale-[0.99]"
+                                    style={{ borderColor: currentTheme.border, color: currentTheme.accent }}
+                                  >
+                                    <div className="flex items-center gap-1.5">
+                                      <Cherry className="w-3.5 h-3.5" style={{ color: currentTheme.main }} />
+                                      <span>查看推薦清單 ({shopList.length})</span>
+                                    </div>
+                                    {expandedNotes[item.id] ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                                  </button>
+                                  
+                                  {expandedNotes[item.id] && (
+                                    <div className="mt-2 grid grid-cols-2 gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                      {shopList.map((shop, sIdx) => {
+                                        const ShopIconComponent = getShopIcon(shop.category);
+                                        const hasImage = !!shop.image?.trim();
+
+                                        return (
+                                          <button 
+                                            key={sIdx} 
+                                            onClick={(e) => { 
+                                              e.stopPropagation(); 
+                                              setSelectedShop({ shops: shopList, initialIndex: sIdx, id: item.id }); 
+                                            }}
+                                            className="bg-white border rounded-xl p-1.5 pr-2.5 text-[11px] text-left hover:opacity-80 active:scale-95 transition-all shadow-sm flex items-center gap-2 overflow-hidden"
+                                            style={{ borderColor: currentTheme.border }}
+                                          >
+                                            {hasImage ? (
+                                              <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-slate-100 bg-slate-50">
+                                                <img 
+                                                  src={shop.image} 
+                                                  alt={shop.name} 
+                                                  className="w-full h-full object-cover" 
+                                                  onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    e.target.style.display = 'none';
+                                                  }}
+                                                />
+                                              </div>
+                                            ) : (
+                                              <div 
+                                                className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center border border-dashed"
+                                                style={{ backgroundColor: `${currentTheme.main}08`, borderColor: `${currentTheme.main}20` }}
+                                              >
+                                                <ShopIconComponent className="w-3.5 h-3.5 opacity-60" style={{ color: currentTheme.main }} />
+                                              </div>
+                                            )}
+
+                                            <div className="min-w-0 flex-1 flex items-center gap-1">
+                                              {hasImage && (
+                                                <ShopIconComponent className="w-3 h-3 shrink-0 opacity-70" style={{ color: currentTheme.main }} />
+                                              )}
+                                              <span className="font-bold truncate" style={{ color: currentTheme.text }}>
+                                                {shop.name || `店家 ${sIdx + 1}`}
+                                              </span>
+                                            </div>
+                                          </button>
+                                        );
+                                      })}
                                     </div>
                                   )}
                                 </div>
                               )}
+                              
                             </div>
                           </div>
 
@@ -634,7 +687,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
         <div className="flex justify-center mt-4 px-2">
           <button onClick={() => setTrip((prev) => {
             const next = structuredClone(prev);
-            next.days[activeDayIndex].items.push({ id: `item-${Date.now()}`, time: "", type: "ATTRACTION", title: "新的行程", ticketIds: [], subtitle: "", address: "", openingHours: "", offDay: "", phone: "", notes: "", link: "" });
+            next.days[activeDayIndex].items.push({ id: `item-${Date.now()}`, time: "", type: "ATTRACTION", title: "新的行程", ticketIds: [], subtitle: "", address: "", openingHours: "", offDay: "", phone: "", notes: "", shops: [], link: "" });
             return next;
           })} className="w-full max-w-xs py-2.5 rounded-full border border-dashed bg-white text-xs font-bold shadow-sm active:scale-95 transition-all" style={{ borderColor: currentTheme.main, color: currentTheme.accent }}>
             ＋ 新增行程
@@ -642,79 +695,23 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
         </div>
       )}
 
+      {/* 推薦店家清單瀏覽 Modal */}
       {selectedShop && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-3 bg-black/50 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setSelectedShop(null)}>
-          <div className="w-[95%] max-w-[340px] rounded-[2.2rem] border shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-200" style={{ backgroundColor: "white", backgroundImage: `linear-gradient(${currentTheme.main}0D, ${currentTheme.main}0D)`, borderColor: currentTheme.border }} onClick={(e) => e.stopPropagation()}>
-            
-            <div className="h-14 flex flex-col items-center justify-center relative" style={{ backgroundColor: currentTheme.light }}>
-               <span className="text-[8px] font-bold tracking-[0.3em] uppercase mb-1 opacity-60" style={{ color: currentTheme.main }}>Shop Information</span>
-               <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-sm"><Store className="w-4 h-4" style={{ color: currentTheme.main }} /></div>
-               <button onClick={() => setSelectedShop(null)} className="absolute top-3.5 right-4 w-7 h-7 rounded-full flex items-center justify-center bg-white/60 active:scale-90 transition-all z-10" style={{ color: currentTheme.accent }}><X className="w-4 h-4" /></button>
-            </div>
-
-            <div className="px-5 pb-7 pt-5 flex flex-col items-center">
-              <div className="text-center mb-5 w-full">
-                <h3 className="text-[20px] font-black leading-tight" style={{ color: currentTheme.text }}>{selectedShop.name}</h3>
-                {selectedShop.subtitle && (
-                  <p className="text-[13px] font-bold mt-1.5 tracking-wide opacity-80" style={{ color: currentTheme.accent }}>
-                    {selectedShop.subtitle}
-                  </p>
-                )}
-              </div>
-              
-              <div className="w-full space-y-4 text-left overflow-y-auto max-h-[45vh] scrollbar-none">
-                <div className="flex flex-col gap-1.5">
-                   <div className="flex items-center gap-1.5 text-[10px] font-bold opacity-70 uppercase tracking-tight ml-1" style={{ color: currentTheme.accent }}>
-                      <Clock className="w-3.5 h-3.5" /> 營業時間
-                   </div>
-                   <div className="bg-white rounded-2xl p-3 border text-[14px] font-medium leading-relaxed shadow-sm text-center" style={{ borderColor: currentTheme.border, color: currentTheme.text }}>
-                      {selectedShop.hours || "請參考現場公告"}
-                   </div>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                   <div className="flex items-center gap-1.5 text-[10px] font-bold opacity-70 uppercase tracking-tight ml-1" style={{ color: currentTheme.accent }}>
-                      <Sparkles className="w-3.5 h-3.5" /> 詳細介紹
-                   </div>
-                   <div className="bg-white rounded-2xl p-4 border shadow-sm" style={{ borderColor: currentTheme.border }}>
-                      {selectedShop.desc ? (
-                        <div>
-                          {renderFormattedLines(selectedShop.desc, "\\", false)}
-                        </div>
-                      ) : (
-                        <p className="text-[13px] text-center italic opacity-60" style={{ color: currentTheme.accent }}>暫無詳細備註...</p>
-                      )}
-                   </div>
-                </div>
-              </div>
-              
-              <button 
-                onClick={() => {
-                  const fullTextContainer = `${selectedShop.name || ""} ${selectedShop.subtitle || ""} ${selectedShop.desc || ""}`;
-                  const hasKorean = /[\uAC00-\uD7AF]/.test(fullTextContainer);
-                  
-                  const finalSearchWord = (hasKorean && selectedShop.subtitle) ? selectedShop.subtitle : selectedShop.name;
-                  const query = encodeURIComponent(finalSearchWord);
-
-                  if (hasKorean) {
-                    window.open(`https://map.naver.com/v5/search/${query}`, "_blank");
-                  } else {
-                    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank");
-                  }
-                }}
-                className="mt-6 w-full py-4 text-white rounded-2xl text-[14px] font-black shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 hover:opacity-90"
-                style={{ backgroundColor: currentTheme.main }}
-              >
-                <Map className="w-4 h-4" /> 查看店家地圖
-              </button>
-            </div>
-          </div>
-        </div>
+        <ShopListModal
+          shops={selectedShop.shops}
+          themeId={themeId}
+          initialIndex={selectedShop.initialIndex || 0}
+          onClose={() => setSelectedShop(null)}
+          onEdit={!isViewer ? () => setEditingItem(currentItems.find(i => i.id === selectedShop.id)) : null}
+        />
       )}
 
+      {/* 編輯行程 Modal */}
       {editingItem && !isViewer && (
         <EditItemModal
-          item={editingItem} trip={trip} tickets={trip.tickets || []}
+          item={editingItem} 
+          trip={trip} 
+          tickets={trip.tickets || []}
           themeId={themeId}
           onClose={() => setEditingItem(null)}
           onSave={(updated, targetDayIndex) => {

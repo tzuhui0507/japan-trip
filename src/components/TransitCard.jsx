@@ -12,7 +12,8 @@ import {
   TrainFront,
   Signpost,
   CarFront,
-  Ship, // 新增：引入船圖示
+  Ship,
+  Motorbike,
 } from "lucide-react";
 import { THEMES } from "../App";
 
@@ -20,6 +21,7 @@ const MODE_COLORS = {
   walk: "#666666",
   taxi: "#EFBF2F",
   drive: "#E67E22", // 代表自駕/租車
+  scooter: "#CC5500", // 代表機車/摩托車 (疾速橘紅)
   bus: "#8B5E3C",
   plane: "#1C82D4",
   ferry: "#0891B2", // 代表船隻/渡輪
@@ -143,9 +145,10 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
       case "walk": return <Footprints className="w-4 h-4" stroke={color} />;
       case "taxi": return <Car className="w-4 h-4" stroke={color} />;
       case "drive": return <CarFront className="w-4 h-4" stroke={color} />;
+      case "scooter": return <Motorbike className="w-4 h-4" stroke={color} />; // 💡 採用自訂的專屬機車圖示
       case "bus": return <Bus className="w-4 h-4" stroke={color} />;
       case "plane": return <Plane className="w-4 h-4" stroke={color} />;
-      case "ferry": return <Ship className="w-4 h-4" stroke={color} />; // 新增船隻圖示
+      case "ferry": return <Ship className="w-4 h-4" stroke={color} />;
       case "shinkansen": return <TrainFront stroke={color} className="w-4 h-4" />;
       default: return <Train className="w-4 h-4" stroke={color} />;
     }
@@ -168,7 +171,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
   
   const toggleMode = (legId) => {
     if (isViewer) return;
-    const MODES = ["train", "shinkansen", "walk", "taxi", "drive", "bus", "plane", "ferry"]; // 新增 "ferry"
+    const MODES = ["train", "shinkansen", "walk", "taxi", "drive", "scooter", "bus", "plane", "ferry"];
     setLegs((prev) => prev.map((l) => (l.id === legId ? { ...l, mode: MODES[(MODES.indexOf(l.mode) + 1) % MODES.length] } : l)));
   };
 
@@ -201,14 +204,12 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
 
         return (
           <div key={leg.id} className="mb-2.5 last:mb-0 w-full">
-            {/* 一體化流線型設計「路線名稱 ｜ 🧭 方向文字」 */}
             <div className="flex items-center gap-1 w-full mb-1 flex-wrap text-[10px]" style={{ color }}>
               <div className="flex items-center gap-1 min-w-0">
                 <div className="shrink-0 mt-0.5">{getIcon(leg.mode, color)}</div>
                 <span className="font-black break-words min-w-0">{lineName || "未命名路線"}</span>
               </div>
               
-              {/* 當有輸入方向時，流暢並排呈現 */}
               {direction && (
                 <div className="flex items-center gap-1 shrink-0 font-black">
                   <span className="opacity-40 font-normal">｜</span>
@@ -218,10 +219,7 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
               )}
             </div>
             
-            {/* 起訖純文字區塊 (依字數自動調整寬度，不再硬撐中間空隙) */}
             <div className="flex flex-row items-center gap-1.5 pl-5 w-full overflow-hidden">
-              
-              {/* 1. 起點純文字 (依字數自然自適應) */}
               <div 
                 className="shrink-0 max-w-[38%] truncate text-[10px] font-bold text-left"
                 style={{ color }}
@@ -230,12 +228,10 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
                 {from || "—"}
               </div>
 
-              {/* 2. 中間方向箭頭 (緊貼起點) */}
               <div className="flex items-center justify-center text-[8px] opacity-50 shrink-0" style={{ color }}>
                 ➔
               </div>
 
-              {/* 3. 終點純文字 (緊貼箭頭) */}
               <div 
                 className="shrink-0 max-w-[38%] truncate text-[10px] font-bold text-left"
                 style={{ color }}
@@ -244,7 +240,6 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
                 {to || "—"}
               </div>
 
-              {/* 4. 最右側貼邊細節小配件 */}
               {(duration || priceDisplay) && (
                 <div className="ml-auto flex flex-col items-end justify-center pl-1 text-[9px] font-bold opacity-80 shrink-0 leading-tight" style={{ color }}>
                   {duration && (
@@ -360,7 +355,6 @@ function TransitCard({ id, defaultData, onUpdate, isViewer = false, branchIndex 
                   </div>
 
                   <div className="space-y-3">
-                    {/* 路線名稱與搭乘方向並排編輯框 */}
                     <div className="flex flex-col sm:flex-row gap-3">
                       <div className="flex-1">
                         <label className="text-[9px] font-black opacity-40 mb-1 block uppercase px-1">路線名稱</label>
