@@ -472,7 +472,6 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                 )}
                               </div>
                               
-                              {/* 💡 左右雙欄對齊核心：右側相片寬度已放大 (w-[145px] sm:w-[165px]) */}
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0 flex-1 space-y-3">
                                   <div>
@@ -553,7 +552,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                   <div className="flex items-center justify-between mb-1.5 opacity-80">
                                     <div className="flex items-center gap-1.5">
                                       <StickyNote className="w-3.5 h-3.5" style={{ color: currentTheme.main }} />
-                                      <span className="text-[10px] font-black tracking-widest uppercase">備註 Notes</span>
+                                      <span className="text-[10px] font-black tracking-widest uppercase">Notes</span>
                                     </div>
 
                                     {canCollapse && (
@@ -578,7 +577,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                 </div>
                               )}
 
-                              {/* 推薦店家清單 */}
+                              {/* 推薦店家清單 (調整為精巧單行設計，無縮圖) */}
                               {shopList.length > 0 && (
                                 <div className="mt-3">
                                   <button 
@@ -600,7 +599,6 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                     <div className="mt-2 grid grid-cols-2 gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
                                       {shopList.map((shop, sIdx) => {
                                         const ShopIconComponent = getShopIcon(shop.category);
-                                        const hasImage = !!shop.image?.trim();
 
                                         return (
                                           <button 
@@ -609,38 +607,13 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                               e.stopPropagation(); 
                                               setSelectedShop({ shops: shopList, initialIndex: sIdx, id: item.id }); 
                                             }}
-                                            className="bg-white border rounded-xl p-1.5 pr-2.5 text-[11px] text-left hover:opacity-80 active:scale-95 transition-all shadow-sm flex items-center gap-2 overflow-hidden"
+                                            className="bg-white border rounded-xl px-2.5 py-2 text-[11px] text-left hover:opacity-80 active:scale-95 transition-all shadow-sm flex items-center gap-2 overflow-hidden"
                                             style={{ borderColor: currentTheme.border }}
                                           >
-                                            {hasImage ? (
-                                              <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-slate-100 bg-slate-50">
-                                                <img 
-                                                  src={shop.image} 
-                                                  alt={shop.name} 
-                                                  className="w-full h-full object-cover" 
-                                                  onError={(e) => {
-                                                    e.target.onerror = null;
-                                                    e.target.style.display = 'none';
-                                                  }}
-                                                />
-                                              </div>
-                                            ) : (
-                                              <div 
-                                                className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center border border-dashed"
-                                                style={{ backgroundColor: `${currentTheme.main}08`, borderColor: `${currentTheme.main}20` }}
-                                              >
-                                                <ShopIconComponent className="w-3.5 h-3.5 opacity-60" style={{ color: currentTheme.main }} />
-                                              </div>
-                                            )}
-
-                                            <div className="min-w-0 flex-1 flex items-center gap-1">
-                                              {hasImage && (
-                                                <ShopIconComponent className="w-3 h-3 shrink-0 opacity-70" style={{ color: currentTheme.main }} />
-                                              )}
-                                              <span className="font-bold truncate" style={{ color: currentTheme.text }}>
-                                                {shop.name || `店家 ${sIdx + 1}`}
-                                              </span>
-                                            </div>
+                                            <ShopIconComponent className="w-3.5 h-3.5 shrink-0 opacity-80" style={{ color: currentTheme.main }} />
+                                            <span className="font-bold truncate flex-1" style={{ color: currentTheme.text }}>
+                                              {shop.name || `店家 ${sIdx + 1}`}
+                                            </span>
                                           </button>
                                         );
                                       })}
