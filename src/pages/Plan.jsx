@@ -472,7 +472,8 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                 )}
                               </div>
                               
-                              <div className="flex items-start justify-between gap-3">
+                              {/* 💡 左右雙欄對齊核心：右側相片加上 mr-2 內縮，並垂直置中 */}
+                              <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0 flex-1 space-y-3">
                                   <div>
                                     <h3 className="text-base font-bold leading-snug" style={{ color: currentTheme.text }}>{branch.title}</h3>
@@ -520,7 +521,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                 </div>
 
                                 {item.image?.trim() && (
-                                  <div className="shrink-0 w-[145px] sm:w-[165px] bg-white p-2 pb-3 rounded-xl border border-slate-200/80 shadow-md transform rotate-2 transition-transform hover:rotate-0 self-start mt-1">
+                                  <div className="shrink-0 w-[145px] sm:w-[165px] bg-white p-2 pb-3 rounded-xl border border-slate-200/80 shadow-md transform rotate-2 transition-transform hover:rotate-0 self-center mr-2">
                                     <div className="w-full h-[105px] sm:h-[120px] rounded-lg overflow-hidden bg-slate-100">
                                       <img 
                                         src={item.image} 
@@ -577,7 +578,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                 </div>
                               )}
 
-                              {/* 推薦店家清單 (調整為精巧單行設計，無縮圖) */}
+                              {/* 推薦店家清單 */}
                               {shopList.length > 0 && (
                                 <div className="mt-3">
                                   <button 
