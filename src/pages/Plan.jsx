@@ -120,6 +120,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
       offDay: getVal(item.offDay),
       phone: getVal(item.phone),
       link: getVal(item.link),
+      image: getVal(item.image), // 💡 支援每個方案擁有各自的獨立圖片
       shops: item.shops || [],
       ticketIds: typeof item.ticketIds === "string" 
         ? (split(item.ticketIds)[currentIndex] || split(item.ticketIds)[0]).split(",").filter(Boolean)
@@ -472,12 +473,12 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                 )}
                               </div>
                               
-                              {/* 💡 左右雙欄：右側相片寬度適度調小（w-[115px] sm:w-[130px]），留給左側更多空間顯示長店名 */}
+                              {/* 💡 左右雙欄：右側相片可隨著方案切換連動顯示對應圖片 */}
                               <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0 flex-1 space-y-3">
                                   <div>
-                                    <h3 className="text-base font-bold leading-snug" style={{ color: currentTheme.text }}>{branch.title}</h3>
-                                    {branch.subtitle && <p className="text-[11px] mt-0.5 opacity-70" style={{ color: currentTheme.accent }}>{branch.subtitle}</p>}
+                                    <h3 className="text-base font-bold leading-snug break-words" style={{ color: currentTheme.text }}>{branch.title}</h3>
+                                    {branch.subtitle && <p className="text-[11px] mt-0.5 opacity-70 leading-tight break-words" style={{ color: currentTheme.accent }}>{branch.subtitle}</p>}
                                   </div>
 
                                   {branch.ticketIds?.length > 0 && (
@@ -520,11 +521,11 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                   </div>
                                 </div>
 
-                                {item.image?.trim() && (
+                                {branch.image?.trim() && (
                                   <div className="shrink-0 w-[115px] sm:w-[130px] bg-white p-2 pb-2.5 rounded-xl border border-slate-200/80 shadow-md transform rotate-2 transition-transform hover:rotate-0 self-center mr-1">
                                     <div className="w-full h-[85px] sm:h-[95px] rounded-lg overflow-hidden bg-slate-100">
                                       <img 
-                                        src={item.image} 
+                                        src={branch.image} 
                                         alt={branch.title} 
                                         className="w-full h-full object-cover"
                                         onError={(e) => {

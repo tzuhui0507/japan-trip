@@ -68,7 +68,6 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
   const [baseForm, setBaseForm] = useState({ 
     time: item.time || "", 
     type: item.type || "ATTRACTION",
-    image: item.image || "", // 💡 行程卡片本身的封面圖片網址
     targetDayIndex: currentDayIndex // 用來記錄使用者選擇搬移到哪一天
   });
   
@@ -81,11 +80,12 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
     phone: parseBranch(item.phone),
     notes: parseBranch(item.notes),
     link: parseBranch(item.link),
+    image: parseBranch(item.image), // 💡 支援每個方案各自獨立的圖片網址
   }), [item]);
 
-  const [formA, setFormA] = useState({ title: initialData.title.a, subtitle: initialData.subtitle.a, address: initialData.address.a, openingHours: initialData.openingHours.a, offDay: initialData.offDay.a, phone: initialData.phone.a, notes: initialData.notes.a, link: initialData.link.a });
-  const [formB, setFormB] = useState({ title: initialData.title.b, subtitle: initialData.subtitle.b, address: initialData.address.b, openingHours: initialData.openingHours.b, offDay: initialData.offDay.b, phone: initialData.phone.b, notes: initialData.notes.b, link: initialData.link.b });
-  const [formC, setFormC] = useState({ title: initialData.title.c, subtitle: initialData.subtitle.c, address: initialData.address.c, openingHours: initialData.openingHours.c, offDay: initialData.offDay.c, phone: initialData.phone.c, notes: initialData.notes.c, link: initialData.link.c });
+  const [formA, setFormA] = useState({ title: initialData.title.a, subtitle: initialData.subtitle.a, address: initialData.address.a, openingHours: initialData.openingHours.a, offDay: initialData.offDay.a, phone: initialData.phone.a, notes: initialData.notes.a, link: initialData.link.a, image: initialData.image.a });
+  const [formB, setFormB] = useState({ title: initialData.title.b, subtitle: initialData.subtitle.b, address: initialData.address.b, openingHours: initialData.openingHours.b, offDay: initialData.offDay.b, phone: initialData.phone.b, notes: initialData.notes.b, link: initialData.link.b, image: initialData.image.b });
+  const [formC, setFormC] = useState({ title: initialData.title.c, subtitle: initialData.subtitle.c, address: initialData.address.c, openingHours: initialData.openingHours.c, offDay: initialData.offDay.c, phone: initialData.phone.c, notes: initialData.notes.c, link: initialData.link.c, image: initialData.image.c });
 
   const [branchTickets, setBranchTickets] = useState(useMemo(() => {
     let ids = item.ticketIds || [];
@@ -126,7 +126,6 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
       ...item, 
       time: baseForm.time || "", 
       type: baseForm.type, 
-      image: baseForm.image?.trim() || "", // 💡 儲存行程卡片圖片
       title: combine("title"), 
       subtitle: combine("subtitle"), 
       address: combine("address"), 
@@ -135,6 +134,7 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
       phone: combine("phone"), 
       notes: combine("notes"), 
       link: combine("link"), 
+      image: combine("image"), // 💡 儲存各方案獨立的圖片
       shops: shops, // 儲存店家清單
       ticketIds: hasAnyC 
         ? `${branchTickets.A.join(",")}---${branchTickets.B.join(",")}---${branchTickets.C.join(",")}`
@@ -291,51 +291,6 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
               </div>
             </div>
 
-            {/* 💡 行程卡片封面圖片 (URL) 欄位 */}
-            <div className="w-full space-y-2">
-              <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest px-1 opacity-70" style={{ color: currentTheme.text }}>
-                <ImageIcon className="w-3.5 h-3.5" style={{ color: currentTheme.main }} /> 行程卡片封面圖片 (URL)
-              </label>
-              
-              <div 
-                className="w-full border rounded-2xl bg-white shadow-sm overflow-hidden flex items-center transition-all focus-within:ring-2 px-3 py-1.5"
-                style={{ borderColor: `${currentTheme.main}30`, "--tw-ring-color": `${currentTheme.main}20` }}
-              >
-                <input 
-                  type="text"
-                  value={baseForm.image || ""} 
-                  onChange={(e) => setBaseForm(prev => ({ ...prev, image: e.target.value }))} 
-                  className="w-full px-2 py-2 text-xs font-medium outline-none bg-transparent" 
-                  placeholder="請輸入圖片連結網址 (例：https://example.com/photo.jpg)"
-                  style={{ color: currentTheme.text }}
-                />
-                {baseForm.image && (
-                  <button 
-                    type="button"
-                    onClick={() => setBaseForm(prev => ({ ...prev, image: "" }))}
-                    className="p-1 rounded-full text-slate-400 hover:text-red-500 transition-colors shrink-0"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-
-              {/* 即時圖片預覽 */}
-              {baseForm.image?.trim() && (
-                <div className="relative w-full h-36 rounded-2xl overflow-hidden border shadow-inner bg-slate-50 mt-2">
-                  <img
-                    src={baseForm.image}
-                    alt="行程封面預覽"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = "https://placehold.co/600x400?text=Image+Not+Found";
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-
             {/* 推薦店家管理按鈕區塊 */}
             <div className="w-full space-y-2">
               <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest px-1 opacity-70" style={{ color: currentTheme.text }}>
@@ -421,6 +376,52 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
               <div className="space-y-5 animate-in fade-in duration-200">
                 {renderField("地點名稱", "title", Pin)}
                 {renderField("副標題", "subtitle", Bookmark)}
+                
+                {/* 💡 行程卡片封面圖片 (URL) 欄位移至方案內，讓各方案可獨立設定照片 */}
+                <div className="w-full space-y-2">
+                  <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest px-1 opacity-70" style={{ color: currentTheme.text }}>
+                    <ImageIcon className="w-3.5 h-3.5" style={{ color: currentTheme.main }} /> 行程卡片封面圖片 (URL) - ({activeTab === "A" ? "方案 1" : activeTab === "B" ? "方案 2" : "方案 3"})
+                  </label>
+                  
+                  <div 
+                    className="w-full border rounded-2xl bg-white shadow-sm overflow-hidden flex items-center transition-all focus-within:ring-2 px-3 py-1.5"
+                    style={{ borderColor: `${currentTheme.main}30`, "--tw-ring-color": `${currentTheme.main}20` }}
+                  >
+                    <input 
+                      type="text"
+                      value={currentForm.image || ""} 
+                      onChange={(e) => setCurrentForm(prev => ({ ...prev, image: e.target.value }))} 
+                      className="w-full px-2 py-2 text-xs font-medium outline-none bg-transparent" 
+                      placeholder="請輸入圖片連結網址 (例：https://example.com/photo.jpg)"
+                      style={{ color: currentTheme.text }}
+                    />
+                    {currentForm.image && (
+                      <button 
+                        type="button"
+                        onClick={() => setCurrentForm(prev => ({ ...prev, image: "" }))}
+                        className="p-1 rounded-full text-slate-400 hover:text-red-500 transition-colors shrink-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* 即時圖片預覽 */}
+                  {currentForm.image?.trim() && (
+                    <div className="relative w-full h-36 rounded-2xl overflow-hidden border shadow-inner bg-slate-50 mt-2">
+                      <img
+                        src={currentForm.image}
+                        alt="行程封面預覽"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "https://placehold.co/600x400?text=Image+Not+Found";
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
                 {renderField("詳細地址", "address", MapPin)}
                 {renderField("營業時間", "openingHours", Clock)}
                 {renderField("公休日", "offDay", CalendarOff)}
