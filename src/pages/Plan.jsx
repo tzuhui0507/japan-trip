@@ -472,7 +472,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                 )}
                               </div>
                               
-                              {/* 💡 左右雙欄對齊核心：右側相片加上 mr-2 內縮，並垂直置中 */}
+                              {/* 💡 左右雙欄：右側相片寬度適度調小（w-[115px] sm:w-[130px]），留給左側更多空間顯示長店名 */}
                               <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0 flex-1 space-y-3">
                                   <div>
@@ -521,8 +521,8 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                 </div>
 
                                 {item.image?.trim() && (
-                                  <div className="shrink-0 w-[145px] sm:w-[165px] bg-white p-2 pb-3 rounded-xl border border-slate-200/80 shadow-md transform rotate-2 transition-transform hover:rotate-0 self-center mr-2">
-                                    <div className="w-full h-[105px] sm:h-[120px] rounded-lg overflow-hidden bg-slate-100">
+                                  <div className="shrink-0 w-[115px] sm:w-[130px] bg-white p-2 pb-2.5 rounded-xl border border-slate-200/80 shadow-md transform rotate-2 transition-transform hover:rotate-0 self-center mr-1">
+                                    <div className="w-full h-[85px] sm:h-[95px] rounded-lg overflow-hidden bg-slate-100">
                                       <img 
                                         src={item.image} 
                                         alt={branch.title} 
@@ -533,9 +533,13 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                         }}
                                       />
                                     </div>
-                                    <div className="mt-1.5 text-[9px] font-bold text-center opacity-60 flex items-center justify-center gap-0.5" style={{ color: currentTheme.text }}>
-                                      <CameraIcon className="w-3 h-3 opacity-90" style={{ color: currentTheme.main }} />
-                                      <span className="opacity-60">｜</span>
+                                    <div 
+                                      className="mt-1.5 text-[8px] font-bold text-center opacity-70 flex items-center justify-center gap-1" 
+                                      style={{ color: currentTheme.text }}
+                                      title={branch.title}
+                                    >
+                                      <CameraIcon className="w-2.5 h-2.5 shrink-0 opacity-90" style={{ color: currentTheme.main }} />
+                                      <span className="opacity-50">|</span>
                                       <span className="truncate">{branch.title}</span>
                                     </div>
                                   </div>
