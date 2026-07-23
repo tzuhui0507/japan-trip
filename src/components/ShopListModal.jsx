@@ -301,7 +301,7 @@ export default function ShopListModal({
             style={{ backgroundColor: currentTheme.main }}
           >
             <MapPinned className="w-3.5 h-3.5" />
-            <span>開啟地圖導航</span>
+            <span>地圖導航</span>
           </button>
         </div>
       </div>

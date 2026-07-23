@@ -596,7 +596,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                   >
                                     <div className="flex items-center gap-1.5">
                                       <Cherry className="w-3.5 h-3.5" style={{ color: currentTheme.main }} />
-                                      <span>查看推薦清單 ({shopList.length})</span>
+                                      <span>推薦清單 ({shopList.length})</span>
                                     </div>
                                     {expandedNotes[item.id] ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                                   </button>
