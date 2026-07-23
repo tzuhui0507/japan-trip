@@ -3,15 +3,20 @@
 @tailwind utilities;
 
 html {
-  font-family: "Zen Maru Gothic", sans-serif !important;
+  font-family: "Zen Maru Gothic", "Sunflower", sans-serif !important;
   font-weight: 700;
   background-color: #F7F1EB;
   color: #5A4636;
 }
 
 body, input, textarea, select, h1, h2, h3, h4, span, p, div {
-  font-family: "Zen Maru Gothic", sans-serif;
+  font-family: "Zen Maru Gothic", "Sunflower", sans-serif;
   font-weight: 700;
+}
+
+/* 讓 Sunflower 區塊明確指定使用 500 粗重 */
+span, div, p {
+  font-synthesis: none;
 }
 
 /* ===== iOS Safari 防止輸入時自動放大 ===== */
