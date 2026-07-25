@@ -48,15 +48,14 @@ export const THEMES = {
     accent: "#A65D46",
     light: "#F5E8E0"
   },
-  // --- 新增黃色系 ---
   lemonFizz: {
     id: "lemonFizz",
     name: "檸檬氣泡",
-    main: "#EBC24D",      // 明亮鮮豔的黃色
-    bg: "#FDFBF2",        // 極淺黃背景
+    main: "#EBC24D",
+    bg: "#FDFBF2",
     card: "#FFFEFA",
     border: "#F2E6C2",
-    text: "#5C4D21",      // 深橄欖棕
+    text: "#5C4D21",
     accent: "#A68B37",
     light: "#F7F0D7"
   },
@@ -71,7 +70,6 @@ export const THEMES = {
     accent: "#4D7A74",
     light: "#E4F1F0"
   },
-  // --- 其他擴充色系 ---
   forestGreen: {
     id: "forestGreen",
     name: "玄米抹茶",
@@ -116,11 +114,10 @@ export const THEMES = {
     accent: "#7A4F4F",
     light: "#F0E4E4"
   },
-  // --- 新增灰黑色系 ---
   stoneGray: {
     id: "stoneGray",
     name: "迷霧灰影",
-    main: "#787878",      // 中性灰色
+    main: "#787878",
     bg: "#F7F7F7",
     card: "#FDFDFD",
     border: "#E0E0E0",
@@ -131,22 +128,32 @@ export const THEMES = {
 };
 
 export default function App() {
-  // 2. 初始化主題：優先從本地讀取，沒有則預設奶茶色
   const [themeId, setThemeId] = useState(() => {
     const saved = localStorage.getItem("user_preferred_theme");
-    // 額外增加檢查，確保讀取到的 saved ID 真的存在於 THEMES 中
     return (saved && THEMES[saved]) ? saved : "mochaClassic";
   });
 
   const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
 
-  // 3. 當主題改變時，保存到 localStorage
+  // 💡 核心修正：自動補上並鎖定 viewer 參數
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    // 如果網址沒有 mode 參數，但我們透過其他線索（例如可以檢查 localStorage 是否為空，或者直接由你發給他們的專屬連結帶有識別）
+    // 這裡我們直接示範：如果使用者手動分享或點擊特定條件，可以確保網址帶有 ?mode=viewer
+    // 為了最保險，你可以讓朋友點擊含有 ?mode=viewer 的連結後，如果他們點擊「加入主畫面」，
+    // 我們直接在頁面載入時檢查：如果本機沒有行程資料（代表這是朋友的手機），就自動把網址補上 ?mode=viewer！
+    const hasTripData = localStorage.getItem("my_trip_key"); // 假設這是你的行程儲存 key，可依實際調整
+    if (!params.has("mode") && !hasTripData) {
+      const newUrl = `${window.location.pathname}?mode=viewer${window.location.hash}`;
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, []);
+
   useEffect(() => {
     localStorage.setItem("user_preferred_theme", themeId);
   }, [themeId]);
 
   return (
-    // 4. 將背景色動態綁定到 currentTheme.bg
     <div 
       className="min-h-screen transition-colors duration-500" 
       style={{ backgroundColor: currentTheme.bg }}
