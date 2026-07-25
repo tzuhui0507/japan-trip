@@ -16,13 +16,23 @@ import {
   Check,
   HandCoins,
   ReceiptText,
-  RefreshCcw
+  RefreshCcw,
+  ChevronRight,
+  Cat,
+  PawPrint,
+  Smile,
+  Heart,
+  Star,
+  Zap,
+  Ghost,
+  Rabbit,
+  Dog,
+  Squirrel
 } from "lucide-react";
 import { THEMES } from "../App";
 
 const VIEWER_EXPENSES_KEY = "viewer_expenses_v1";
 
-// 貨幣符號對照表
 const CURRENCY_MAP = {
   JPY: { symbol: "¥", name: "日圓" },
   KRW: { symbol: "₩", name: "韓元" },
@@ -44,6 +54,25 @@ const CATEGORY_MAP = {
   SHOP: { key: "SHOP", label: "購物", icon: ShoppingBag, pillBg: "#F3E3F0", pillText: "#7A4D6E" },
 };
 
+// 🛠️ 充滿可愛動物與精選風格的 Lucide Icon 清單
+const ICON_OPTIONS = [
+  { id: "Cat", label: "小貓", icon: Cat },
+  { id: "Rabbit", label: "兔子", icon: Rabbit },
+  { id: "Dog", label: "小狗", icon: Dog },
+  { id: "Squirrel", label: "小松鼠", icon: Squirrel },
+  { id: "PawPrint", label: "腳印", icon: PawPrint },
+  { id: "Ghost", label: "幽靈", icon: Ghost },
+  { id: "Smile", label: "笑臉", icon: Smile },
+  { id: "Heart", label: "愛心", icon: Heart },
+  { id: "Star", label: "星星", icon: Star },
+  { id: "Zap", label: "閃電", icon: Zap },
+];
+
+function getMemberIconComponent(iconName) {
+  const found = ICON_OPTIONS.find((i) => i.id === iconName);
+  return found ? found.icon : Cat;
+}
+
 const CATEGORY_ORDER = ["TRANSPORT", "FOOD", "SIGHT", "SHOP"];
 const DEFAULT_DATA = { members: [], expenses: [] };
 
@@ -62,13 +91,12 @@ export default function Expenses({ trip, setTrip, themeId }) {
   const baseCurrency = trip.currency || "JPY";
   const currencyInfo = CURRENCY_MAP[baseCurrency] || { symbol: "$", name: "外幣" };
 
-  const members = Array.isArray(isViewer ? viewerData?.members : trip?.members) 
-    ? (isViewer ? viewerData.members : trip.members) 
-    : [];
+  const rawMembers = isViewer ? viewerData?.members : trip?.members;
+  const members = Array.isArray(rawMembers) ? rawMembers : DEFAULT_DATA.members;
     
-  const expenses = Array.isArray(isViewer ? viewerData?.expenses : trip?.expenses) 
-    ? (isViewer ? viewerData.expenses : trip.expenses) 
-    : [];
+  const rawExpenses = isViewer ? viewerData?.expenses : trip?.expenses;
+  const expenses = Array.isArray(rawExpenses) ? rawExpenses : [];
+
   const exchangeRate = isViewer ? (viewerData?.exchangeRate || trip.exchangeRate || null) : (trip.exchangeRate || null);
 
   useEffect(() => {
@@ -80,7 +108,6 @@ export default function Expenses({ trip, setTrip, themeId }) {
   }, [isViewer]);
 
   useEffect(() => {
-    // 如果已經有抓過當前幣別的匯率，且距離上次更新不久，就不要一直重複抓，避免觸發 404 或頻繁重刷
     if (exchangeRate && exchangeRate.base === baseCurrency) return;
 
     async function fetchRate() {
@@ -103,35 +130,50 @@ export default function Expenses({ trip, setTrip, themeId }) {
       } catch (e) { console.error("匯率抓取失敗", e); }
     }
     fetchRate();
-  }, [baseCurrency]); // 移除不必要的依賴，只在幣別改變時才抓取
+  }, [baseCurrency]);
 
   const setMembers = (updater) => {
     if (isViewer) {
       setViewerData(prev => {
-        const next = { ...prev, members: typeof updater === "function" ? updater(prev.members) : updater };
+        const currentList = Array.isArray(prev?.members) ? prev.members : DEFAULT_DATA.members;
+        const resolvedMembers = typeof updater === "function" ? updater(currentList) : updater;
+        const next = { ...prev, members: Array.isArray(resolvedMembers) ? resolvedMembers : DEFAULT_DATA.members };
         localStorage.setItem(VIEWER_EXPENSES_KEY, JSON.stringify(next));
         return next;
       });
     } else {
-      setTrip(prev => ({ ...prev, members: typeof updater === "function" ? updater(prev.members) : updater }));
+      setTrip(prev => {
+        const currentList = Array.isArray(prev?.members) ? prev.members : DEFAULT_DATA.members;
+        const resolvedMembers = typeof updater === "function" ? updater(currentList) : updater;
+        return { ...prev, members: Array.isArray(resolvedMembers) ? resolvedMembers : DEFAULT_DATA.members };
+      });
     }
   };
 
   const setExpenses = (updater) => {
     if (isViewer) {
       setViewerData(prev => {
-        const next = { ...prev, expenses: typeof updater === "function" ? updater(prev.expenses) : updater };
+        const currentList = Array.isArray(prev?.expenses) ? prev.expenses : [];
+        const resolvedExpenses = typeof updater === "function" ? updater(currentList) : updater;
+        const next = { ...prev, expenses: Array.isArray(resolvedExpenses) ? resolvedExpenses : [] };
         localStorage.setItem(VIEWER_EXPENSES_KEY, JSON.stringify(next));
         return next;
       });
     } else {
-      setTrip(prev => ({ ...prev, expenses: typeof updater === "function" ? updater(prev.expenses) : updater }));
+      setTrip(prev => {
+        const currentList = Array.isArray(prev?.expenses) ? prev.expenses : [];
+        const resolvedExpenses = typeof updater === "function" ? updater(currentList) : updater;
+        return { ...prev, expenses: Array.isArray(resolvedExpenses) ? resolvedExpenses : [] };
+      });
     }
   };
 
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [memberModalOpen, setMemberModalOpen] = useState(false);
+  const [advanceModalOpen, setAdvanceModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+
+  const [activeIconPickerId, setActiveIconPickerId] = useState(null);
 
   const [form, setForm] = useState({
     date: todayString(), category: "TRANSPORT", title: "", amount: "", mode: "PERSONAL", advanceFor: [], payer: "ME", payMethod: "CASH",
@@ -145,7 +187,9 @@ export default function Expenses({ trip, setTrip, themeId }) {
 
   const categoryTotals = useMemo(() => {
     const r = { TRANSPORT: 0, FOOD: 0, SIGHT: 0, SHOP: 0 };
-    expenses.forEach((e) => (r[e.category] += Number(e.amount)));
+    expenses.forEach((e) => {
+      if (r[e.category] !== undefined) r[e.category] += Number(e.amount);
+    });
     return r;
   }, [expenses]);
 
@@ -153,13 +197,27 @@ export default function Expenses({ trip, setTrip, themeId }) {
     const map = {};
     expenses.forEach((e) => {
       if (e.mode !== "ADVANCE" || e.payer !== "ME") return;
-      const share = Number(e.amount) / (e.advanceFor.length || 1);
-      e.advanceFor.forEach((id) => { map[id] = (map[id] || 0) + share; });
+      const advanceList = Array.isArray(e.advanceFor) ? e.advanceFor : [];
+      if (advanceList.length === 0) return;
+      const share = Number(e.amount) / advanceList.length;
+      advanceList.forEach((id) => { 
+        map[id] = (map[id] || 0) + share; 
+      });
     });
-    return Object.entries(map).map(([id, amt]) => ({
-      id, name: members.find((m) => m.id === id)?.name || "", amount: Math.round(amt),
-    }));
+    return Object.entries(map).map(([id, amt]) => {
+      const foundMember = members.find((m) => m.id === id);
+      return {
+        id, 
+        name: foundMember ? foundMember.name : "未知夥伴", 
+        avatarIcon: foundMember?.avatarIcon || "Cat",
+        amount: Math.round(amt),
+      };
+    });
   }, [expenses, members]);
+
+  const totalAdvanceAmount = useMemo(() => {
+    return advanceSummary.reduce((s, a) => s + a.amount, 0);
+  }, [advanceSummary]);
 
   const groupedByDate = useMemo(() => {
     const map = {};
@@ -181,13 +239,18 @@ export default function Expenses({ trip, setTrip, themeId }) {
 
   const openEdit = (exp) => {
     setEditingId(exp.id);
-    setForm({ ...exp, amount: String(exp.amount) });
+    setForm({ ...exp, amount: String(exp.amount), advanceFor: Array.isArray(exp.advanceFor) ? exp.advanceFor : [] });
     setExpenseModalOpen(true);
   };
 
   const updateForm = (patch) => setForm((p) => ({ ...p, ...patch }));
   const toggleAdvance = (id) => {
-    setForm((p) => ({ ...p, advanceFor: p.advanceFor.includes(id) ? p.advanceFor.filter((x) => x !== id) : [...p.advanceFor, id] }));
+    setForm((p) => ({ 
+      ...p, 
+      advanceFor: Array.isArray(p.advanceFor) 
+        ? (p.advanceFor.includes(id) ? p.advanceFor.filter((x) => x !== id) : [...p.advanceFor, id])
+        : [id] 
+    }));
   };
 
   const saveExpense = () => {
@@ -200,13 +263,11 @@ export default function Expenses({ trip, setTrip, themeId }) {
 
   const deleteExpense = (id) => { if (window.confirm("確定刪除此筆花費？")) setExpenses((prev) => prev.filter((e) => e.id !== id)); };
 
-  // --- 新增：動態匯率精度 (方法 1) ---
   const formatRate = (r) => {
     if (!r) return "--";
     return r < 0.1 ? r.toFixed(5) : r.toFixed(2);
   };
 
-  // --- 修正：金額格式化處理，包含千分位 (方法 4) ---
   const formatCurrency = (n) => {
     const formatted = Number(n).toLocaleString(undefined, {
       minimumFractionDigits: 0,
@@ -225,7 +286,6 @@ export default function Expenses({ trip, setTrip, themeId }) {
           style={{ borderColor: currentTheme.border, color: currentTheme.main }}
         >
           <RefreshCcw className="w-3 h-3 animate-spin-slow" />
-          {/* 套用動態匯率精度 (方法 1) */}
           1 {baseCurrency} ≈ {formatRate(TO_TWD)} TWD
         </div>
 
@@ -239,15 +299,14 @@ export default function Expenses({ trip, setTrip, themeId }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-8">
-        <div className="rounded-[2.5rem] p-5 shadow-lg flex flex-col justify-between min-h-[145px] relative overflow-hidden" 
+      <div className="grid grid-cols-2 gap-3 mb-8 items-stretch">
+        <div className="rounded-[2.5rem] p-5 shadow-lg flex flex-col justify-between h-full relative overflow-hidden" 
              style={{ background: `linear-gradient(135deg, ${currentTheme.main}, ${currentTheme.main}dd)` }}>
           <div className="relative z-10">
             <div className="flex items-center gap-1.5 mb-2 opacity-80 text-white">
               <ReceiptText className="w-4 h-4" />
               <p className="text-[14px] font-black uppercase tracking-widest">Total</p>
             </div>
-            {/* 套用千分位格式化 (方法 4) */}
             <p className="text-2xl font-black leading-tight truncate text-white">{formatCurrency(totalBase)}</p>
           </div>
           <p className="text-[11px] font-bold text-white/70 relative z-10 mt-2">≈ NT${totalTwd.toLocaleString()}</p>
@@ -256,29 +315,26 @@ export default function Expenses({ trip, setTrip, themeId }) {
           </div>
         </div>
 
-        <div className="bg-white rounded-[2.5rem] p-5 border-2 border-dashed shadow-sm flex flex-col justify-between min-h-[145px]" 
-             style={{ borderColor: `${currentTheme.main}40` }}>
+        <button 
+          onClick={() => setAdvanceModalOpen(true)}
+          className="bg-white rounded-[2.5rem] p-5 border-2 border-dashed shadow-sm flex flex-col justify-between h-full text-left active:scale-[0.98] transition-all group"
+          style={{ borderColor: `${currentTheme.main}40` }}
+        >
           <div>
             <div className="flex items-center gap-1.5 mb-2">
               <HandCoins className="w-4 h-4" style={{ color: currentTheme.main }} />
               <p className="text-[14px] font-black uppercase tracking-widest" style={{ color: currentTheme.main }}>代墊總結</p>
             </div>
-            <p className="text-2xl font-black leading-tight truncate" style={{ color: currentTheme.text }}>{formatCurrency(advanceSummary.reduce((s, a) => s + a.amount, 0))}</p>
+            <p className="text-2xl font-black leading-tight truncate" style={{ color: currentTheme.text }}>{formatCurrency(totalAdvanceAmount)}</p>
           </div>
-          <div className="mt-3 space-y-1.5">
-            {advanceSummary.length > 0 ? (
-              advanceSummary.slice(0, 2).map(a => (
-                <div key={a.id} className="flex justify-between items-center px-3 py-1.5 rounded-xl" 
-                     style={{ backgroundColor: `${currentTheme.main}0D` }}>
-                  <span className="text-[11px] font-black truncate max-w-[55px]" style={{ color: currentTheme.main }}>{a.name}</span>
-                  <span className="text-[11px] font-black" style={{ color: currentTheme.main }}>{formatCurrency(a.amount)}</span>
-                </div>
-              ))
-            ) : (
-              <p className="text-[10px] font-bold opacity-30 italic px-1" style={{ color: currentTheme.text }}>尚無代墊紀錄</p>
-            )}
+          
+          <div className="flex items-center justify-between mt-3 pt-2 border-t w-full" style={{ borderColor: `${currentTheme.main}15` }}>
+            <span className="text-[11px] font-black opacity-60" style={{ color: currentTheme.text }}>查看明細對帳</span>
+            <div className="w-6 h-6 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-0.5" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </div>
           </div>
-        </div>
+        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-6">
@@ -328,7 +384,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
             </div>
             {group.items.map((e) => {
               const isCard = e.payMethod === "CARD";
-              const cat = CATEGORY_MAP[e.category];
+              const cat = CATEGORY_MAP[e.category] || CATEGORY_MAP.TRANSPORT;
               return (
                 <div key={e.id} className="bg-white rounded-2xl border px-4 py-3 flex items-center justify-between shadow-sm" style={{ borderColor: currentTheme.border }}>
                   <div className="flex items-start gap-3 min-w-0">
@@ -365,14 +421,69 @@ export default function Expenses({ trip, setTrip, themeId }) {
         ))}
       </div>
 
-      {/* Expense Modal */}
+      {/* 代墊總結詳情 Modal */}
+      {advanceModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-16">
+          <div className="w-full max-w-lg rounded-[32px] border shadow-xl overflow-hidden flex flex-col bg-white" style={{ borderColor: currentTheme.border }}>
+            <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/50 border-b" style={{ borderColor: `${currentTheme.border}40` }}>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>
+                  <HandCoins className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black" style={{ color: currentTheme.text }}>代墊總結清單</h2>
+                  <p className="text-[10px] tracking-[0.2em] uppercase font-black opacity-40" style={{ color: currentTheme.main }}>Advance Summary</p>
+                </div>
+              </div>
+              <button onClick={() => setAdvanceModalOpen(false)} className="w-8 h-8 rounded-full border flex items-center justify-center bg-white shadow-sm" style={{ borderColor: currentTheme.border }}>
+                <X className="w-4 h-4" style={{ color: currentTheme.main }} />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-3 overflow-y-auto max-h-[60vh] scrollbar-hide">
+              <div className="p-4 rounded-2xl flex justify-between items-center mb-2" style={{ backgroundColor: `${currentTheme.main}10` }}>
+                <span className="text-xs font-black" style={{ color: currentTheme.main }}>代墊總金額</span>
+                <span className="text-lg font-black" style={{ color: currentTheme.main }}>{formatCurrency(totalAdvanceAmount)}</span>
+              </div>
+
+              {advanceSummary.length > 0 ? (
+                advanceSummary.map(a => {
+                  const IconComp = getMemberIconComponent(a.avatarIcon);
+                  return (
+                    <div key={a.id} className="flex justify-between items-center px-4 py-3.5 rounded-2xl border bg-white shadow-sm" style={{ borderColor: `${currentTheme.main}20` }}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-2xl flex items-center justify-center shadow-sm" style={{ backgroundColor: `${currentTheme.main}10`, color: currentTheme.main }}>
+                          <IconComp className="w-4 h-4" />
+                        </div>
+                        <span className="text-sm font-black" style={{ color: currentTheme.text }}>{a.name}</span>
+                      </div>
+                      <span className="text-sm font-black" style={{ color: currentTheme.main }}>{formatCurrency(a.amount)}</span>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="py-12 text-center">
+                  <p className="text-xs font-bold opacity-40 italic" style={{ color: currentTheme.text }}>目前尚無任何代墊紀錄</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Expense Modal (新增/編輯花費) */}
       {expenseModalOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-12">
           <div className="w-full max-w-lg rounded-[32px] border shadow-xl overflow-hidden flex flex-col bg-white" style={{ borderColor: currentTheme.border }}>
             <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/50 border-b" style={{ borderColor: `${currentTheme.border}40` }}>
-              <div>
-                <p className="text-[10px] tracking-[0.2em] mb-1 uppercase font-black" style={{ color: currentTheme.main }}>Entry Details</p>
-                <h2 className="text-lg font-black" style={{ color: currentTheme.text }}>{editingId ? "編輯花費" : "新增花費"}</h2>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>
+                  <ReceiptText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black" style={{ color: currentTheme.text }}>{editingId ? "編輯花費" : "新增花費"}</h2>
+                  <p className="text-[10px] tracking-[0.2em] uppercase font-black opacity-40" style={{ color: currentTheme.main }}>Add Expense</p>
+                </div>
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setExpenseModalOpen(false)} className="w-8 h-8 rounded-full border flex items-center justify-center bg-white" style={{ borderColor: currentTheme.border }}><X className="w-4 h-4" style={{ color: currentTheme.main }} /></button>
@@ -420,11 +531,16 @@ export default function Expenses({ trip, setTrip, themeId }) {
                 <div className="rounded-2xl p-4 border animate-in slide-in-from-top-2" style={{ backgroundColor: `${currentTheme.main}05`, borderColor: `${currentTheme.main}20` }}>
                   <label className="text-[10px] font-black mb-3 block uppercase tracking-widest opacity-60" style={{ color: currentTheme.text }}>為誰代墊</label>
                   <div className="flex flex-wrap gap-2">
-                    {members.map((m) => (
-                      <button key={m.id} onClick={() => toggleAdvance(m.id)} className={`px-4 py-1.5 rounded-full text-[11px] font-black border transition-all ${form.advanceFor.includes(m.id) ? "shadow-sm" : "bg-white opacity-50"}`} style={{ backgroundColor: form.advanceFor.includes(m.id) ? `${currentTheme.main}20` : "white", borderColor: `${currentTheme.main}20`, color: currentTheme.text }}>
-                        {m.name}
-                      </button>
-                    ))}
+                    {members.map((m) => {
+                      const isSelected = Array.isArray(form.advanceFor) && form.advanceFor.includes(m.id);
+                      const IconComp = getMemberIconComponent(m.avatarIcon);
+                      return (
+                        <button key={m.id} onClick={() => toggleAdvance(m.id)} className={`px-4 py-1.5 rounded-full text-[11px] font-black border flex items-center gap-1.5 transition-all ${isSelected ? "shadow-sm" : "bg-white opacity-50"}`} style={{ backgroundColor: isSelected ? `${currentTheme.main}20` : "white", borderColor: `${currentTheme.main}20`, color: currentTheme.text }}>
+                          <IconComp className="w-3.5 h-3.5" />
+                          {m.name}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -438,24 +554,105 @@ export default function Expenses({ trip, setTrip, themeId }) {
         </div>
       )}
 
-      {/* Member Modal */}
+      {/* Member Modal (前三個往下開，第四個以後自動往上開) */}
       {memberModalOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-12">
           <div className="w-full max-w-lg rounded-[32px] border shadow-xl overflow-hidden flex flex-col bg-white" style={{ borderColor: currentTheme.border }}>
             <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/50 border-b" style={{ borderColor: `${currentTheme.border}40` }}>
-              <div><p className="text-[10px] tracking-[0.2em] mb-1 font-black uppercase" style={{ color: currentTheme.main }}>Partners</p><h2 className="text-lg font-black" style={{ color: currentTheme.text }}>行程夥伴</h2></div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black" style={{ color: currentTheme.text }}>行程夥伴</h2>
+                  <p className="text-[10px] tracking-[0.2em] uppercase font-black opacity-40" style={{ color: currentTheme.main }}>Partners</p>
+                </div>
+              </div>
               <button onClick={() => setMemberModalOpen(false)} className="w-8 h-8 rounded-full border flex items-center justify-center bg-white" style={{ borderColor: currentTheme.border }}><X className="w-4 h-4" style={{ color: currentTheme.main }} /></button>
             </div>
+            
             <div className="p-6 space-y-3 overflow-y-auto max-h-[60vh] scrollbar-hide">
-              {members.map((m) => ( 
-                <div key={m.id} className="flex items-center gap-2 bg-white border rounded-2xl px-4 py-3 shadow-sm" style={{ borderColor: `${currentTheme.main}20` }}> 
-                  <input value={m.name} onChange={(e) => setMembers((prev) => prev.map((x) => (x.id === m.id ? { ...x, name: e.target.value } : x)))} className="flex-1 min-w-0 outline-none text-[13px] font-bold bg-transparent" style={{ color: currentTheme.text }} placeholder="成員名稱" /> 
-                  <button onClick={() => setMembers((prev) => prev.filter((x) => x.id !== m.id))} className="p-1.5 rounded-full hover:bg-red-50 text-red-500 shrink-0"><Trash2 className="w-4 h-4" /></button> 
-                </div> 
-              ))}
-              <button onClick={() => setMembers((prev) => [...prev, { id: `m-${Date.now()}`, name: "" }])} className="w-full py-3 border-2 border-dashed rounded-2xl text-[11px] font-black transition-all hover:bg-gray-50 active:scale-[0.98]" style={{ borderColor: `${currentTheme.main}30`, color: currentTheme.main }}> + 新增夥伴 </button>
+              {members.map((m, index) => {
+                const currentIconId = m.avatarIcon || "Cat";
+                const SelectedIconComp = getMemberIconComponent(currentIconId);
+                const isPickerOpen = activeIconPickerId === m.id;
+                
+                const isTopThree = index < 3;
+
+                return ( 
+                  <div key={m.id} className="relative bg-white border rounded-2xl p-3 shadow-sm flex items-center gap-2" style={{ borderColor: `${currentTheme.main}20` }}> 
+                    
+                    <button
+                      onClick={() => setActiveIconPickerId(isPickerOpen ? null : m.id)}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center border shrink-0 transition-all hover:scale-105"
+                      style={{ 
+                        backgroundColor: `${currentTheme.main}10`,
+                        borderColor: `${currentTheme.main}30`,
+                        color: currentTheme.main
+                      }}
+                      title="點擊更換圖示"
+                    >
+                      <SelectedIconComp className="w-5 h-5" />
+                    </button>
+
+                    <input 
+                      value={m.name} 
+                      onChange={(e) => setMembers((prev) => prev.map((x) => (x.id === m.id ? { ...x, name: e.target.value } : x)))} 
+                      className="flex-1 min-w-0 outline-none text-[13px] font-bold bg-transparent px-2" 
+                      style={{ color: currentTheme.text }} 
+                      placeholder="成員名稱 (例如：小慈)" 
+                    /> 
+
+                    <button onClick={() => setMembers((prev) => prev.filter((x) => x.id !== m.id))} className="p-2 rounded-full hover:bg-red-50 text-red-500 shrink-0">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+
+                    {/* 彈跳選擇面板：前三個往下開，第四個以後往上開 */}
+                    {isPickerOpen && (
+                      <div 
+                        className={`absolute left-3 z-20 bg-white rounded-2xl border p-3 shadow-xl w-[260px] animate-in fade-in zoom-in-95 ${
+                          isTopThree ? "top-16" : "bottom-16"
+                        }`} 
+                        style={{ borderColor: currentTheme.border }}
+                      >
+                        <div className="flex justify-between items-center mb-2 pb-1.5 border-b" style={{ borderColor: `${currentTheme.border}40` }}>
+                          <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: currentTheme.text }}>選擇專屬圖示</span>
+                          <button onClick={() => setActiveIconPickerId(null)} className="w-5 h-5 rounded-full flex items-center justify-center text-xs opacity-50 hover:opacity-100">✕</button>
+                        </div>
+                        <div className="grid grid-cols-5 gap-1.5">
+                          {ICON_OPTIONS.map((opt) => {
+                            const IconComp = opt.icon;
+                            const isSelected = currentIconId === opt.id;
+                            return (
+                              <button
+                                key={opt.id}
+                                onClick={() => {
+                                  setMembers((prev) => prev.map((x) => (x.id === m.id ? { ...x, avatarIcon: opt.id } : x)));
+                                  setActiveIconPickerId(null);
+                                }}
+                                className={`h-9 rounded-xl flex items-center justify-center border transition-all ${isSelected ? "shadow-sm scale-105" : "opacity-50 hover:opacity-100"}`}
+                                style={{ 
+                                  backgroundColor: isSelected ? `${currentTheme.main}20` : "white",
+                                  borderColor: isSelected ? currentTheme.main : `${currentTheme.main}20`,
+                                  color: isSelected ? currentTheme.main : currentTheme.text
+                                }}
+                              >
+                                <IconComp className="w-4 h-4" />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div> 
+                );
+              })}
+              <button onClick={() => setMembers((prev) => [...prev, { id: `m-${Date.now()}`, name: "", avatarIcon: "Cat" }])} className="w-full py-3 border-2 border-dashed rounded-2xl text-[11px] font-black transition-all hover:bg-gray-50 active:scale-[0.98]" style={{ borderColor: `${currentTheme.main}30`, color: currentTheme.main }}> + 新增夥伴 </button>
             </div>
-            <div className="p-6 border-t" style={{ borderColor: `${currentTheme.border}10` }}><button onClick={() => setMemberModalOpen(false)} className="w-full py-4 text-white rounded-2xl font-black shadow-md active:scale-95 transition-all" style={{ backgroundColor: currentTheme.main }}>確認儲存</button></div>
+            
+            <div className="p-6 border-t" style={{ borderColor: `${currentTheme.border}10` }}>
+              <button onClick={() => setMemberModalOpen(false)} className="w-full py-4 text-white rounded-2xl font-black shadow-md active:scale-95 transition-all" style={{ backgroundColor: currentTheme.main }}>確認儲存</button>
+            </div>
           </div>
         </div>
       )}

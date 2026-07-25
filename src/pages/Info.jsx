@@ -16,7 +16,8 @@ import {
   Globe,
   Plus,
   Lightbulb, // 新增：燈泡元件
-  Heart      // 新增：愛心元件
+  Heart,      // 新增：愛心元件
+  TicketsPlane
 } from "lucide-react";
 import { THEMES } from "../App";
 
@@ -146,7 +147,7 @@ export default function Info({ trip, setTrip, themeId }) {
       <section>
         <div className="flex items-center justify-between mb-4 px-4">
           <div className="flex items-center gap-2">
-            <Plane className="w-5 h-5" style={{ color: currentTheme.main }} />
+            <TicketsPlane className="w-5 h-5" style={{ color: currentTheme.main }} />
             <h2 className="text-base font-semibold" style={{ color: currentTheme.text }}>航班資訊</h2>
           </div>
           {!isReadOnly && (
