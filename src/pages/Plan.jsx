@@ -332,14 +332,22 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
           <span className="text-[10px] border rounded-full px-2 py-0.5" style={{ color: currentTheme.main, borderColor: currentTheme.border }}>Open-Meteo</span>
         </div>
         <div className="px-1 py-2">
-          <div className="flex gap-5 overflow-x-auto scrollbar-none">
+          <div className="flex gap-4 overflow-x-auto scrollbar-none py-1">
             {weatherHourly.length > 0 ? weatherHourly.slice(0, 24).map((h) => (
-              <div key={h.timeLabel} className="flex flex-col items-center min-w-[34px] shrink-0">
-                <span className="text-[10px] opacity-80" style={{ color: currentTheme.accent }}>{h.timeLabel}</span>
-                <div className="mt-2" style={{ color: currentTheme.main }}>{weatherIcon(h.code)}</div>
-                <span className="mt-2 text-xs font-bold" style={{ color: currentTheme.text }}>{h.temp}°</span>
+              <div key={h.timeLabel} className="flex flex-col items-center w-[52px] shrink-0 text-center">
+                {/* 時間 */}
+                <span className="text-[10px] font-medium opacity-85 tabular-nums" style={{ color: currentTheme.accent }}>{h.timeLabel}</span>
+                
+                {/* 天氣圖示 */}
+                <div className="flex items-center justify-center my-2 h-6" style={{ color: currentTheme.main }}>{weatherIcon(h.code)}</div>
+                
+                {/* 💡 溫度：讓數字絕對置中，並把 ° 符號用相對定位掛在旁邊，完全不影響數字的中心軸 */}
+                <div className="relative inline-flex items-start justify-center tabular-nums">
+                  <span className="text-xs font-bold" style={{ color: currentTheme.text }}>{h.temp}</span>
+                  <span className="text-[12px] font-bold absolute -right-2.5 top-0" style={{ color: currentTheme.text }}>°</span>
+                </div>
               </div>
-            )) : <p className="text-xs w-full text-center" style={{ color: currentTheme.accent }}>載入中...</p>}
+            )) : <p className="text-xs w-full text-center py-4" style={{ color: currentTheme.accent }}>載入中...</p>}
           </div>
         </div>
       </section>
