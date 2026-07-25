@@ -62,8 +62,13 @@ export default function Expenses({ trip, setTrip, themeId }) {
   const baseCurrency = trip.currency || "JPY";
   const currencyInfo = CURRENCY_MAP[baseCurrency] || { symbol: "$", name: "外幣" };
 
-  const members = isViewer ? (viewerData?.members || DEFAULT_DATA.members) : (trip.members || DEFAULT_DATA.members);
-  const expenses = isViewer ? (viewerData?.expenses || []) : (trip.expenses || []);
+  const members = Array.isArray(isViewer ? viewerData?.members : trip?.members) 
+    ? (isViewer ? viewerData.members : trip.members) 
+    : [];
+    
+  const expenses = Array.isArray(isViewer ? viewerData?.expenses : trip?.expenses) 
+    ? (isViewer ? viewerData.expenses : trip.expenses) 
+    : [];
   const exchangeRate = isViewer ? (viewerData?.exchangeRate || trip.exchangeRate || null) : (trip.exchangeRate || null);
 
   useEffect(() => {
@@ -75,9 +80,13 @@ export default function Expenses({ trip, setTrip, themeId }) {
   }, [isViewer]);
 
   useEffect(() => {
+    // 如果已經有抓過當前幣別的匯率，且距離上次更新不久，就不要一直重複抓，避免觸發 404 或頻繁重刷
+    if (exchangeRate && exchangeRate.base === baseCurrency) return;
+
     async function fetchRate() {
       try {
         const res = await fetch(`https://open.er-api.com/v6/latest/${baseCurrency}`);
+        if (!res.ok) throw new Error("Network response was not ok");
         const data = await res.json();
         if (!data?.rates?.TWD) return;
         const rateData = { RATE_TWD: data.rates.TWD, updatedAt: Date.now(), base: baseCurrency };
@@ -94,7 +103,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
       } catch (e) { console.error("匯率抓取失敗", e); }
     }
     fetchRate();
-  }, [baseCurrency, isViewer, setTrip]);
+  }, [baseCurrency]); // 移除不必要的依賴，只在幣別改變時才抓取
 
   const setMembers = (updater) => {
     if (isViewer) {

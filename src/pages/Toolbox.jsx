@@ -23,14 +23,11 @@ import {
   ChevronDown,
   UtensilsCrossed,
   PartyPopper,
-  Signal,
-  Copy,
-  QrCode,
-  Link as LinkIcon, // 🛠️ 導入：Link 圖示
-  MoreHorizontal // 🛠️ 導入方案 B 需要的三個點點圖示
+  Link as LinkIcon,
+  MoreHorizontal
 } from "lucide-react";
 import { THEMES } from "../App";
-import PageHeader from "../components/PageHeader"; // 🛠️ 確保有導入妳的 PageHeader 元件（請根據妳實際的資料夾路徑調整）
+import PageHeader from "../components/PageHeader";
 
 const AVAILABLE_ICONS = {
   Smartphone: Smartphone,
@@ -53,7 +50,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
 
   const defaultApps = [
     { id: "app-1", name: "NAVER Map", desc: "韓國找路封神，千萬別用 Google Map", appleUrl: "https://apps.apple.com/tw/app/naver-map-navigation/id311867728", androidUrl: "https://play.google.com/store/apps/details?id=com.nhn.android.nmap", icon: "Map", imgUrl: "https://play-lh.googleusercontent.com/URf_NsdR_zz2jAQFWHQf2ArOPdAa7n0Exolkm0h4ydFvmUMxG4puOam19EahHIge16Ojl0_jNRnoH1LRVad_SQ" },
-    { id: "app-2", name: "Kakao T", desc: "綁定信用卡即可在韓國直接叫計程車", appleUrl: "https://apps.apple.com/tw/app/카카오-t-택西-се차-주車-바イク-항공-퀵/id981110422", androidUrl: "https://play.google.com/store/apps/details?id=com.kakao.taxi", icon: "Taxi", imgUrl: "https://play-lh.googleusercontent.com/5X2OLNovx1Bf1NndZyPq6m0U2lPoopybo2vO56zjB_6fpNAzHWY0Sw0qjB28_G9Eb8rX0AMJbuE2aQEd5O1O7A" }
+    { id: "app-2", name: "Kakao T", desc: "綁定信用卡即可在韓國直接叫計程車", appleUrl: "https://apps.apple.com/tw/app/카카오-t-택西-세차-주車-바イク-항공-퀵/id981110422", androidUrl: "https://play.google.com/store/apps/details?id=com.kakao.taxi", icon: "Taxi", imgUrl: "https://play-lh.googleusercontent.com/5X2OLNovx1Bf1NndZyPq6m0U2lPoopybo2vO56zjB_6fpNAzHWY0Sw0qjB28_G9Eb8rX0AMJbuE2aQEd5O1O7A" }
   ];
 
   const defaultTodos = [
@@ -75,9 +72,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
   const [editingTodoId, setEditingTodoId] = useState(null); 
   const [isDoneExpanded, setIsDoneExpanded] = useState(false);
   
-  // 🛠️ 管理查看 APP 詳情 Modal 的狀態
   const [selectedAppDetails, setSelectedAppDetails] = useState(null);
-  // 🛠️ 新增：管理三個點點下拉功能選單的顯示狀態
   const [showMenuId, setShowMenuId] = useState(false);
 
   const parseBranchText = (text) => {
@@ -102,10 +97,13 @@ export default function Toolbox({ trip, setTrip, themeId }) {
   const handleAddTodoSubmit = (e) => {
     e.preventDefault();
     if (!newTodoText.trim()) return;
+    
+    // 🛠️ 修正處：將原本錯誤的 { updatedTodos } 改為正確的 { todos }
     let updatedTodos = editingTodoId 
       ? todos.map(t => t.id === editingTodoId ? { ...t, text: newTodoText.trim() } : t)
       : [...todos, { id: `todo-${Date.now()}`, completed: false, text: newTodoText.trim() }];
-    saveToolboxData({ updatedTodos: updatedTodos });
+      
+    saveToolboxData({ todos: updatedTodos });
     setNewTodoText("");
     setEditingTodoId(null);
     setIsOpenModal(false);
@@ -123,7 +121,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
     setNewAppAppleUrl(app.appleUrl || "");
     setNewAppAndroidUrl(app.androidUrl || "");
     setSelectedIconName(app.icon || "Smartphone");
-    setNewAppImgUrl(app.imgUrl || ""); // 🛠️ 讀取圖片網址
+    setNewAppImgUrl(app.imgUrl || "");
     setIsOpenModal(true);
   };
 
@@ -135,7 +133,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
     setNewAppAppleUrl("");
     setNewAppAndroidUrl("");
     setSelectedIconName("Smartphone");
-    setNewAppImgUrl(""); // 🛠️ 清空圖片網址
+    setNewAppImgUrl("");
     setIsOpenModal(true);
   };
 
@@ -159,7 +157,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
   const [newAppAndroidUrl, setNewAppAndroidUrl] = useState(""); 
   const [selectedIconName, setSelectedIconName] = useState("Smartphone");
   const [showIconPicker, setShowIconPicker] = useState(false);
-  const [newAppImgUrl, setNewAppImgUrl] = useState(""); // 🛠️ 圖片狀態
+  const [newAppImgUrl, setNewAppImgUrl] = useState("");
 
   const handleSubmitApp = (e) => {
     e.preventDefault();
@@ -173,14 +171,14 @@ export default function Toolbox({ trip, setTrip, themeId }) {
     saveToolboxData({ apps: updatedApps });
     setIsOpenModal(false);
     setShowIconPicker(false);
-    setSelectedAppDetails(null); // 關閉詳情
-    setShowMenuId(false); // 關閉三個點選單
+    setSelectedAppDetails(null);
+    setShowMenuId(false);
   };
 
   const deleteApp = (appId) => {
     saveToolboxData({ apps: apps.filter(a => a.id !== appId) });
-    setSelectedAppDetails(null); // 關閉詳情
-    setShowMenuId(false); // 關閉三個點選單
+    setSelectedAppDetails(null);
+    setShowMenuId(false);
   };
 
   const activeTodos = todos.filter(t => !t.completed);
@@ -211,7 +209,6 @@ export default function Toolbox({ trip, setTrip, themeId }) {
   return (
     <div className="pt-2 pb-24 animate-in fade-in duration-500 max-w-full overflow-hidden">
       
-      {/* 🛠️ 套用妳的模板標題 PageHeader 元件 */}
       <PageHeader
         icon={Smartphone}
         title="行前準備"
@@ -362,7 +359,6 @@ export default function Toolbox({ trip, setTrip, themeId }) {
           <button onClick={openAddModal} className="text-[11px] font-black flex items-center gap-1 px-2.5 py-1 rounded-full border border-dashed transition-all active:scale-95" style={{ borderColor: `${currentTheme.main}40`, color: currentTheme.main }}><Plus className="w-3 h-3" /> 新增</button>
         </div>
         
-        {/* 精緻四格九宮格手機桌面牆 */}
         <div className="grid grid-cols-4 gap-x-2 gap-y-4 px-1">
           {apps.map((app) => {
             const RenderedIcon = AVAILABLE_ICONS[app.icon] || Smartphone;
@@ -391,39 +387,34 @@ export default function Toolbox({ trip, setTrip, themeId }) {
         </div>
       </section>
 
-      {/* ========================================================
-          🎈 APP 詳細資料檢視視窗 (Modal) —— 🛠️ 完美修復右上角定位與選單點擊邏輯
-         ======================================================== */}
       {selectedAppDetails && (
         <div 
           onClick={() => { setSelectedAppDetails(null); setShowMenuId(false); }} 
           className="fixed inset-0 z-[150] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
         >
           <div 
-            onClick={(e) => { e.stopPropagation(); setShowMenuId(false); }} // 點擊卡片其他地方時自動把下拉選單收起來
+            onClick={(e) => { e.stopPropagation(); setShowMenuId(false); }}
             className="w-full max-w-sm rounded-[2rem] border shadow-2xl animate-in zoom-in-95 duration-300 bg-white relative p-6" 
             style={{ borderColor: currentTheme.border }}
           >
             
-            {/* 右上角定位及功能徹底隔離修復，防止冒泡事件干擾，且按鈕顏色隨主題色變色 */}
             <div 
               className="absolute top-5 right-5 z-30"
-              onClick={(e) => e.stopPropagation()} // 強制阻斷，防止點選單時卡片關閉
+              onClick={(e) => e.stopPropagation()}
             >
               <button 
                 onClick={() => setShowMenuId(!showMenuId)}
                 className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-all active:scale-90 shadow-sm"
-                style={{ color: currentTheme.main }} // 右上角三個點點隨主題色變色
+                style={{ color: currentTheme.main }}
               >
                 <MoreHorizontal className="w-4 h-4" />
               </button>
               
-              {/* 下拉彈出的功能選單 */}
               {showMenuId && (
                 <div className="absolute right-0 top-8 bg-white border rounded-xl shadow-xl py-1 w-24 z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150" style={{ borderColor: '#f3f4f6' }}>
                   <button 
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); openEditModal(selectedAppDetails); setShowMenuId(false); }} // 點擊編輯
+                    onClick={(e) => { e.stopPropagation(); openEditModal(selectedAppDetails); setShowMenuId(false); }}
                     className="w-full px-3 py-1.5 text-[11px] font-bold text-left hover:bg-gray-50 flex items-center gap-1.5"
                     style={{ color: currentTheme.text }}
                   >
@@ -431,7 +422,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
                   </button>
                   <button 
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); deleteApp(selectedAppDetails.id); }} // 點擊刪除
+                    onClick={(e) => { e.stopPropagation(); deleteApp(selectedAppDetails.id); }}
                     className="w-full px-3 py-1.5 text-[11px] font-bold text-left hover:bg-red-50 flex items-center gap-1.5 text-red-500"
                   >
                     <Trash2 className="w-3.5 h-3.5" />刪除
@@ -440,7 +431,6 @@ export default function Toolbox({ trip, setTrip, themeId }) {
               )}
             </div>
 
-            {/* APP 主圖展示區 —— 完美的垂直居中正方形 APP 樣式（100% 呈現，絕不裁切） */}
             <div className="w-full flex justify-center mt-6 mb-5">
               {selectedAppDetails.imgUrl ? (
                 <div className="w-28 h-28 rounded-3xl overflow-hidden bg-gray-50/60 shadow-md border border-gray-100/80 flex items-center justify-center">
@@ -459,7 +449,6 @@ export default function Toolbox({ trip, setTrip, themeId }) {
               )}
             </div>
 
-            {/* 詳細內容 */}
             <div className="text-center px-1">
               <div className="flex items-center justify-center gap-1.5 mb-2.5">
                 <div className="w-5 h-5 rounded-md flex items-center justify-center bg-gray-50" style={{ color: currentTheme.main }}>
@@ -468,22 +457,20 @@ export default function Toolbox({ trip, setTrip, themeId }) {
                 <h3 className="font-black text-base" style={{ color: currentTheme.text }}>{selectedAppDetails.name}</h3>
               </div>
               
-              {/* 介紹欄位套用主題色背景與文字置中排版 */}
               <p 
                 className="text-[12px] leading-relaxed font-medium mb-6 whitespace-pre-line text-center rounded-2xl border p-4 shadow-sm"
                 style={{ 
-                  backgroundColor: `${currentTheme.main}09`, // 淺淺的主題色底色
-                  borderColor: `${currentTheme.main}18`, // 搭配微量主題色邊框
-                  color: currentTheme.text // 維持原本的字體顏色
+                  backgroundColor: `${currentTheme.main}09`,
+                  borderColor: `${currentTheme.main}18`,
+                  color: currentTheme.text 
                 }}
               >
                 {selectedAppDetails.desc}
               </p>
               
-              {/* 底部分流下載連結按鈕 —— 🛠️ 升級：將原本的 border-gray-50 分隔線改為明顯的主題色細邊線 */}
               <div 
                 className="grid grid-cols-2 gap-2 text-[11px] font-black border-t pt-4" 
-                style={{ borderColor: `${currentTheme.main}30` }} // 🛠️ 明顯的主題色分隔線
+                style={{ borderColor: `${currentTheme.main}30` }}
               >
                 {selectedAppDetails.appleUrl ? (
                   <button onClick={() => window.open(selectedAppDetails.appleUrl, "_blank")} className="py-2.5 rounded-xl border flex items-center justify-center gap-1.5 hover:bg-gray-50 active:scale-95 transition-all" style={{ borderColor: `${currentTheme.main}25`, color: currentTheme.main }}>
@@ -505,7 +492,6 @@ export default function Toolbox({ trip, setTrip, themeId }) {
         </div>
       )}
 
-      {/* 🎈 Modal —— 新增與修改彈窗 */}
       {isOpenModal && (
         <div className="fixed inset-0 z-[160] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-sm rounded-[2rem] border p-5 shadow-2xl animate-in zoom-in-95 duration-300 relative bg-white" style={{ borderColor: currentTheme.border }}>
