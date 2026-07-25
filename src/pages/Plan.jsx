@@ -332,9 +332,9 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
           <span className="text-[10px] border rounded-full px-2 py-0.5" style={{ color: currentTheme.main, borderColor: currentTheme.border }}>Open-Meteo</span>
         </div>
         <div className="px-1 py-2">
-          <div className="flex gap-4 overflow-x-auto scrollbar-none py-1">
+          <div className="flex gap-2 overflow-x-auto scrollbar-none py-1">
             {weatherHourly.length > 0 ? weatherHourly.slice(0, 24).map((h) => (
-              <div key={h.timeLabel} className="flex flex-col items-center w-[52px] shrink-0 text-center">
+              <div key={h.timeLabel} className="flex flex-col items-center w-[38px] shrink-0 text-center">
                 {/* 時間 */}
                 <span className="text-[10px] font-medium opacity-85 tabular-nums" style={{ color: currentTheme.accent }}>{h.timeLabel}</span>
                 
