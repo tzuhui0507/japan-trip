@@ -203,13 +203,14 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
     setSlideOpenId(null);
   };
 
+  // 💡 修改處：只有當備註內容含有愛心 (>) 或花朵 (-) 時才允許摺疊
   const hasCollapsibleContent = (rawText, delimiter = "\n") => {
     if (!rawText) return false;
     const lines = rawText.split(delimiter);
+    // 💡 嚴格限制：必須要有「以 > 或 - 開頭」的行，才允許摺疊
     return lines.some((line) => {
       const trimmed = line.trim();
-      if (!trimmed) return false;
-      return trimmed.startsWith(">") || trimmed.startsWith("-") || trimmed.startsWith(">>") || (!trimmed.startsWith("!") && !trimmed.startsWith("="));
+      return trimmed.startsWith(">") || trimmed.startsWith("-");
     });
   };
 
