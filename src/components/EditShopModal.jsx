@@ -41,6 +41,7 @@ export default function EditShopModal({ shops = [], onSave, onClose, themeId }) 
         category: "STORE",
         name: "",
         subtitle: "",
+        noNav: false, // 💡 預設允許導航
         hours: "",
         image: "",
         desc: "",
@@ -67,6 +68,7 @@ export default function EditShopModal({ shops = [], onSave, onClose, themeId }) 
       category: "STORE",
       name: "",
       subtitle: "",
+      noNav: false, // 💡 預設允許導航
       hours: "",
       image: "",
       desc: "",
@@ -86,6 +88,7 @@ export default function EditShopModal({ shops = [], onSave, onClose, themeId }) 
           category: "STORE",
           name: "",
           subtitle: "",
+          noNav: false,
           hours: "",
           image: "",
           desc: "",
@@ -276,6 +279,22 @@ export default function EditShopModal({ shops = [], onSave, onClose, themeId }) 
                           color: currentTheme.text,
                         }}
                       />
+                    </div>
+
+                    {/* 💡 新增：不顯示地圖導航勾選框 */}
+                    <div className="pt-0.5">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={shop.noNav || false}
+                          onChange={(e) => handleUpdateField(index, "noNav", e.target.checked)}
+                          className="w-3.5 h-3.5 rounded border-gray-300 transition-all cursor-pointer"
+                          style={{ accentColor: currentTheme.main }}
+                        />
+                        <span className="text-xs font-bold" style={{ color: currentTheme.text }}>
+                          不顯示地圖導航按鈕（適用於地下街、無地址景點）
+                        </span>
+                      </label>
                     </div>
 
                     {/* 營業時間 */}

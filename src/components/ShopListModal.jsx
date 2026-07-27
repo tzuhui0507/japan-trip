@@ -148,7 +148,7 @@ export default function ShopListModal({
       onClick={onClose}
     >
       <div
-        className="w-[92%] max-w-[360px] bg-[#FAF8F5] rounded-3xl border-2 shadow-xl overflow-hidden relative flex flex-col max-h-[82vh] animate-in zoom-in-95 duration-200"
+        className="w-[92%] max-w-[360px] bg-[#FAF8F5] rounded-3xl border-2 shadow-xl overflow-hidden relative flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
         style={{ borderColor: `${currentTheme.main}40` }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -181,7 +181,7 @@ export default function ShopListModal({
 
         {/* 主要內容區塊 */}
         <div className="p-5 overflow-y-auto space-y-4 flex-1 scrollbar-none">
-          {/* 1. 店家名稱與副標題 (移至照片上方，無背景色) */}
+          {/* 1. 店家名稱與副標題 */}
           <div className="pl-3 border-l-4 rounded-l-sm" style={{ borderColor: currentTheme.main }}>
             <h3
               className="text-base font-black leading-snug"
@@ -202,7 +202,7 @@ export default function ShopListModal({
           {/* 2. 店家封面圖片 */}
           {currentShop.image?.trim() ? (
             <div
-              className="w-full h-36 rounded-2xl overflow-hidden border bg-white p-1 shadow-sm shrink-0"
+              className="w-full h-56 rounded-2xl overflow-hidden border bg-white p-1 shadow-sm shrink-0 flex items-center justify-center bg-slate-900/5"
               style={{ borderColor: `${currentTheme.main}20` }}
             >
               <img
@@ -218,7 +218,7 @@ export default function ShopListModal({
             </div>
           ) : (
             <div
-              className="w-full h-20 rounded-2xl border border-dashed flex flex-col items-center justify-center gap-1 bg-white/60"
+              className="w-full h-24 rounded-2xl border border-dashed flex flex-col items-center justify-center gap-1 bg-white/60"
               style={{ borderColor: `${currentTheme.main}30` }}
             >
               <Store
@@ -234,7 +234,7 @@ export default function ShopListModal({
             </div>
           )}
 
-          {/* 3. 營業時間 (統一標題 Icon 樣式 + 文字置中) */}
+          {/* 3. 營業時間 */}
           {currentShop.hours && (
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5 px-0.5">
@@ -290,20 +290,22 @@ export default function ShopListModal({
           )}
         </div>
 
-        {/* 底部導航按鈕 */}
-        <div
-          className="p-4 border-t border-dashed bg-white shrink-0"
-          style={{ borderColor: `${currentTheme.main}30` }}
-        >
-          <button
-            onClick={() => handleOpenMap(currentShop)}
-            className="w-full py-2.5 rounded-xl text-xs font-bold text-white shadow-md flex items-center justify-center gap-1.5 active:scale-95 transition-all"
-            style={{ backgroundColor: currentTheme.main }}
+        {/* 💡 底部導航按鈕：如果店家勾選了 noNav，則不顯示按鈕 */}
+        {!currentShop.noNav && (
+          <div
+            className="p-4 border-t border-dashed bg-white shrink-0"
+            style={{ borderColor: `${currentTheme.main}30` }}
           >
-            <MapPinned className="w-3.5 h-3.5" />
-            <span>地圖導航</span>
-          </button>
-        </div>
+            <button
+              onClick={() => handleOpenMap(currentShop)}
+              className="w-full py-2.5 rounded-xl text-xs font-bold text-white shadow-md flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+              style={{ backgroundColor: currentTheme.main }}
+            >
+              <MapPinned className="w-3.5 h-3.5" />
+              <span>地圖導航</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
