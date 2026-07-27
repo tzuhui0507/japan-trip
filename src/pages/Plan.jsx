@@ -39,7 +39,8 @@ import {
   Coffee,
   ShoppingBag,
   Camera,
-  CameraIcon
+  CameraIcon,
+  X
 } from "lucide-react";
 
 export default function Plan({ trip, setTrip, dayIndex, themeId }) {
@@ -70,6 +71,9 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
   const [expandedNotes, setExpandedNotes] = useState({});
   const [expandedCardNotes, setExpandedCardNotes] = useState({});
   const [selectedShop, setSelectedShop] = useState(null);
+  
+  // 💡 放大預覽的 State (儲存物件: { url, title })
+  const [previewImage, setPreviewImage] = useState(null);
 
   const TYPE_META = {
     ATTRACTION: { label: "景點", pillBg: "#E7EEF9", pillText: "#4A607F", icon: Landmark },
@@ -120,7 +124,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
       offDay: getVal(item.offDay),
       phone: getVal(item.phone),
       link: getVal(item.link),
-      image: getVal(item.image), // 💡 支援每個方案擁有各自的獨立圖片
+      image: getVal(item.image),
       shops: item.shops || [],
       ticketIds: typeof item.ticketIds === "string" 
         ? (split(item.ticketIds)[currentIndex] || split(item.ticketIds)[0]).split(",").filter(Boolean)
@@ -203,11 +207,9 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
     setSlideOpenId(null);
   };
 
-  // 💡 修改處：只有當備註內容含有愛心 (>) 或花朵 (-) 時才允許摺疊
   const hasCollapsibleContent = (rawText, delimiter = "\n") => {
     if (!rawText) return false;
     const lines = rawText.split(delimiter);
-    // 💡 嚴格限制：必須要有「以 > 或 - 開頭」的行，才允許摺疊
     return lines.some((line) => {
       const trimmed = line.trim();
       return trimmed.startsWith(">") || trimmed.startsWith("-");
@@ -342,7 +344,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                 {/* 天氣圖示 */}
                 <div className="flex items-center justify-center my-2 h-6" style={{ color: currentTheme.main }}>{weatherIcon(h.code)}</div>
                 
-                {/* 💡 溫度：讓數字絕對置中，並把 ° 符號用相對定位掛在旁邊，完全不影響數字的中心軸 */}
+                {/* 溫度 */}
                 <div className="relative inline-flex items-start justify-center tabular-nums">
                   <span className="text-xs font-bold" style={{ color: currentTheme.text }}>{h.temp}</span>
                   <span className="text-[12px] font-bold absolute -right-2.5 top-0" style={{ color: currentTheme.text }}>°</span>
@@ -482,7 +484,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                 )}
                               </div>
                               
-                              {/* 💡 左右雙欄：右側相片可隨著方案切換連動顯示對應圖片 */}
+                              {/* 左右雙欄：右側相片點擊可放大包含 UI 的卡片 */}
                               <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0 flex-1 space-y-3">
                                   <div>
@@ -530,8 +532,15 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                   </div>
                                 </div>
 
+                                {/* 照片區域：點擊傳入 url 與 title */}
                                 {branch.image?.trim() && (
-                                  <div className="shrink-0 w-[115px] sm:w-[130px] bg-white p-2 pb-2.5 rounded-xl border border-slate-200/80 shadow-md transform rotate-2 transition-transform hover:rotate-0 self-center mr-1">
+                                  <div 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setPreviewImage({ url: branch.image, title: branch.title });
+                                    }}
+                                    className="shrink-0 w-[115px] sm:w-[130px] bg-white p-2 pb-2.5 rounded-xl border border-slate-200/80 shadow-md transform rotate-2 transition-transform hover:rotate-0 active:scale-95 cursor-pointer self-center mr-1"
+                                  >
                                     <div className="w-full h-[85px] sm:h-[95px] rounded-lg overflow-hidden bg-slate-100">
                                       <img 
                                         src={branch.image} 
@@ -727,6 +736,46 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
       )}
       {editingHero && !isViewer && <EditHeroModal dayData={editingHero} onClose={() => setEditingHero(null)} onSave={saveHero} themeId={themeId} />}
       {viewTicket && <TicketDetail ticket={viewTicket} onClose={() => setViewTicket(null)} themeId={themeId} />}
+
+      {/* 💡 放大後的拍立得卡片 Lightbox (尺寸從 w-[300px] 加大為 w-[38px] / max-w-[92vw]) */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 z-[500] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200 cursor-zoom-out"
+          onClick={() => setPreviewImage(null)}
+        >
+          {/* 右上角關閉按鈕 */}
+          <button 
+            onClick={() => setPreviewImage(null)}
+            className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-all active:scale-90 z-[510]"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {/* 放大後的拍立得卡片主體 (設定更寬敞的尺寸 w-[380px] 或 w-[420px]) */}
+          <div 
+            className="relative w-[92vw] max-w-[400px] bg-white p-4 pb-5 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200 cursor-default border border-slate-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 照片本體 (加大高度至 h-[280px] sm:h-[320px]) */}
+            <div className="w-full h-[280px] sm:h-[320px] rounded-2xl overflow-hidden bg-slate-100 shadow-inner">
+              <img 
+                src={previewImage.url} 
+                alt={previewImage.title} 
+                className="w-full h-full object-cover"
+              />
+            </div>
+            {/* 底部相機圖示與標題文字 */}
+            <div 
+              className="mt-4 text-sm font-bold text-center opacity-90 flex items-center justify-center gap-2" 
+              style={{ color: currentTheme.text }}
+            >
+              <CameraIcon className="w-4 h-4 shrink-0 opacity-90" style={{ color: currentTheme.main }} />
+              <span className="opacity-40">|</span>
+              <span className="truncate">{previewImage.title}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
