@@ -75,6 +75,11 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
   // 💡 放大預覽的 State (儲存物件: { url, title })
   const [previewImage, setPreviewImage] = useState(null);
 
+  // 💡 當切換天數時強制回到頁面最上方[cite: 2]
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [activeDayIndex]);
+
   const TYPE_META = {
     ATTRACTION: { label: "景點", pillBg: "#E7EEF9", pillText: "#4A607F", icon: Landmark },
     RESTAURANT: { label: "餐廳", pillBg: "#FBE7DF", pillText: "#8C4A2F", icon: UtensilsCrossed },
@@ -216,7 +221,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
     });
   };
 
-  // 💡 修正：讓數字與文字起點完美對齊，並極度壓縮行距
+  // 💡 修正：使用純 CSS 懸掛縮排（hanging indent），讓數字項目的第二行換行與純換行 (>>) 完美對齊文字起點，且完全沒有中間的奇怪大空白
   const renderFormattedLines = (rawText, delimiter = "\n", isCollapsed = false) => {
     if (!rawText) return null;
     const lines = rawText.split(delimiter);
@@ -282,14 +287,12 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
       if (activeType === "heart" || activeType === "heartNum") paddingClass = "pl-4";
       if (activeType === "flower" || activeType === "flowerNum") paddingClass = "pl-8";
 
-      // 💡 極緊湊行距
       const marginTopClass = lIdx === 0 ? "mt-0" : "mt-0.5";
 
       return (
         <div key={lIdx} className={`flex items-start ${paddingClass} ${marginTopClass}`}>
           {showIcon ? (
             <>
-              {/* 圖標本身維持在固定欄位 */}
               <div className="w-5 flex-shrink-0 flex justify-center items-center">
                 {activeType === "alert" && <BellRing className="w-3.5 h-3.5 text-[#FA5F73] mt-0.5 animate-pulse" />}
                 {activeType === "heart" && <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1" />}
@@ -297,13 +300,13 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                 {activeType === "star" && <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-0.5" />}
               </div>
               
-              {/* 如果是數字，我們把數字與文字一起包在右側，讓數字起點直接對齊文字區域 */}
               {(activeType === "starNum" || activeType === "heartNum" || activeType === "flowerNum") ? (
-                <div className="flex-1 flex items-start gap-1.5">
-                  <span className="text-[10px] font-black tabular-nums tracking-tighter shrink-0 mt-0.5" style={{ color: currentTheme.main }}>
-                    {customNumber}
-                  </span>
-                  <p className="flex-1 leading-snug text-[11px] font-semibold" style={{ color: currentTheme.text }}>
+                /* 💡 數字項目：利用 pl-5 與 -indent-5 達到精準懸掛縮排，數字貼著文字起點，換行自動對齊文字 */
+                <div className="flex-1 pl-1">
+                  <p className="text-[11px] font-semibold leading-snug pl-5 -indent-5" style={{ color: currentTheme.text }}>
+                    <span className="font-black tabular-nums mr-1.5 inline-block" style={{ color: currentTheme.main, fontSize: "11px" }}>
+                      {customNumber}
+                    </span>
                     {content}
                   </p>
                 </div>
@@ -314,10 +317,14 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
               )}
             </>
           ) : (
-            /* 純換行文字內容 */
-            <p className="flex-1 leading-snug text-[12px] font-bold pl-5" style={{ color: currentTheme.text }}>
-              {content}
-            </p>
+            /* 💡 純換行 (>>) 完美對齊數字階級的文字起點 (pl-6) */
+            <div className="flex-1 pl-1">
+              <div className="pl-6">
+                <p className="text-[11px] font-semibold leading-snug" style={{ color: currentTheme.text }}>
+                  {content}
+                </p>
+              </div>
+            </div>
           )}
         </div>
       );
