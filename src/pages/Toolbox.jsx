@@ -45,6 +45,7 @@ const AVAILABLE_ICONS = {
 export default function Toolbox({ trip, setTrip, themeId }) {
   if (!trip) return null;
 
+  const isViewer = trip.shareMode === "viewer";
   const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
   const branchIndex = trip.activeDayIndex ?? 0; 
 
@@ -82,6 +83,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
   };
 
   const saveToolboxData = (updatedToolbox) => {
+    if (isViewer) return;
     setTrip(prev => {
       const next = structuredClone(prev);
       next.toolbox = { ...tData, ...updatedToolbox };
@@ -98,7 +100,6 @@ export default function Toolbox({ trip, setTrip, themeId }) {
     e.preventDefault();
     if (!newTodoText.trim()) return;
     
-    // 🛠️ 修正處：將原本錯誤的 { updatedTodos } 改為正確的 { todos }
     let updatedTodos = editingTodoId 
       ? todos.map(t => t.id === editingTodoId ? { ...t, text: newTodoText.trim() } : t)
       : [...todos, { id: `todo-${Date.now()}`, completed: false, text: newTodoText.trim() }];
@@ -114,6 +115,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
   };
 
   const openEditModal = (app) => {
+    if (isViewer) return;
     setModalType("APP");
     setEditingAppId(app.id);
     setNewAppName(app.name);
@@ -126,6 +128,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
   };
 
   const openAddModal = () => {
+    if (isViewer) return;
     setModalType("APP");
     setEditingAppId(null);
     setNewAppName("");
@@ -161,6 +164,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
 
   const handleSubmitApp = (e) => {
     e.preventDefault();
+    if (isViewer) return;
     if (!newAppName.trim()) return;
     const formatUrl = (u) => u.trim() ? (u.trim().startsWith("http") ? u.trim() : `https://${u.trim()}`) : "";
     
@@ -176,6 +180,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
   };
 
   const deleteApp = (appId) => {
+    if (isViewer) return;
     saveToolboxData({ apps: apps.filter(a => a.id !== appId) });
     setSelectedAppDetails(null);
     setShowMenuId(false);
@@ -225,13 +230,15 @@ export default function Toolbox({ trip, setTrip, themeId }) {
               推薦的 SIM卡 與 eSIM 網路方案
             </h4>
           </div>
-          <button onClick={() => setIsEditingNet(!isEditingNet)} className="text-[11px] font-bold flex items-center gap-1 transition-all active:scale-95" style={{ color: currentTheme.main }}>
-            {isEditingNet ? <><Check className="w-3.5 h-3.5" />完成</> : <><Edit3 className="w-3.5 h-3.5" />修改</>}
-          </button>
+          {!isViewer && (
+            <button onClick={() => setIsEditingNet(!isEditingNet)} className="text-[11px] font-bold flex items-center gap-1 transition-all active:scale-95" style={{ color: currentTheme.main }}>
+              {isEditingNet ? <><Check className="w-3.5 h-3.5" />完成</> : <><Edit3 className="w-3.5 h-3.5" />修改</>}
+            </button>
+          )}
         </div>
 
         <div className="bg-white border rounded-[1.5rem] shadow-sm overflow-hidden transition-all" style={{ borderColor: currentTheme.border }}>
-          {isEditingNet ? (
+          {isEditingNet && !isViewer ? (
             <div className="space-y-4 p-5">
               <div>
                 <label className="text-[9px] font-black opacity-40 mb-1 block uppercase">eSIM 推薦 (名字 https://網址)</label>
@@ -304,7 +311,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
         <div className="bg-white/80 border-2 border-dashed rounded-[1.5rem] py-2 px-4 shadow-sm relative transition-all" style={{ borderColor: `${currentTheme.main}25` }}>
           {todos.length > 0 && activeTodosCount === 0 && (
             <div className="mx-1 mt-2 mb-3 px-3 py-2.5 rounded-xl flex items-center justify-center gap-2 text-xs font-black tracking-wider animate-in fade-in zoom-in-95 duration-300 border border-dashed select-none" style={{ backgroundColor: `${currentTheme.main}10`, borderColor: `${currentTheme.main}30`, color: currentTheme.text }}>
-              <PartyPopper className="w-4 h-4 shrink-0 animate-pulse" style={{ color: currentTheme.main }} /><span>所有待辦事項都完成了哦 ପ꒰⑅•ᴗ•｡꒱໊♡</span><Star className="w-4 h-4 shrink-0 animate-pulse" style={{ color: currentTheme.main }} />
+              <PartyPopper className="w-4 h-4 shrink-0 animate-pulse" style={{ color: currentTheme.main }} /><span>所有待辦事項都完成了哦哦 ପ꒰⑅•ᴗ•｡꒱໊♡</span><Star className="w-4 h-4 shrink-0 animate-pulse" style={{ color: currentTheme.main }} />
             </div>
           )}
           {activeTodos.length > 0 ? (
@@ -356,7 +363,9 @@ export default function Toolbox({ trip, setTrip, themeId }) {
             <Smartphone className="w-4 h-4" style={{ color: currentTheme.main }} />
             <h4 className="text-[12px] font-black uppercase tracking-widest" style={{ color: currentTheme.text }}>推薦下載的 APP</h4>
           </div>
-          <button onClick={openAddModal} className="text-[11px] font-black flex items-center gap-1 px-2.5 py-1 rounded-full border border-dashed transition-all active:scale-95" style={{ borderColor: `${currentTheme.main}40`, color: currentTheme.main }}><Plus className="w-3 h-3" /> 新增</button>
+          {!isViewer && (
+            <button onClick={openAddModal} className="text-[11px] font-black flex items-center gap-1 px-2.5 py-1 rounded-full border border-dashed transition-all active:scale-95" style={{ borderColor: `${currentTheme.main}40`, color: currentTheme.main }}><Plus className="w-3 h-3" /> 新增</button>
+          )}
         </div>
         
         <div className="grid grid-cols-4 gap-x-2 gap-y-4 px-1">
@@ -398,38 +407,40 @@ export default function Toolbox({ trip, setTrip, themeId }) {
             style={{ borderColor: currentTheme.border }}
           >
             
-            <div 
-              className="absolute top-5 right-5 z-30"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button 
-                onClick={() => setShowMenuId(!showMenuId)}
-                className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-all active:scale-90 shadow-sm"
-                style={{ color: currentTheme.main }}
+            {!isViewer && (
+              <div 
+                className="absolute top-5 right-5 z-30"
+                onClick={(e) => e.stopPropagation()}
               >
-                <MoreHorizontal className="w-4 h-4" />
-              </button>
-              
-              {showMenuId && (
-                <div className="absolute right-0 top-8 bg-white border rounded-xl shadow-xl py-1 w-24 z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150" style={{ borderColor: '#f3f4f6' }}>
-                  <button 
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); openEditModal(selectedAppDetails); setShowMenuId(false); }}
-                    className="w-full px-3 py-1.5 text-[11px] font-bold text-left hover:bg-gray-50 flex items-center gap-1.5"
-                    style={{ color: currentTheme.text }}
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />編輯
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); deleteApp(selectedAppDetails.id); }}
-                    className="w-full px-3 py-1.5 text-[11px] font-bold text-left hover:bg-red-50 flex items-center gap-1.5 text-red-500"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />刪除
-                  </button>
-                </div>
-              )}
-            </div>
+                <button 
+                  onClick={() => setShowMenuId(!showMenuId)}
+                  className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-all active:scale-90 shadow-sm"
+                  style={{ color: currentTheme.main }}
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                </button>
+                
+                {showMenuId && (
+                  <div className="absolute right-0 top-8 bg-white border rounded-xl shadow-xl py-1 w-24 z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150" style={{ borderColor: '#f3f4f6' }}>
+                    <button 
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); openEditModal(selectedAppDetails); setShowMenuId(false); }}
+                      className="w-full px-3 py-1.5 text-[11px] font-bold text-left hover:bg-gray-50 flex items-center gap-1.5"
+                      style={{ color: currentTheme.text }}
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />編輯
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); deleteApp(selectedAppDetails.id); }}
+                      className="w-full px-3 py-1.5 text-[11px] font-bold text-left hover:bg-red-50 flex items-center gap-1.5 text-red-500"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />刪除
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="w-full flex justify-center mt-6 mb-5">
               {selectedAppDetails.imgUrl ? (
@@ -492,7 +503,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
         </div>
       )}
 
-      {isOpenModal && (
+      {isOpenModal && !isViewer && (
         <div className="fixed inset-0 z-[160] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-sm rounded-[2rem] border p-5 shadow-2xl animate-in zoom-in-95 duration-300 relative bg-white" style={{ borderColor: currentTheme.border }}>
             <button type="button" onClick={() => { setIsOpenModal(false); setShowIconPicker(false); }} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-50"><X className="w-5 h-5" /></button>
@@ -515,7 +526,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
                     <div className="col-span-2"><label className="text-[9px] font-black opacity-40 mb-1 block uppercase px-1">App 名字 (必填)</label><input type="text" required placeholder="例：Suica / NAVER" value={newAppName} onChange={(e) => setNewAppName(e.target.value)} className="w-full bg-white border rounded-xl px-3 py-2 text-xs font-bold outline-none" style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text }} /></div>
                   </div>
                   <div><label className="text-[9px] font-black opacity-40 mb-1 block uppercase px-1">App 封面圖片網址</label><input type="text" placeholder="可貼上介紹截圖或封面 URL，可選填" value={newAppImgUrl} onChange={(e) => setNewAppImgUrl(e.target.value)} className="w-full bg-white border rounded-xl px-3 py-2 text-xs font-bold outline-none" style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text }} /></div>
-                  <div><label className="text-[9px] font-black opacity-40 mb-1 block uppercase px-1">App Store 下載網址</label><input type="text" placeholder="可貼上完整網址，慢或留空" value={newAppAppleUrl} onChange={(e) => setNewAppAppleUrl(e.target.value)} className="w-full bg-white border rounded-xl px-3 py-2 text-xs font-bold outline-none" style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text }} /></div>
+                  <div><label className="text-[9px] font-black opacity-40 mb-1 block uppercase px-1">App Store 下載網址</label><input type="text" placeholder="可貼上完整網址，或留空" value={newAppAppleUrl} onChange={(e) => setNewAppAppleUrl(e.target.value)} className="w-full bg-white border rounded-xl px-3 py-2 text-xs font-bold outline-none" style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text }} /></div>
                   <div><label className="text-[9px] font-black opacity-40 mb-1 block uppercase px-1">Play 商店 下載網址</label><input type="text" placeholder="可貼上完整網址，或留空" value={newAppAndroidUrl} onChange={(e) => setNewAppAndroidUrl(e.target.value)} className="w-full bg-white border rounded-xl px-3 py-2 text-xs font-bold outline-none" style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text }} /></div>
                   <div><label className="text-[9px] font-black opacity-40 mb-1 block uppercase px-1">備註</label><input type="text" placeholder="一句短提醒 (例：需先綁定台灣手機號碼)" value={newAppDesc} onChange={(e) => setNewAppDesc(e.target.value)} className="w-full bg-white border rounded-xl px-3 py-2 text-xs font-bold outline-none" style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text }} /></div>
                   <div className="pt-2"><button type="submit" disabled={!newAppName.trim()} className="w-full py-3 rounded-xl text-xs font-black text-white shadow-sm hover:brightness-95 transition-all active:scale-[0.99] disabled:opacity-30" style={{ backgroundColor: currentTheme.main }}>{editingAppId ? "更新 APP 資訊" : "確認加入"}</button></div>
