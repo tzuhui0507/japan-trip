@@ -195,7 +195,7 @@ export default function TripDetail({ themeId, setThemeId }) {
             style={{ backgroundColor: currentTheme.card, borderColor: currentTheme.border }}
           >
             <h3 className="text-sm font-bold mb-2 tracking-[0.15em] text-center" style={{ color: currentTheme.text }}>
-              Hiiii~ 泥好 (･ัᗜ･ั)و
+              Hiiii~ 泥好 ෆ⸒⸒⸜( ˶'ᵕ'˶)⸝
             </h3>
 
             <p className="text-xs text-center mb-4 opacity-80" style={{ color: currentTheme.accent }}>
@@ -210,7 +210,7 @@ export default function TripDetail({ themeId, setThemeId }) {
                 目前為 <span className="font-semibold" style={{ color: currentTheme.text }}>觀看模式 ( ˘͈ ᵕ ˘͈ )</span>
               </p>
               <p>
-                有些內容無法編輯，但可以自由瀏覽行程資訊哦 •͈ ₃ •͈
+                有些內容無法編輯，但可以自由瀏覽行程資訊哦  •͈ ₃ •͈
               </p>
             </div>
 
