@@ -216,6 +216,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
     });
   };
 
+  // 💡 修正：讓數字與文字起點完美對齊，並極度壓縮行距
   const renderFormattedLines = (rawText, delimiter = "\n", isCollapsed = false) => {
     if (!rawText) return null;
     const lines = rawText.split(delimiter);
@@ -227,6 +228,9 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
 
       let type = "";
       let content = "";
+      let customNumber = null;
+
+      const pureNumMatch = trimmed.match(/^(\d+)([\.\)])\s*(.*)$/);
 
       if (trimmed.startsWith("!")) {
         type = "alert";
@@ -235,6 +239,21 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
       } else if (trimmed.startsWith(">>")) {
         type = "continue";
         content = trimmed.substring(2).trim();
+      } else if (pureNumMatch) {
+        const [, num, punct, rest] = pureNumMatch;
+        customNumber = `${num}${punct}`;
+        content = rest.trim();
+
+        if (currentLevel === "flower" || currentLevel === "flowerNum") {
+          type = "flowerNum";
+          currentLevel = "flowerNum";
+        } else if (currentLevel === "heart" || currentLevel === "heartNum") {
+          type = "heartNum";
+          currentLevel = "heartNum";
+        } else {
+          type = "starNum";
+          currentLevel = "starNum";
+        }
       } else if (trimmed.startsWith(">")) {
         type = "heart";
         content = trimmed.substring(1).trim();
@@ -255,37 +274,51 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
       const activeType = type === "continue" ? currentLevel : type;
       const showIcon = type !== "continue";
 
-      if (isCollapsed && activeType !== "star" && activeType !== "alert") {
+      if (isCollapsed && activeType !== "star" && activeType !== "starNum" && activeType !== "alert") {
         return null;
       }
 
       let paddingClass = "";
-      if (activeType === "heart") paddingClass = "pl-4";
-      if (activeType === "flower") paddingClass = "pl-8";
+      if (activeType === "heart" || activeType === "heartNum") paddingClass = "pl-4";
+      if (activeType === "flower" || activeType === "flowerNum") paddingClass = "pl-8";
 
-      const marginTopClass = lIdx === 0 ? "mt-0" : showIcon ? "mt-2.5" : "mt-0.5";
-
-      let iconComponent = null;
-      if (showIcon) {
-        if (activeType === "alert") iconComponent = <BellRing className="w-3.5 h-3.5 text-[#FA5F73] mt-0.5 animate-pulse" />;
-        else if (activeType === "heart") iconComponent = <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1" />;
-        else if (activeType === "flower") iconComponent = <Flower2 className="w-2.5 h-2.5 text-[#FDBA74] mt-1" />;
-        else iconComponent = <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-0.5" />;
-      }
-
-      let textClass = "text-[12px] font-bold";
-      if (activeType === "alert") textClass = "text-[12px] font-bold text-[#FA5F73]";
-      else if (activeType === "heart") textClass = "text-[11px] font-semibold";
-      else if (activeType === "flower") textClass = "text-[11px] opacity-90";
+      // 💡 極緊湊行距
+      const marginTopClass = lIdx === 0 ? "mt-0" : "mt-0.5";
 
       return (
         <div key={lIdx} className={`flex items-start ${paddingClass} ${marginTopClass}`}>
-          <div className="w-5 flex-shrink-0 flex justify-center">
-            {iconComponent}
-          </div>
-          <p className={`flex-1 leading-snug ${textClass}`} style={{ color: activeType !== "alert" ? currentTheme.text : undefined }}>
-            {content}
-          </p>
+          {showIcon ? (
+            <>
+              {/* 圖標本身維持在固定欄位 */}
+              <div className="w-5 flex-shrink-0 flex justify-center items-center">
+                {activeType === "alert" && <BellRing className="w-3.5 h-3.5 text-[#FA5F73] mt-0.5 animate-pulse" />}
+                {activeType === "heart" && <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1" />}
+                {activeType === "flower" && <Flower2 className="w-2.5 h-2.5 text-[#FDBA74] mt-1" />}
+                {activeType === "star" && <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-0.5" />}
+              </div>
+              
+              {/* 如果是數字，我們把數字與文字一起包在右側，讓數字起點直接對齊文字區域 */}
+              {(activeType === "starNum" || activeType === "heartNum" || activeType === "flowerNum") ? (
+                <div className="flex-1 flex items-start gap-1.5">
+                  <span className="text-[10px] font-black tabular-nums tracking-tighter shrink-0 mt-0.5" style={{ color: currentTheme.main }}>
+                    {customNumber}
+                  </span>
+                  <p className="flex-1 leading-snug text-[11px] font-semibold" style={{ color: currentTheme.text }}>
+                    {content}
+                  </p>
+                </div>
+              ) : (
+                <p className={`flex-1 leading-snug ${activeType === "alert" ? "text-[12px] font-bold text-[#FA5F73]" : activeType === "heart" || activeType === "flower" ? "text-[11px] font-semibold" : "text-[12px] font-bold"}`} style={{ color: activeType !== "alert" ? currentTheme.text : undefined }}>
+                  {content}
+                </p>
+              )}
+            </>
+          ) : (
+            /* 純換行文字內容 */
+            <p className="flex-1 leading-snug text-[12px] font-bold pl-5" style={{ color: currentTheme.text }}>
+              {content}
+            </p>
+          )}
         </div>
       );
     });
@@ -737,7 +770,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
       {editingHero && !isViewer && <EditHeroModal dayData={editingHero} onClose={() => setEditingHero(null)} onSave={saveHero} themeId={themeId} />}
       {viewTicket && <TicketDetail ticket={viewTicket} onClose={() => setViewTicket(null)} themeId={themeId} />}
 
-      {/* 💡 放大後的拍立得卡片 Lightbox (尺寸從 w-[300px] 加大為 w-[38px] / max-w-[92vw]) */}
+      {/* 放大後的拍立得卡片 Lightbox */}
       {previewImage && (
         <div 
           className="fixed inset-0 z-[500] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200 cursor-zoom-out"
@@ -751,12 +784,12 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
             <X className="w-6 h-6" />
           </button>
 
-          {/* 放大後的拍立得卡片主體 (設定更寬敞的尺寸 w-[380px] 或 w-[420px]) */}
+          {/* 放大後的拍立得卡片主體 */}
           <div 
             className="relative w-[92vw] max-w-[400px] bg-white p-4 pb-5 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200 cursor-default border border-slate-200"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* 照片本體 (加大高度至 h-[280px] sm:h-[320px]) */}
+            {/* 照片本體 */}
             <div className="w-full h-[280px] sm:h-[320px] rounded-2xl overflow-hidden bg-slate-100 shadow-inner">
               <img 
                 src={previewImage.url} 
