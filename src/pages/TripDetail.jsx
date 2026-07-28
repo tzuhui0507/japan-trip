@@ -195,7 +195,7 @@ export default function TripDetail({ themeId, setThemeId }) {
             style={{ backgroundColor: currentTheme.card, borderColor: currentTheme.border }}
           >
             <h3 className="text-sm font-bold mb-2 tracking-[0.15em] text-center" style={{ color: currentTheme.text }}>
-              Hiiii~ 泥好 *⸜( ˶´ ˘ `˶ )⸝*
+              Hiiii~ 泥好 (･ัᗜ･ั)و
             </h3>
 
             <p className="text-xs text-center mb-4 opacity-80" style={{ color: currentTheme.accent }}>
@@ -210,7 +210,7 @@ export default function TripDetail({ themeId, setThemeId }) {
                 目前為 <span className="font-semibold" style={{ color: currentTheme.text }}>觀看模式 ( ˘͈ ᵕ ˘͈ )</span>
               </p>
               <p>
-                有些內容無法編輯，但可以自由瀏覽行程資訊 (´･ᴗ･`)
+                有些內容無法編輯，但可以自由瀏覽行程資訊哦 •͈ ₃ •͈
               </p>
             </div>
 
@@ -222,12 +222,12 @@ export default function TripDetail({ themeId, setThemeId }) {
               <ul className="space-y-1.5 leading-relaxed">
                 {[
                   { icon: Route, label: "PLAN｜每日行程與天氣安排" },
-                  { icon: Wallet, label: "COST｜旅費記帳與分帳（這裡可以自由編輯 ⸝⸝꙳）" },
-                  { icon: Luggage, label: "PACK｜行李清單（這裡可以自由編輯 ⸝⸝꙳）" }, // 🎒 提示同步更換圖示
-                  { icon: ShoppingBag, label: "LIST｜購物清單（這裡可以自由編輯 ⸝⸝꙳）" },
+                  { icon: Wallet, label: "COST｜旅費記帳與分帳（這邊可以編輯 ⸝⸝꙳）" },
+                  { icon: Luggage, label: "PACK｜行李清單（這邊可以編輯 ⸝⸝꙳）" }, // 🎒 提示同步更換圖示
+                  { icon: ShoppingBag, label: "LIST｜購物清單（這邊可以編輯 ⸝⸝꙳）" },
                   { icon: Ticket, label: "TICKET｜票券資訊與 QR Code" },
-                  { icon: Coins, label: "RATE｜即時匯率隨手換算（這裡可以自由編輯 ⸝⸝꙳）" },
-                  { icon: Smartphone, label: "TOOLS｜必備APP、網卡與待辦（這裡可以自由編輯 ⸝⸝꙳）" }, // 🧭 提示同步更換圖示
+                  { icon: Coins, label: "RATE｜即時匯率隨手換算（這這邊可以編輯 ⸝⸝꙳）" },
+                  { icon: Smartphone, label: "TOOLS｜必備APP、網卡與待辦（這邊可以編輯 ⸝⸝꙳）" }, // 🧭 提示同步更換圖示
                   { icon: Info, label: "INFO｜航班、住宿與緊急聯絡等資訊" },
                 ].map((item, idx) => (
                   <li key={idx} className="flex items-center gap-2">
@@ -266,7 +266,7 @@ export default function TripDetail({ themeId, setThemeId }) {
                 className="px-6 py-2 text-xs rounded-full text-white tracking-widest shadow-md active:scale-95 transition-all"
                 style={{ backgroundColor: currentTheme.main }}
               >
-                (〃・ิ‿・ิ)ゞ ᵒᵒᵒᵒᵒᵒᵒᵒᵏ .ᐟ.ᐟ
+                (๑╹◡╹)ゞ ᵒᵒᵒᵒᵒᵒᵒᵒᵏ .ᐟ.ᐟ
               </button>
             </div>
           </div>
