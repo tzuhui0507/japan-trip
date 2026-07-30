@@ -46,7 +46,7 @@ export default function Header({ trip, setTrip, currentTab, themeId, setThemeId 
 
   useEffect(() => {
     setTempTitle(trip.title);
-    setTempSlogan(trip.slogan || "JAPAN TRIP");
+    setTempSlogan(trip.slogan || "TRIP");
   }, [trip.title, trip.slogan]);
 
   const handleSaveTitle = () => {
@@ -56,7 +56,7 @@ export default function Header({ trip, setTrip, currentTab, themeId, setThemeId 
   };
 
   const handleSaveSlogan = () => {
-    setTrip(prev => ({ ...prev, slogan: tempSlogan.trim() || "JAPAN TRIP" }));
+    setTrip(prev => ({ ...prev, slogan: tempSlogan.trim() || "TRIP" }));
     setIsEditingSlogan(false);
   };
 
@@ -101,8 +101,7 @@ export default function Header({ trip, setTrip, currentTab, themeId, setThemeId 
   };
 
   const handleShare = async () => {
-    const url = new URL(window.location.href);
-    url.searchParams.set("mode", "viewer");
+    const url = new URL("https://my-trip-viewer.vercel.app/");
     try {
       // 🔗 複製給 Viewer 時，主動將機密的待辦事項 (todos) 清空，不外流給觀看者
       const viewerTripData = {
@@ -115,7 +114,7 @@ export default function Header({ trip, setTrip, currentTab, themeId, setThemeId 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(viewerTripData));
       
       await navigator.clipboard.writeText(url.toString());
-      alert("🔗 Viewer 連結已複製（已自動隔離待辦事項）");
+      alert(" Viewer 連結已複製");
       setShowMenu(false);
     } catch { alert("❌ 複製失敗"); }
   };
@@ -180,7 +179,7 @@ export default function Header({ trip, setTrip, currentTab, themeId, setThemeId 
         });
         setShowImport(false);
         setShowMenu(false);
-        alert("✅ 行程檔案匯入成功！行李資訊與 APP 已更新，您的勾選狀態與待辦事項已安全保留。");
+        alert("行程檔案匯入成功！");
       } catch { alert("❌ 檔案格式錯誤"); }
     };
     reader.readAsText(file);
@@ -361,8 +360,8 @@ export default function Header({ trip, setTrip, currentTab, themeId, setThemeId 
       {showImport && (
         <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center">
           <div className="w-full max-w-[320px] mx-4 rounded-3xl border p-6 text-center shadow-2xl" style={{ backgroundColor: "white", borderColor: currentTheme.border }}>
-            <h2 className="text-sm font-bold mb-2" style={{ color: currentTheme.text }}>匯入行程與資訊資料</h2>
-            <p className="text-[11px] mb-4 opacity-60" style={{ color: currentTheme.text }}>匯入將更新行程、行李資訊與設定，但您的行李勾選與待辦事項將會被安全保留。</p>
+            <h2 className="text-sm font-bold mb-2" style={{ color: currentTheme.text }}>匯入行程資料</h2>
+            <p className="text-[11px] mb-4 opacity-60" style={{ color: currentTheme.text }}>匯入將更新行程。</p>
             <input type="file" accept="application/json" onChange={handleImportFile} className="w-full border rounded-xl p-3 text-sm bg-white mb-5 outline-none" style={{ borderColor: currentTheme.border }} />
             <button onClick={() => setShowImport(false)} className="px-6 py-2 text-xs rounded-full border font-bold" style={{ borderColor: currentTheme.border, color: currentTheme.text }}>取消</button>
           </div>
