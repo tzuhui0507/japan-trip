@@ -1,7 +1,7 @@
 // src/pages/ListTab.jsx
 import React, { useEffect, useState } from "react";
 import PageHeader from "../components/PageHeader";
-import { THEMES } from "../App"; // 引入全域主題
+import { THEMES } from "../App"; // 引入全域主題[cite: 8]
 import {
   Check,
   Plus,
@@ -163,7 +163,21 @@ export default function ListTab({ trip, setTrip, themeId }) {
   const [editingBag, setEditingBag] = useState(null);
   const [draggedIndex, setDraggedIndex] = useState(null);
 
-  const luggage = isViewer ? (viewerLuggage || createDefaultLuggage()) : (trip.luggage || createDefaultLuggage());
+  // 💡 智慧組合資料來源：
+  // 1. 勾選與自訂項目：優先讀取本機 (trip.luggage)，若無則用預設。
+  // 2. 行李資訊 (bags)：直接對應當前 trip.luggage.bags，確保匯入新行程檔案時，Luggage info 能順利更新！
+  const luggage = React.useMemo(() => {
+    const defaultLuggage = createDefaultLuggage();
+    const sourceLuggage = isViewer ? (viewerLuggage || defaultLuggage) : (trip?.luggage || defaultLuggage);
+
+    return {
+      ...defaultLuggage,
+      categories: sourceLuggage.categories || defaultLuggage.categories,
+      otherCustom: sourceLuggage.otherCustom || defaultLuggage.otherCustom,
+      // 💡 關鍵：讓 bags 隨著當前 trip 裡的資料同步更新
+      bags: trip?.luggage?.bags || sourceLuggage.bags || defaultLuggage.bags,
+    };
+  }, [isViewer, viewerLuggage, trip?.luggage]);
 
   const { categories = [], otherCustom = [], bags = [] } = luggage || {};
   const activeCategoryData = activeTab === "other" 
@@ -213,11 +227,11 @@ export default function ListTab({ trip, setTrip, themeId }) {
   };
 
   useEffect(() => {
-    if (!isViewer && trip.luggage) {
+    if (!isViewer && trip?.luggage) {
       const patched = patchLuggageData(trip.luggage);
       if (patched) setTrip(prev => ({ ...prev, luggage: patched }));
     }
-  }, [trip.luggage, isViewer, setTrip]);
+  }, [trip?.luggage, isViewer, setTrip]);
 
   useEffect(() => {
     if (!isViewer) return;
@@ -235,11 +249,11 @@ export default function ListTab({ trip, setTrip, themeId }) {
         initData = createDefaultLuggage();
       }
     } else {
-      initData = trip.luggage || createDefaultLuggage();
+      initData = trip?.luggage || createDefaultLuggage();
       localStorage.setItem(VIEWER_LUGGAGE_KEY, JSON.stringify(initData));
     }
     setViewerLuggage(initData);
-  }, [isViewer, trip.luggage]);
+  }, [isViewer, trip?.luggage]);
 
   useEffect(() => {
     if (isViewer) return;
@@ -486,7 +500,6 @@ export default function ListTab({ trip, setTrip, themeId }) {
                           </span>
                           <span className={`text-[12.5px] font-bold transition-all truncate`} 
                             style={{ 
-                              // 勾選前使用同色系加深，勾選後變淡加刪除線
                               color: checked ? `${activeConfig.color}60` : activeConfig.color,
                               filter: checked ? "none" : "brightness(0.6)",
                               textDecoration: checked ? "line-through" : "none"
