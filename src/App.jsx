@@ -3,10 +3,7 @@ import React, { useState, useEffect } from "react";
 import TripDetail from "./pages/TripDetail";
 
 // 檢查環境變數是否強制指定為 viewer
-const isViewerEnv = process.env.REACT_APP_IS_VIEWER === "true";
-
-// 讓原本的 isViewer 判斷也把環境變數考慮進去
-const isViewer = trip.shareMode === "viewer" || isViewerEnv;
+const isViewerEnv = import.meta.env.VITE_IS_VIEWER === "true";
 
 // 1. 定義全域主題配置
 export const THEMES = {
