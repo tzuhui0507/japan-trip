@@ -62,6 +62,11 @@ export default function TripDetail({ themeId, setThemeId }) {
   const [trip, setTrip] = useState(null);
   const [tab, setTab] = useState("PLAN");
 
+  // 💡 當切換導覽列分頁時，自動將畫面捲回最上方
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [tab]);
+
   /* 獲取目前主題配色 */
   const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
 

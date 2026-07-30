@@ -302,7 +302,7 @@ export default function Header({ trip, setTrip, currentTab, themeId, setThemeId 
                 style={{ color: currentTheme.accent }}
                 onClick={() => !isViewer && setIsEditingSlogan(true)}
               >
-                {trip.slogan || "JAPAN TRIP"}
+                {trip.slogan || "TRIP"}
               </div>
             )}
           </div>
@@ -317,7 +317,7 @@ export default function Header({ trip, setTrip, currentTab, themeId, setThemeId 
               </div>
             ) : (
               <h1 className={`text-2xl font-bold ${!isViewer ? 'cursor-pointer' : ''}`} style={{ color: currentTheme.text }} onClick={() => !isViewer && setIsEditingTitle(true)}>
-                {trip.title || "日本自由行"}
+                {trip.title || "自由行"}
               </h1>
             )}
 
