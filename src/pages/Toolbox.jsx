@@ -310,7 +310,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
         <div className="bg-white/80 border-2 border-dashed rounded-[1.5rem] py-2 px-4 shadow-sm relative transition-all" style={{ borderColor: `${currentTheme.main}25` }}>
           {todos.length > 0 && activeTodosCount === 0 && (
             <div className="mx-1 mt-2 mb-3 px-3 py-2.5 rounded-xl flex items-center justify-center gap-2 text-xs font-black tracking-wider animate-in fade-in zoom-in-95 duration-300 border border-dashed select-none" style={{ backgroundColor: `${currentTheme.main}10`, borderColor: `${currentTheme.main}30`, color: currentTheme.text }}>
-              <PartyPopper className="w-4 h-4 shrink-0 animate-pulse" style={{ color: currentTheme.main }} /><span>所有待辦事項都完成了哦 ପ꒰⑅•ᴗ•｡꒱໊♡</span><Star className="w-4 h-4 shrink-0 animate-pulse" style={{ color: currentTheme.main }} />
+              <PartyPopper className="w-4 h-4 shrink-0 animate-pulse" style={{ color: currentTheme.main }} /><span>所有待辦事項都完成了哦哦 ପ꒰⑅•ᴗ•｡꒱໊♡</span><Star className="w-4 h-4 shrink-0 animate-pulse" style={{ color: currentTheme.main }} />
             </div>
           )}
           {activeTodos.length > 0 ? (

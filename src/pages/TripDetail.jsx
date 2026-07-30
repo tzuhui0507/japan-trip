@@ -51,12 +51,7 @@ export default function TripDetail({ themeId, setThemeId }) {
   const params = new URLSearchParams(window.location.search);
   const modeFromUrl = params.get("mode");
   const dataFromUrl = params.get("data"); 
-
-  // 💡 加上這行：檢查 Vercel 環境變數有沒有被開啟
-  const isViewerEnv = import.meta.env.VITE_IS_VIEWER === "true";
-
-  // 💡 修改這裡：只要網址是 viewer 或是環境變數是 true，就強制設為 viewer
-  const shareMode = (modeFromUrl === "viewer" || isViewerEnv) ? "viewer" : "owner";
+  const shareMode = modeFromUrl === "viewer" ? "viewer" : "owner";
   const isViewer = shareMode === "viewer";
 
   const [trip, setTrip] = useState(null);

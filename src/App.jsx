@@ -2,9 +2,6 @@
 import React, { useState, useEffect } from "react";
 import TripDetail from "./pages/TripDetail";
 
-// 檢查環境變數是否強制指定為 viewer
-const isViewerEnv = import.meta.env.VITE_IS_VIEWER === "true";
-
 // 1. 定義全域主題配置
 export const THEMES = {
   sakuraPink: {

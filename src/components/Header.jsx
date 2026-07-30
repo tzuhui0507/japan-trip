@@ -142,18 +142,8 @@ export default function Header({ trip, setTrip, currentTab, themeId, setThemeId 
             days: importedData.days || prevTrip.days,
             tickets: importedData.tickets || prevTrip.tickets,
             info: importedData.info || prevTrip.info,
-            
-            // 💡 絕對保護行李清單
-            luggage: prevTrip.luggage,
-
-            // 💡 修正：待辦事項保留原本的，但推薦 APP 與 網路方案 (network) 優先採用匯入檔案裡的新內容！
-            toolbox: {
-              ...(importedData.toolbox || {}),
-              todos: prevTrip.toolbox?.todos || importedData.toolbox?.todos,
-              apps: importedData.toolbox?.apps || prevTrip.toolbox?.apps, // 確保匯入檔裡的 APP 順利更新
-              network: importedData.toolbox?.network || prevTrip.toolbox?.network,
-            },
-
+            luggage: { ...prevTrip.luggage, bags: importedData.luggage?.bags || prevTrip.luggage?.bags },
+            toolbox: importedData.toolbox || prevTrip.toolbox, // 🛠️ 關鍵修復：把 TOOLS 頁面的工具箱資料也一起匯入進來！
             shareMode: prevTrip.shareMode
           };
           if (isViewer) {
@@ -165,7 +155,6 @@ export default function Header({ trip, setTrip, currentTab, themeId, setThemeId 
         });
         setShowImport(false);
         setShowMenu(false);
-        alert("✅ 行程檔案匯入成功！");
       } catch { alert("❌ 檔案格式錯誤"); }
     };
     reader.readAsText(file);
@@ -347,7 +336,7 @@ export default function Header({ trip, setTrip, currentTab, themeId, setThemeId 
         <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center">
           <div className="w-full max-w-[320px] mx-4 rounded-3xl border p-6 text-center shadow-2xl" style={{ backgroundColor: "white", borderColor: currentTheme.border }}>
             <h2 className="text-sm font-bold mb-2" style={{ color: currentTheme.text }}>匯入行程與資訊資料</h2>
-            <p className="text-[11px] mb-4 opacity-60" style={{ color: currentTheme.text }}>匯入將更新行程與基本設定，但您的行李清單勾選與待辦事項將會被安全保留。</p>
+            <p className="text-[11px] mb-4 opacity-60" style={{ color: currentTheme.text }}>匯入將會覆蓋目前的行程、票券與貨幣設定。</p>
             <input type="file" accept="application/json" onChange={handleImportFile} className="w-full border rounded-xl p-3 text-sm bg-white mb-5 outline-none" style={{ borderColor: currentTheme.border }} />
             <button onClick={() => setShowImport(false)} className="px-6 py-2 text-xs rounded-full border font-bold" style={{ borderColor: currentTheme.border, color: currentTheme.text }}>取消</button>
           </div>
