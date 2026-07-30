@@ -60,6 +60,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
     { id: "todo-3", completed: false, text: "確認各國入境表格填寫完畢" }
   ];
 
+  // 💡 智慧合併：優先保留使用者的待辦事項與 App 清單，僅允許新檔案覆蓋/同步網路方案 (network)
   const tData = trip.toolbox || {};
   const apps = tData.apps || defaultApps;
   const todos = tData.todos || defaultTodos;
@@ -85,7 +86,15 @@ export default function Toolbox({ trip, setTrip, themeId }) {
   const saveToolboxData = (updatedToolbox) => {
     setTrip(prev => {
       const next = structuredClone(prev);
-      next.toolbox = { ...tData, ...updatedToolbox };
+      const currentToolbox = next.toolbox || {};
+      next.toolbox = {
+        ...currentToolbox,
+        ...updatedToolbox,
+        // 確保待辦事項與 App 列表在更新時絕對不會被蓋掉
+        todos: updatedToolbox.todos !== undefined ? updatedToolbox.todos : (currentToolbox.todos || defaultTodos),
+        apps: updatedToolbox.apps !== undefined ? updatedToolbox.apps : (currentToolbox.apps || defaultApps),
+        network: updatedToolbox.network !== undefined ? updatedToolbox.network : (currentToolbox.network || { type: "", provider: "", notes: "" }),
+      };
       return next;
     });
   };
@@ -502,7 +511,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
         </div>
       )}
 
-      {isOpenModal && (
+      {isOpenModal && !isViewer && (
         <div className="fixed inset-0 z-[160] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-sm rounded-[2rem] border p-5 shadow-2xl animate-in zoom-in-95 duration-300 relative bg-white" style={{ borderColor: currentTheme.border }}>
             <button type="button" onClick={() => { setIsOpenModal(false); setShowIconPicker(false); }} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-50"><X className="w-5 h-5" /></button>
