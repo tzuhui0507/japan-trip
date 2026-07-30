@@ -143,12 +143,14 @@ export default function Header({ trip, setTrip, currentTab, themeId, setThemeId 
             tickets: importedData.tickets || prevTrip.tickets,
             info: importedData.info || prevTrip.info,
             
-            // 💡 絕對保護行李清單：直接保留原本的 luggage，不讓匯入檔案覆蓋任何勾選與項目！
+            // 💡 絕對保護行李清單
             luggage: prevTrip.luggage,
 
-            // 💡 同步保護行前準備工具箱的待辦事項與 App
+            // 💡 修正：待辦事項保留原本的，但推薦 APP 與 網路方案 (network) 優先採用匯入檔案裡的新內容！
             toolbox: {
-              ...(prevTrip.toolbox || {}),
+              ...(importedData.toolbox || {}),
+              todos: prevTrip.toolbox?.todos || importedData.toolbox?.todos,
+              apps: importedData.toolbox?.apps || prevTrip.toolbox?.apps, // 確保匯入檔裡的 APP 順利更新
               network: importedData.toolbox?.network || prevTrip.toolbox?.network,
             },
 
@@ -163,7 +165,7 @@ export default function Header({ trip, setTrip, currentTab, themeId, setThemeId 
         });
         setShowImport(false);
         setShowMenu(false);
-        alert("行程檔案匯入成功！");
+        alert("✅ 行程檔案匯入成功！");
       } catch { alert("❌ 檔案格式錯誤"); }
     };
     reader.readAsText(file);
