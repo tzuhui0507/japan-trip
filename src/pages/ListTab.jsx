@@ -163,22 +163,7 @@ export default function ListTab({ trip, setTrip, themeId }) {
   const [editingBag, setEditingBag] = useState(null);
   const [draggedIndex, setDraggedIndex] = useState(null);
 
-  // 💡 智慧合併：如果 trip.luggage 存在，優先保留使用者的勾選狀態與自訂項目，僅同步/更新最上層的 bags 資訊
-  const luggage = React.useMemo(() => {
-    const rawLuggage = isViewer ? viewerLuggage : trip?.luggage;
-    const defaultLuggage = createDefaultLuggage();
-    if (!rawLuggage) return defaultLuggage;
-
-    return {
-      ...defaultLuggage,
-      ...rawLuggage,
-      // 確保六大區塊若被匯入影響時，能完整保留使用者原本勾選與新增的項目
-      categories: rawLuggage.categories || defaultLuggage.categories,
-      otherCustom: rawLuggage.otherCustom || defaultLuggage.otherCustom,
-      // 僅允許最上層的 bags 資訊被新檔案覆蓋或更新（若新檔案有給的話）
-      bags: rawLuggage.bags || defaultLuggage.bags,
-    };
-  }, [isViewer, viewerLuggage, trip?.luggage]);
+  const luggage = isViewer ? (viewerLuggage || createDefaultLuggage()) : (trip.luggage || createDefaultLuggage());
 
   const { categories = [], otherCustom = [], bags = [] } = luggage || {};
   const activeCategoryData = activeTab === "other" 
@@ -192,28 +177,77 @@ export default function ListTab({ trip, setTrip, themeId }) {
     backgroundSize: "12px 12px",
   };
 
-  useEffect(() => {
-    if (!isViewer && !trip.luggage) {
-      const init = createDefaultLuggage();
-      setTrip((prev) => ({ ...prev, luggage: init }));
+  const patchLuggageData = (currentData) => {
+    if (!currentData) return createDefaultLuggage();
+    const defaultData = createDefaultLuggage();
+    let needsUpdate = false;
+    const newData = JSON.parse(JSON.stringify(currentData));
+
+    if (!newData.otherCustom || newData.otherCustom.length < defaultData.otherCustom.length) {
+      newData.otherCustom = defaultData.otherCustom;
+      needsUpdate = true;
     }
-  }, [isViewer, trip?.luggage, setTrip]);
+
+    if (!newData.categories) {
+      newData.categories = defaultData.categories;
+      needsUpdate = true;
+    } else {
+      newData.categories = newData.categories.map((cat, idx) => {
+        const defaultCat = defaultData.categories[idx];
+        if (defaultCat && (!cat.items || cat.items.length < defaultCat.items.length)) {
+          needsUpdate = true;
+          const existingIds = new Set((cat.items || []).map(i => i.id));
+          const newItems = defaultCat.items.filter(i => !existingIds.has(i.id));
+          return { ...cat, items: [...(cat.items || []), ...newItems] };
+        }
+        return cat;
+      });
+    }
+
+    if (!newData.bags) {
+      newData.bags = defaultData.bags;
+      needsUpdate = true;
+    }
+
+    return needsUpdate ? newData : null;
+  };
+
+  useEffect(() => {
+    if (!isViewer && trip.luggage) {
+      const patched = patchLuggageData(trip.luggage);
+      if (patched) setTrip(prev => ({ ...prev, luggage: patched }));
+    }
+  }, [trip.luggage, isViewer, setTrip]);
 
   useEffect(() => {
     if (!isViewer) return;
     const raw = localStorage.getItem(VIEWER_LUGGAGE_KEY);
+    let initData;
     if (raw) {
       try {
-        setViewerLuggage(JSON.parse(raw));
+        initData = JSON.parse(raw);
+        const patched = patchLuggageData(initData);
+        if (patched) {
+          initData = patched;
+          localStorage.setItem(VIEWER_LUGGAGE_KEY, JSON.stringify(initData));
+        }
       } catch (e) {
-        setViewerLuggage(createDefaultLuggage());
+        initData = createDefaultLuggage();
       }
     } else {
-      const init = trip.luggage || createDefaultLuggage();
-      localStorage.setItem(VIEWER_LUGGAGE_KEY, JSON.stringify(init));
-      setViewerLuggage(init);
+      initData = trip.luggage || createDefaultLuggage();
+      localStorage.setItem(VIEWER_LUGGAGE_KEY, JSON.stringify(initData));
     }
+    setViewerLuggage(initData);
   }, [isViewer, trip.luggage]);
+
+  useEffect(() => {
+    if (isViewer) return;
+    if (!trip?.luggage) {
+      const init = createDefaultLuggage();
+      setTrip((prev) => ({ ...prev, luggage: init }));
+    }
+  }, [isViewer, trip, setTrip]);
 
   const updateLuggage = (updater) => {
     if (isViewer) {
@@ -452,6 +486,7 @@ export default function ListTab({ trip, setTrip, themeId }) {
                           </span>
                           <span className={`text-[12.5px] font-bold transition-all truncate`} 
                             style={{ 
+                              // 勾選前使用同色系加深，勾選後變淡加刪除線
                               color: checked ? `${activeConfig.color}60` : activeConfig.color,
                               filter: checked ? "none" : "brightness(0.6)",
                               textDecoration: checked ? "line-through" : "none"
