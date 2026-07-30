@@ -83,7 +83,6 @@ export default function Toolbox({ trip, setTrip, themeId }) {
   };
 
   const saveToolboxData = (updatedToolbox) => {
-    if (isViewer) return;
     setTrip(prev => {
       const next = structuredClone(prev);
       next.toolbox = { ...tData, ...updatedToolbox };
@@ -311,7 +310,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
         <div className="bg-white/80 border-2 border-dashed rounded-[1.5rem] py-2 px-4 shadow-sm relative transition-all" style={{ borderColor: `${currentTheme.main}25` }}>
           {todos.length > 0 && activeTodosCount === 0 && (
             <div className="mx-1 mt-2 mb-3 px-3 py-2.5 rounded-xl flex items-center justify-center gap-2 text-xs font-black tracking-wider animate-in fade-in zoom-in-95 duration-300 border border-dashed select-none" style={{ backgroundColor: `${currentTheme.main}10`, borderColor: `${currentTheme.main}30`, color: currentTheme.text }}>
-              <PartyPopper className="w-4 h-4 shrink-0 animate-pulse" style={{ color: currentTheme.main }} /><span>所有待辦事項都完成了哦哦 ପ꒰⑅•ᴗ•｡꒱໊♡</span><Star className="w-4 h-4 shrink-0 animate-pulse" style={{ color: currentTheme.main }} />
+              <PartyPopper className="w-4 h-4 shrink-0 animate-pulse" style={{ color: currentTheme.main }} /><span>所有待辦事項都完成了哦 ପ꒰⑅•ᴗ•｡꒱໊♡</span><Star className="w-4 h-4 shrink-0 animate-pulse" style={{ color: currentTheme.main }} />
             </div>
           )}
           {activeTodos.length > 0 ? (
@@ -503,7 +502,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
         </div>
       )}
 
-      {isOpenModal && !isViewer && (
+      {isOpenModal && (
         <div className="fixed inset-0 z-[160] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-sm rounded-[2rem] border p-5 shadow-2xl animate-in zoom-in-95 duration-300 relative bg-white" style={{ borderColor: currentTheme.border }}>
             <button type="button" onClick={() => { setIsOpenModal(false); setShowIconPicker(false); }} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-50"><X className="w-5 h-5" /></button>
