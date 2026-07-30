@@ -15,9 +15,11 @@ import {
   ShieldAlert,
   Globe,
   Plus,
-  Lightbulb, // 新增：燈泡元件
-  Heart,      // 新增：愛心元件
-  TicketsPlane
+  Lightbulb,
+  Heart,
+  TicketsPlane,
+  Copy,
+  Phone
 } from "lucide-react";
 import { THEMES } from "../App";
 
@@ -135,6 +137,17 @@ export default function Info({ trip, setTrip, themeId }) {
     } else {
       window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, "_blank");
     }
+  };
+
+  // 複製文字至剪貼簿輔助函式
+  const handleCopyText = (e, text, label = "文字") => {
+    e.stopPropagation();
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      alert(`✅ 已複製${label}：${text}`);
+    }).catch(() => {
+      alert("❌ 複製失敗，請手動複製");
+    });
   };
 
   const telHref = (phone) => `tel:${phone?.replace(/\s+/g, "").replace(/[^0-9+]/g, "")}`;
@@ -271,18 +284,73 @@ export default function Info({ trip, setTrip, themeId }) {
                   <div className="inline-flex items-center px-4 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>HOTEL</div>
                   <div className="flex items-center gap-1 text-[11px] font-medium" style={{ color: currentTheme.main }}><CalendarDays className="w-3 h-3" /><span>{h.dateRange}</span></div>
                 </div>
-                <h3 className="text-xl font-bold mb-3 leading-snug" style={{ color: currentTheme.text }}>{h.name}</h3>
+
+                {/* 飯店名稱區塊 + 絕對定位複製按鈕 (色系跟隨主題) */}
+                <div className="relative pr-10 mb-3">
+                  <h3 className="text-xl font-bold leading-snug" style={{ color: currentTheme.text }}>{h.name}</h3>
+                  <button
+                    onClick={(e) => handleCopyText(e, h.name, "飯店名稱")}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 p-2 rounded-xl hover:bg-black/5 active:scale-95 transition-all"
+                    title="複製飯店名稱"
+                  >
+                    <Copy className="w-4 h-4" style={{ color: currentTheme.main }} />
+                  </button>
+                </div>
+
                 <div className="border-t pt-3 mt-1 space-y-2 text-[13px]" style={{ borderColor: `${currentTheme.border}40`, color: currentTheme.text }}>
-                  <div onClick={(e) => handleNavigation(e, h.addressLine1)} className="flex items-start gap-2 cursor-pointer hover:opacity-70 transition-opacity">
-                    <MapPin className="w-4 h-4 mt-0.5 shrink-0" style={{ color: currentTheme.main }} />
-                    <div className="flex-1">
-                      <p className="font-medium underline underline-offset-2">{h.addressLine1}</p>
-                      <p className="text-[11px] mt-0.5 leading-relaxed opacity-70">{h.addressLine2}</p>
+                  
+                  {/* 地址 1 區塊 + 絕對定位複製按鈕 (色系跟隨主題) */}
+                  <div className="relative pr-10">
+                    <div onClick={(e) => handleNavigation(e, h.addressLine1)} className="flex items-start gap-2 cursor-pointer hover:opacity-70 transition-opacity">
+                      <MapPin className="w-4 h-4 mt-0.5 shrink-0" style={{ color: currentTheme.main }} />
+                      <div className="flex-1">
+                        <p className="font-medium underline underline-offset-2">{h.addressLine1}</p>
+                      </div>
                     </div>
+                    {h.addressLine1 && (
+                      <button
+                        onClick={(e) => handleCopyText(e, h.addressLine1, "地址")}
+                        className="absolute right-0 top-0 p-2 rounded-xl hover:bg-black/5 active:scale-95 transition-all"
+                        title="複製地址"
+                      >
+                        <Copy className="w-3 h-3" style={{ color: currentTheme.main }} />
+                      </button>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2 text-sm pt-1">
-                    <span className="opacity-70">電話：</span><a href={telHref(h.phone)} className="font-bold underline">{h.phone}</a>
+
+                  {/* 地址 2 區塊 + 絕對定位複製按鈕 (色系跟隨主題) */}
+                  {h.addressLine2 && (
+                    <div className="relative pr-10 pl-6">
+                      <div onClick={(e) => handleNavigation(e, h.addressLine2)} className="cursor-pointer hover:opacity-70 transition-opacity">
+                        <p className="text-[11px] leading-relaxed opacity-70 underline underline-offset-2">{h.addressLine2}</p>
+                      </div>
+                      <button
+                        onClick={(e) => handleCopyText(e, h.addressLine2, "英文地址")}
+                        className="absolute right-0 top-0 p-2 rounded-xl hover:bg-black/5 active:scale-95 transition-all"
+                        title="複製英文地址"
+                      >
+                        <Copy className="w-3 h-3" style={{ color: currentTheme.main }} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* 電話區塊 + 絕對定位複製按鈕 (色系跟隨主題) */}
+                  <div className="relative pr-10 pt-1">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="w-4 h-4 shrink-0" style={{ color: currentTheme.main }} />
+                      <a href={telHref(h.phone)} className="font-bold underline">{h.phone}</a>
+                    </div>
+                    {h.phone && (
+                      <button
+                        onClick={(e) => handleCopyText(e, h.phone, "電話號碼")}
+                        className="absolute right-0 top-1/2 -translate-y-1/2 p-2 rounded-xl hover:bg-black/5 active:scale-95 transition-all"
+                        title="複製電話"
+                      >
+                        <Copy className="w-3 h-3" style={{ color: currentTheme.main }} />
+                      </button>
+                    )}
                   </div>
+
                 </div>
               </div>
             </div>
@@ -327,12 +395,10 @@ export default function Info({ trip, setTrip, themeId }) {
           {/* 下半部分：嵌入內部的精選教學小氣泡 */}
           {tutorialLinks.length > 0 && (
             <div className="mt-4 pt-4 border-t border-dotted space-y-2.5" style={{ borderColor: `${currentTheme.main}30` }}>
-              {/* 💡 取代為 Lightbulb 元件 */}
               <p className="text-[10px] font-black tracking-widest uppercase opacity-70 px-0.5 flex items-center gap-1" style={{ color: currentTheme.text }}>
                 <Lightbulb className="w-3.5 h-3.5" style={{ color: currentTheme.main }} /> 網路精選操作教學
               </p>
               
-              {/* 改為與交通卡相同的網格雙欄氣泡架構 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {tutorialLinks.map((tutor) => (
                   <div 
@@ -344,7 +410,6 @@ export default function Info({ trip, setTrip, themeId }) {
                       borderColor: `${currentTheme.main}1F`
                     }}
                   >
-                    {/* 🔹 取代為 Heart 元件 */}
                     <div className="flex items-center gap-1.5 min-w-0 flex-1">
                       <Heart className="w-3.5 h-3.5 shrink-0 fill-current" style={{ color: currentTheme.main }} />
                       <span className="text-[12px] font-bold truncate opacity-90 group-hover:underline" style={{ color: currentTheme.text }}>

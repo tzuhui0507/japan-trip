@@ -63,7 +63,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
   const tData = trip.toolbox || {};
   const apps = tData.apps || defaultApps;
   const todos = tData.todos || defaultTodos;
-  const network = tData.network || { type: "", provider: "", notes: "" };
+  const network = tData.network || { type: "", provider: "", notes: "", iosTitle: "", iosUrl: "", androidTitle: "", androidUrl: "" };
 
   const [isEditingNet, setIsEditingNet] = useState(false);
   const [newTodoText, setNewTodoText] = useState("");
@@ -201,7 +201,11 @@ export default function Toolbox({ trip, setTrip, themeId }) {
 
   const esimList = parseLinks(network.provider);
   const simList = parseLinks(network.notes);
-  const guideUrls = parseLinks(network.type).filter(l => l.url);
+  
+  const iosGuideTitle = parseBranchText(network.iosTitle || "");
+  const iosGuideUrl = parseBranchText(network.iosUrl || "");
+  const androidGuideTitle = parseBranchText(network.androidTitle || "");
+  const androidGuideUrl = parseBranchText(network.androidUrl || "");
 
   const networkGroups = [
     { label: "eSIM", list: esimList, color: currentTheme.main + "12", text: currentTheme.main },
@@ -247,9 +251,29 @@ export default function Toolbox({ trip, setTrip, themeId }) {
                 <label className="text-[9px] font-black opacity-40 mb-1 block uppercase">實體 SIM卡 推薦 (名字 https://網址)</label>
                 <textarea rows={2} value={network.notes || ""} onChange={(e) => saveToolboxData({ network: { ...network, notes: e.target.value } })} className="w-full bg-white border rounded-xl px-3 py-2 text-[13px] font-bold outline-none resize-none" style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text }} placeholder="Softbank 原生卡 https://..." />
               </div>
-              <div>
-                <label className="text-[9px] font-black opacity-40 mb-1 block uppercase">eSIM設定教學 (僅支援網址)</label>
-                <textarea rows={2} value={network.type || ""} onChange={(e) => saveToolboxData({ network: { ...network, type: e.target.value } })} className="w-full bg-white border rounded-xl px-3 py-2 text-[13px] font-bold outline-none resize-none" style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text }} placeholder="https://..." />
+
+              {/* iOS 設定教學 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-dashed border-gray-200">
+                <div>
+                  <label className="text-[9px] font-black opacity-40 mb-1 block uppercase">iOS 設定標題</label>
+                  <input type="text" value={network.iosTitle || ""} onChange={(e) => saveToolboxData({ network: { ...network, iosTitle: e.target.value } })} className="w-full bg-white border rounded-xl px-3 py-2 text-[13px] font-bold outline-none" style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text }} placeholder="例：iPhone eSIM 安裝教學" />
+                </div>
+                <div>
+                  <label className="text-[9px] font-black opacity-40 mb-1 block uppercase">iOS 設定網址</label>
+                  <input type="text" value={network.iosUrl || ""} onChange={(e) => saveToolboxData({ network: { ...network, iosUrl: e.target.value } })} className="w-full bg-white border rounded-xl px-3 py-2 text-[13px] font-bold outline-none" style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text }} placeholder="https://..." />
+                </div>
+              </div>
+
+              {/* Android 設定教學 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[9px] font-black opacity-40 mb-1 block uppercase">Android 設定標題</label>
+                  <input type="text" value={network.androidTitle || ""} onChange={(e) => saveToolboxData({ network: { ...network, androidTitle: e.target.value } })} className="w-full bg-white border rounded-xl px-3 py-2 text-[13px] font-bold outline-none" style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text }} placeholder="例：Android 手機設定說明" />
+                </div>
+                <div>
+                  <label className="text-[9px] font-black opacity-40 mb-1 block uppercase">Android 設定網址</label>
+                  <input type="text" value={network.androidUrl || ""} onChange={(e) => saveToolboxData({ network: { ...network, androidUrl: e.target.value } })} className="w-full bg-white border rounded-xl px-3 py-2 text-[13px] font-bold outline-none" style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text }} placeholder="https://..." />
+                </div>
               </div>
             </div>
           ) : (
@@ -281,15 +305,25 @@ export default function Toolbox({ trip, setTrip, themeId }) {
                 )}
               </div>
               
-              {guideUrls.length > 0 && (
-                <div className="px-5 py-3 bg-gray-50/50 flex items-center gap-3">
-                  <Compass className="w-3.5 h-3.5 opacity-80 shrink-0" style={{ color: currentTheme.main }} />
-                  <div className="flex flex-wrap gap-x-4 gap-y-1">
-                    {guideUrls.map((g, i) => (
-                      <button key={i} onClick={() => window.open(g.url, "_blank")} className="text-[12px] font-bold hover:underline" style={{ color: currentTheme.main }}>
-                        eSIM設定教學 {guideUrls.length > 1 ? `#${i+1}` : ""}
+              {(iosGuideUrl || androidGuideUrl) && (
+                <div className="px-5 py-3 bg-gray-50/50 flex flex-wrap items-center gap-4 border-t border-dashed border-gray-100">
+                  <div className="flex items-center gap-1.5 text-[11px] font-black opacity-90 uppercase tracking-wider">
+                    <Compass className="w-3.5 h-3.5" style={{ color: currentTheme.main }} />
+                    <span>設定教學：</span>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {iosGuideUrl && (
+                      <button onClick={() => window.open(iosGuideUrl, "_blank")} className="text-[12px] font-bold hover:underline flex items-center gap-1.5" style={{ color: currentTheme.main }}>
+                        <Apple className="w-3.5 h-3.5" />
+                        <span>{iosGuideTitle || "iOS 設定教學"}</span>
                       </button>
-                    ))}
+                    )}
+                    {androidGuideUrl && (
+                      <button onClick={() => window.open(androidGuideUrl, "_blank")} className="text-[12px] font-bold hover:underline flex items-center gap-1.5" style={{ color: currentTheme.main }}>
+                        <Bot className="w-3.5 h-3.5" />
+                        <span>{androidGuideTitle || "Android 設定教學"}</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -310,7 +344,7 @@ export default function Toolbox({ trip, setTrip, themeId }) {
         <div className="bg-white/80 border-2 border-dashed rounded-[1.5rem] py-2 px-4 shadow-sm relative transition-all" style={{ borderColor: `${currentTheme.main}25` }}>
           {todos.length > 0 && activeTodosCount === 0 && (
             <div className="mx-1 mt-2 mb-3 px-3 py-2.5 rounded-xl flex items-center justify-center gap-2 text-xs font-black tracking-wider animate-in fade-in zoom-in-95 duration-300 border border-dashed select-none" style={{ backgroundColor: `${currentTheme.main}10`, borderColor: `${currentTheme.main}30`, color: currentTheme.text }}>
-              <PartyPopper className="w-4 h-4 shrink-0 animate-pulse" style={{ color: currentTheme.main }} /><span>所有待辦事項都完成了哦哦 ପ꒰⑅•ᴗ•｡꒱໊♡</span><Star className="w-4 h-4 shrink-0 animate-pulse" style={{ color: currentTheme.main }} />
+              <PartyPopper className="w-4 h-4 shrink-0 animate-pulse" style={{ color: currentTheme.main }} /><span>所有待辦事項都完成了哦哦[cite: 6]</span><Star className="w-4 h-4 shrink-0 animate-pulse" style={{ color: currentTheme.main }} />
             </div>
           )}
           {activeTodos.length > 0 ? (
