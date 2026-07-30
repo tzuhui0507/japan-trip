@@ -1,7 +1,7 @@
 // src/pages/ListTab.jsx
 import React, { useEffect, useState } from "react";
 import PageHeader from "../components/PageHeader";
-import { THEMES } from "../App"; // 引入全域主題[cite: 6]
+import { THEMES } from "../App"; // 引入全域主題
 import {
   Check,
   Plus,
@@ -163,43 +163,7 @@ export default function ListTab({ trip, setTrip, themeId }) {
   const [editingBag, setEditingBag] = useState(null);
   const [draggedIndex, setDraggedIndex] = useState(null);
 
-  // 💡 智慧記憶機制：無論是否匯入新行程，優先讀取並保留使用者的勾選與自訂行李項目
-  const luggage = React.useMemo(() => {
-    const rawLuggage = isViewer ? viewerLuggage : trip?.luggage;
-    const defaultLuggage = createDefaultLuggage();
-    
-    // 從 localStorage 額外雙重備份讀取，確保重新匯入檔案時使用者的勾選不會遺失
-    let savedLocalLuggage = null;
-    if (!isViewer) {
-      try {
-        const localRaw = localStorage.getItem("trip_local_luggage_backup");
-        if (localRaw) savedLocalLuggage = JSON.parse(localRaw);
-      } catch (e) {}
-    }
-
-    const targetLuggage = (rawLuggage?.categories && rawLuggage.categories.length > 0) 
-      ? rawLuggage 
-      : (savedLocalLuggage || defaultLuggage);
-
-    return {
-      ...defaultLuggage,
-      categories: targetLuggage.categories || defaultLuggage.categories,
-      otherCustom: targetLuggage.otherCustom || defaultLuggage.otherCustom,
-      bags: rawLuggage?.bags || defaultLuggage.bags,
-    };
-  }, [isViewer, viewerLuggage, trip?.luggage]);
-
-  // 當使用者勾選或修改行李時，同步備份到獨立的 localStorage 鍵值，防止總行程檔案匯入時覆蓋
-  useEffect(() => {
-    if (!isViewer && luggage) {
-      try {
-        localStorage.setItem("trip_local_luggage_backup", JSON.stringify({
-          categories: luggage.categories,
-          otherCustom: luggage.otherCustom
-        }));
-      } catch (e) {}
-    }
-  }, [luggage, isViewer]);
+  const luggage = isViewer ? (viewerLuggage || createDefaultLuggage()) : (trip.luggage || createDefaultLuggage());
 
   const { categories = [], otherCustom = [], bags = [] } = luggage || {};
   const activeCategoryData = activeTab === "other" 
@@ -213,28 +177,77 @@ export default function ListTab({ trip, setTrip, themeId }) {
     backgroundSize: "12px 12px",
   };
 
-  useEffect(() => {
-    if (!isViewer && !trip.luggage) {
-      const init = createDefaultLuggage();
-      setTrip((prev) => ({ ...prev, luggage: init }));
+  const patchLuggageData = (currentData) => {
+    if (!currentData) return createDefaultLuggage();
+    const defaultData = createDefaultLuggage();
+    let needsUpdate = false;
+    const newData = JSON.parse(JSON.stringify(currentData));
+
+    if (!newData.otherCustom || newData.otherCustom.length < defaultData.otherCustom.length) {
+      newData.otherCustom = defaultData.otherCustom;
+      needsUpdate = true;
     }
-  }, [isViewer, trip?.luggage, setTrip]);
+
+    if (!newData.categories) {
+      newData.categories = defaultData.categories;
+      needsUpdate = true;
+    } else {
+      newData.categories = newData.categories.map((cat, idx) => {
+        const defaultCat = defaultData.categories[idx];
+        if (defaultCat && (!cat.items || cat.items.length < defaultCat.items.length)) {
+          needsUpdate = true;
+          const existingIds = new Set((cat.items || []).map(i => i.id));
+          const newItems = defaultCat.items.filter(i => !existingIds.has(i.id));
+          return { ...cat, items: [...(cat.items || []), ...newItems] };
+        }
+        return cat;
+      });
+    }
+
+    if (!newData.bags) {
+      newData.bags = defaultData.bags;
+      needsUpdate = true;
+    }
+
+    return needsUpdate ? newData : null;
+  };
+
+  useEffect(() => {
+    if (!isViewer && trip.luggage) {
+      const patched = patchLuggageData(trip.luggage);
+      if (patched) setTrip(prev => ({ ...prev, luggage: patched }));
+    }
+  }, [trip.luggage, isViewer, setTrip]);
 
   useEffect(() => {
     if (!isViewer) return;
     const raw = localStorage.getItem(VIEWER_LUGGAGE_KEY);
+    let initData;
     if (raw) {
       try {
-        setViewerLuggage(JSON.parse(raw));
+        initData = JSON.parse(raw);
+        const patched = patchLuggageData(initData);
+        if (patched) {
+          initData = patched;
+          localStorage.setItem(VIEWER_LUGGAGE_KEY, JSON.stringify(initData));
+        }
       } catch (e) {
-        setViewerLuggage(createDefaultLuggage());
+        initData = createDefaultLuggage();
       }
     } else {
-      const init = trip.luggage || createDefaultLuggage();
-      localStorage.setItem(VIEWER_LUGGAGE_KEY, JSON.stringify(init));
-      setViewerLuggage(init);
+      initData = trip.luggage || createDefaultLuggage();
+      localStorage.setItem(VIEWER_LUGGAGE_KEY, JSON.stringify(initData));
     }
+    setViewerLuggage(initData);
   }, [isViewer, trip.luggage]);
+
+  useEffect(() => {
+    if (isViewer) return;
+    if (!trip?.luggage) {
+      const init = createDefaultLuggage();
+      setTrip((prev) => ({ ...prev, luggage: init }));
+    }
+  }, [isViewer, trip, setTrip]);
 
   const updateLuggage = (updater) => {
     if (isViewer) {
@@ -245,14 +258,10 @@ export default function ListTab({ trip, setTrip, themeId }) {
       });
       return;
     }
-    setTrip((prev) => {
-      const currentLuggage = prev.luggage || createDefaultLuggage();
-      const nextLuggage = typeof updater === "function" ? updater(currentLuggage) : updater;
-      return {
-        ...prev,
-        luggage: nextLuggage,
-      };
-    });
+    setTrip((prev) => ({
+      ...prev,
+      luggage: typeof updater === "function" ? updater(prev.luggage || createDefaultLuggage()) : updater,
+    }));
   };
 
   const moveItem = (fromIndex, toIndex) => {
@@ -477,6 +486,7 @@ export default function ListTab({ trip, setTrip, themeId }) {
                           </span>
                           <span className={`text-[12.5px] font-bold transition-all truncate`} 
                             style={{ 
+                              // 勾選前使用同色系加深，勾選後變淡加刪除線
                               color: checked ? `${activeConfig.color}60` : activeConfig.color,
                               filter: checked ? "none" : "brightness(0.6)",
                               textDecoration: checked ? "line-through" : "none"

@@ -143,13 +143,10 @@ export default function Header({ trip, setTrip, currentTab, themeId, setThemeId 
             tickets: importedData.tickets || prevTrip.tickets,
             info: importedData.info || prevTrip.info,
             
-            // 💡 智慧保護行李清單：只更新匯入檔裡的 bags（行李重量/規範），絕對不覆蓋使用者的勾選狀態與六大區塊自訂項目！
-            luggage: {
-              ...(prevTrip.luggage || {}),
-              bags: importedData.luggage?.bags || prevTrip.luggage?.bags,
-            },
+            // 💡 絕對保護行李清單：直接保留原本的 luggage，不讓匯入檔案覆蓋任何勾選與項目！
+            luggage: prevTrip.luggage,
 
-            // 💡 智慧保護行前準備工具箱：只更新匯入檔裡的 network（網卡/eSIM），絕對不覆蓋使用者的待辦事項與 APP 推薦！
+            // 💡 同步保護行前準備工具箱的待辦事項與 App
             toolbox: {
               ...(prevTrip.toolbox || {}),
               network: importedData.toolbox?.network || prevTrip.toolbox?.network,
@@ -166,7 +163,7 @@ export default function Header({ trip, setTrip, currentTab, themeId, setThemeId 
         });
         setShowImport(false);
         setShowMenu(false);
-        alert("✅ 行程檔案匯入成功！您的行李勾選與待辦事項已完美保留。");
+        alert("行程檔案匯入成功！");
       } catch { alert("❌ 檔案格式錯誤"); }
     };
     reader.readAsText(file);
