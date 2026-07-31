@@ -221,7 +221,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
     });
   };
 
-  // 💡 修正：讓數字與文字起點完美對齊，並極度壓縮行距
+  // 💡 修正：將純換行與階層的行距微調縮小 (mt-0.5)
   const renderFormattedLines = (rawText, delimiter = "\n", isCollapsed = false) => {
     if (!rawText) return null;
     const lines = rawText.split(delimiter);
@@ -287,14 +287,13 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
       if (activeType === "heart" || activeType === "heartNum") paddingClass = "pl-4";
       if (activeType === "flower" || activeType === "flowerNum") paddingClass = "pl-8";
 
-      // 💡 極緊湊行距
+      // 💡 將換行間距縮小為 mt-0.5
       const marginTopClass = lIdx === 0 ? "mt-0" : "mt-0.5";
 
       return (
         <div key={lIdx} className={`flex items-start ${paddingClass} ${marginTopClass}`}>
           {showIcon ? (
             <>
-              {/* 圖標本身維持在固定欄位 */}
               <div className="w-5 flex-shrink-0 flex justify-center items-center">
                 {activeType === "alert" && <BellRing className="w-3.5 h-3.5 text-[#FA5F73] mt-0.5 animate-pulse" />}
                 {activeType === "heart" && <Heart className="w-2.5 h-2.5 fill-[#E8B4B4] text-[#E8B4B4] mt-1" />}
@@ -302,10 +301,9 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                 {activeType === "star" && <Star className="w-3.5 h-3.5 fill-[#FAF287] text-[#FAF287] mt-0.5" />}
               </div>
               
-              {/* 如果是數字，我們把數字與文字一起包在右側，讓數字起點直接對齊文字區域 */}
               {(activeType === "starNum" || activeType === "heartNum" || activeType === "flowerNum") ? (
                 <div className="flex-1 flex items-start gap-1.5">
-                  <span className="text-[10px] font-black tabular-nums tracking-tighter shrink-0 mt-0.5" style={{ color: currentTheme.main }}>
+                  <span className="text-[11px] font-black tabular-nums tracking-tighter shrink-0 mt-0.5" style={{ color: currentTheme.main }}>
                     {customNumber}
                   </span>
                   <p className="flex-1 leading-snug text-[11px] font-semibold" style={{ color: currentTheme.text }}>
@@ -319,8 +317,8 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
               )}
             </>
           ) : (
-            /* 純換行文字內容 */
-            <p className="flex-1 leading-snug text-[12px] font-bold pl-5" style={{ color: currentTheme.text }}>
+            /* 💡 純換行：與上方標題/階層保持更緊密的行距 */
+            <p className={`flex-1 leading-snug pl-5 ${activeType === "heart" || activeType === "flower" ? "text-[11px] font-semibold" : "text-[12px] font-bold"}`} style={{ color: currentTheme.text }}>
               {content}
             </p>
           )}
