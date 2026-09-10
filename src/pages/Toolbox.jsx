@@ -1,5 +1,5 @@
 // src/pages/Toolbox.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Smartphone,
   CheckSquare,
@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import { THEMES } from "../App";
 import PageHeader from "../components/PageHeader";
+
+const VIEWER_TODOS_KEY = "viewer_todos_v1";
 
 const AVAILABLE_ICONS = {
   Smartphone: Smartphone,
@@ -62,7 +64,21 @@ export default function Toolbox({ trip, setTrip, themeId }) {
 
   const tData = trip.toolbox || {};
   const apps = tData.apps || defaultApps;
-  const todos = tData.todos || defaultTodos;
+  
+  // 💡 針對 Viewer 獨立讀取本機儲存的待辦事項，避免重開網頁被重置
+  const [viewerTodos, setViewerTodos] = useState(() => {
+    if (!isViewer) return null;
+    try {
+      const saved = localStorage.getItem(VIEWER_TODOS_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error(e);
+    }
+    return tData.todos && tData.todos.length > 0 ? tData.todos : defaultTodos;
+  });
+
+  const todos = isViewer ? viewerTodos : (tData.todos || defaultTodos);
+
   const network = tData.network || { type: "", provider: "", notes: "", iosTitle: "", iosUrl: "", androidTitle: "", androidUrl: "" };
 
   const [isEditingNet, setIsEditingNet] = useState(false);
@@ -83,11 +99,22 @@ export default function Toolbox({ trip, setTrip, themeId }) {
   };
 
   const saveToolboxData = (updatedToolbox) => {
-    setTrip(prev => {
-      const next = structuredClone(prev);
-      next.toolbox = { ...tData, ...updatedToolbox };
-      return next;
-    });
+    if (isViewer) {
+      if (updatedToolbox.todos) {
+        setViewerTodos(updatedToolbox.todos);
+        try {
+          localStorage.setItem(VIEWER_TODOS_KEY, JSON.stringify(updatedToolbox.todos));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    } else {
+      setTrip(prev => {
+        const next = structuredClone(prev);
+        next.toolbox = { ...tData, ...updatedToolbox };
+        return next;
+      });
+    }
   };
 
   const toggleTodo = (todoId) => {
