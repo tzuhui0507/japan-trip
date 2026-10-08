@@ -283,7 +283,8 @@ export default function Shopping({ trip, setTrip, themeId }) {
                                  style={{ accentColor: activeStyle.color }}
                                  checked={isChecked} onChange={(e) => updateItem(activeTab, item.id, { checked: e.target.checked })} />
                           
-                          <span className={`ml-3.5 flex-1 text-[13.5px] truncate transition ${isChecked ? "line-through font-medium" : "font-bold"}`}
+                          {/* 💡 修正：加上 min-w-0 與 truncate，確保長名字會自動被壓縮並帶上省略號，絕不覆蓋數量區塊 */}
+                          <span className={`ml-3.5 min-w-0 flex-1 text-[13.5px] truncate transition ${isChecked ? "line-through font-medium" : "font-bold"}`}
                                 style={{ 
                                   color: isChecked ? `${activeStyle.color}80` : activeStyle.color,
                                   filter: isChecked ? "none" : "brightness(0.8)"
@@ -291,14 +292,21 @@ export default function Shopping({ trip, setTrip, themeId }) {
                             {item.name}
                           </span>
 
-                          {typeof item.price === "number" && item.quantity > 0 && (
-                            <div className="mr-2.5 text-right leading-tight tabular-nums">
-                              <div className="text-[11px] font-black" style={{ color: isChecked ? `${activeStyle.color}80` : activeStyle.color }}>{currentCurrencySymbol}{(item.price * item.quantity).toLocaleString()}</div>
-                              <div className="text-[8.5px] font-bold opacity-60" style={{ color: isChecked ? `${activeStyle.color}80` : activeStyle.color }}>{currentCurrencySymbol}{item.price.toLocaleString()} × {item.quantity}</div>
+                          {/* 💡 修正：設定 shrink-0 確保數量與金額區塊擁有絕對固定空間，不會被長名字擠壓 */}
+                          {(typeof item.price === "number" || (item.quantity && item.quantity > 0)) && (
+                            <div className="shrink-0 ml-2 mr-2.5 text-right leading-tight tabular-nums">
+                              {typeof item.price === "number" ? (
+                                <>
+                                  <div className="text-[11px] font-black" style={{ color: isChecked ? `${activeStyle.color}80` : activeStyle.color }}>{currentCurrencySymbol}{(item.price * (item.quantity || 1)).toLocaleString()}</div>
+                                  <div className="text-[8.5px] font-bold opacity-60" style={{ color: isChecked ? `${activeStyle.color}80` : activeStyle.color }}>{currentCurrencySymbol}{item.price.toLocaleString()} × {item.quantity || 1}</div>
+                                </>
+                              ) : (
+                                <div className="text-[11px] font-black" style={{ color: isChecked ? `${activeStyle.color}80` : activeStyle.color }}>數量：{item.quantity}</div>
+                              )}
                             </div>
                           )}
 
-                          <div className="flex items-center gap-1">
+                          <div className="shrink-0 flex items-center gap-1">
                             {item.imageId && <PhotoButton imageId={item.imageId} isChecked={isChecked} activeColor={activeStyle.color} />}
                             <button className="p-1.5 rounded-full hover:bg-black/5" onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}>
                               <MoreHorizontal className="w-4.5 h-4.5 opacity-60" style={{ color: activeStyle.color }} />
@@ -359,7 +367,7 @@ export default function Shopping({ trip, setTrip, themeId }) {
             <div className="grid grid-cols-2 gap-2 mt-5">
               <button onClick={() => setEditingItem(null)} className="py-2 rounded-xl border text-[11px] font-bold bg-white active:scale-95 transition-all" style={{ borderColor: `${currentTheme.border}`, color: currentTheme.text }}>取消</button>
               <button onClick={() => {
-                  if (editingField === "price") updateItem(editingItem.catId, editingItem.item.id, { price: Number(draftValue) });
+                  if (editingField === "price") updateItem(editingItem.catId, editingItem.item.id, { price: draftValue === "" ? null : Number(draftValue) });
                   else if (editingField === "quantity") updateItem(editingItem.catId, editingItem.item.id, { quantity: Number(draftValue) });
                   else updateItem(editingItem.catId, editingItem.item.id, { name: draftValue });
                   setEditingItem(null);
