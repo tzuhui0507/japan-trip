@@ -199,7 +199,6 @@ export default function Shopping({ trip, setTrip, themeId }) {
       <div className="flex items-center justify-between">
         <PageHeader icon={ShoppingBag} title="購物清單" subtitle="SHOPPING LIST" themeId={themeId} />
         
-        {/* 右上角僅顯示當前貨幣，切換功能移至 Header */}
         <div 
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border shadow-sm text-[11px] font-bold"
           style={{ borderColor: currentTheme.border, color: currentTheme.text }}
@@ -271,6 +270,10 @@ export default function Shopping({ trip, setTrip, themeId }) {
                   .map((item, index, arr) => {
                     const shouldOpenUp = index >= 3;
                     const isChecked = item.checked;
+                    const qty = item.quantity || 1;
+                    const hasPrice = typeof item.price === "number";
+                    // 💡 如果沒有填單價，且數量 <= 1，則不顯示右側細節
+                    const showDetail = hasPrice || qty > 1;
 
                     return (
                       <React.Fragment key={item.id}>
@@ -283,7 +286,6 @@ export default function Shopping({ trip, setTrip, themeId }) {
                                  style={{ accentColor: activeStyle.color }}
                                  checked={isChecked} onChange={(e) => updateItem(activeTab, item.id, { checked: e.target.checked })} />
                           
-                          {/* 💡 修正：加上 min-w-0 與 truncate，確保長名字會自動被壓縮並帶上省略號，絕不覆蓋數量區塊 */}
                           <span className={`ml-3.5 min-w-0 flex-1 text-[13.5px] truncate transition ${isChecked ? "line-through font-medium" : "font-bold"}`}
                                 style={{ 
                                   color: isChecked ? `${activeStyle.color}80` : activeStyle.color,
@@ -292,16 +294,15 @@ export default function Shopping({ trip, setTrip, themeId }) {
                             {item.name}
                           </span>
 
-                          {/* 💡 修正：設定 shrink-0 確保數量與金額區塊擁有絕對固定空間，不會被長名字擠壓 */}
-                          {(typeof item.price === "number" || (item.quantity && item.quantity > 0)) && (
+                          {showDetail && (
                             <div className="shrink-0 ml-2 mr-2.5 text-right leading-tight tabular-nums">
-                              {typeof item.price === "number" ? (
+                              {hasPrice ? (
                                 <>
-                                  <div className="text-[11px] font-black" style={{ color: isChecked ? `${activeStyle.color}80` : activeStyle.color }}>{currentCurrencySymbol}{(item.price * (item.quantity || 1)).toLocaleString()}</div>
-                                  <div className="text-[8.5px] font-bold opacity-60" style={{ color: isChecked ? `${activeStyle.color}80` : activeStyle.color }}>{currentCurrencySymbol}{item.price.toLocaleString()} × {item.quantity || 1}</div>
+                                  <div className="text-[10px] font-black" style={{ color: isChecked ? `${activeStyle.color}80` : activeStyle.color }}>{currentCurrencySymbol}{(item.price * qty).toLocaleString()}</div>
+                                  <div className="text-[7.5px] font-bold opacity-60" style={{ color: isChecked ? `${activeStyle.color}80` : activeStyle.color }}>{currentCurrencySymbol}{item.price.toLocaleString()} × {qty}</div>
                                 </>
                               ) : (
-                                <div className="text-[11px] font-black" style={{ color: isChecked ? `${activeStyle.color}80` : activeStyle.color }}>數量：{item.quantity}</div>
+                                <div className="text-[10px] font-black" style={{ color: isChecked ? `${activeStyle.color}80` : activeStyle.color }}>數量：{qty}</div>
                               )}
                             </div>
                           )}
