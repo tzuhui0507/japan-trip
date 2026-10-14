@@ -107,29 +107,54 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
   const getBranchData = (item) => {
     const split = (val) => (typeof val === "string" ? val.split("---") : [val]);
     const currentIndex = branchIndexMap[item.id] || 0;
+    
     const allTitles = split(item.title);
-    const branchCount = allTitles.length;
+    const allSubs = split(item.subtitle);
+    const allNotes = split(item.notes);
+    const allAddresses = split(item.address);
+    const allOpening = split(item.openingHours);
+    const allOffDays = split(item.offDay);
+    const allPhones = split(item.phone);
+    const allLinks = split(item.link);
+    const allImages = split(item.image);
+    const allTypes = split(item.type);
 
-    const getVal = (val) => {
-      const parts = split(val);
+    // 💡 實際計算有效方案數（只要任一欄位有內容即算一個方案，最多 3 個）
+    let branchCount = 1;
+    if (allTitles[2] !== undefined || allSubs[2] !== undefined || allNotes[2] !== undefined || (allTitles[1] !== undefined && (allTitles[1].trim() !== "" || allSubs[1]?.trim() !== "" || allNotes[1]?.trim() !== ""))) {
+      // 檢查 C 是否有內容
+      const hasC = (allTitles[2] && allTitles[2].trim() !== "") || (allSubs[2] && allSubs[2].trim() !== "") || (allNotes[2] && allNotes[2].trim() !== "") || (allAddresses[2] && allAddresses[2].trim() !== "");
+      const hasB = (allTitles[1] && allTitles[1].trim() !== "") || (allSubs[1] && allSubs[1].trim() !== "") || (allNotes[1] && allNotes[1].trim() !== "") || (allAddresses[1] && allAddresses[1].trim() !== "");
+      if (hasC) branchCount = 3;
+      else if (hasB) branchCount = 2;
+    }
+
+    const getVal = (parts) => {
       return (parts[currentIndex] !== undefined && parts[currentIndex].trim() !== "") 
         ? parts[currentIndex] 
         : parts[0];
     };
 
+    const rawType = getVal(allTypes) || "ATTRACTION";
+    const typeKey = TYPE_META[rawType] ? rawType : "ATTRACTION";
+
+    const customNames = Array.isArray(item.branchNames) ? item.branchNames : ["方案 1", "方案 2", "方案 3"];
+
     return {
       hasBranch: branchCount > 1,
       currentIndex,
       branchCount,
-      title: getVal(item.title),
-      subtitle: getVal(item.subtitle),
-      note: getVal(item.notes),
-      address: getVal(item.address),
-      openingHours: getVal(item.openingHours),
-      offDay: getVal(item.offDay),
-      phone: getVal(item.phone),
-      link: getVal(item.link),
-      image: getVal(item.image),
+      branchNames: customNames,
+      title: getVal(allTitles),
+      subtitle: getVal(allSubs),
+      note: getVal(allNotes),
+      address: getVal(allAddresses),
+      openingHours: getVal(allOpening),
+      offDay: getVal(allOffDays),
+      phone: getVal(allPhones),
+      link: getVal(allLinks),
+      image: getVal(allImages),
+      type: typeKey,
       shops: item.shops || [],
       ticketIds: typeof item.ticketIds === "string" 
         ? (split(item.ticketIds)[currentIndex] || split(item.ticketIds)[0]).split(",").filter(Boolean)
@@ -221,7 +246,6 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
     });
   };
 
-  // 💡 修正：將純換行與階層的行距微調縮小 (mt-0.5)
   const renderFormattedLines = (rawText, delimiter = "\n", isCollapsed = false) => {
     if (!rawText) return null;
     const lines = rawText.split(delimiter);
@@ -287,7 +311,6 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
       if (activeType === "heart" || activeType === "heartNum") paddingClass = "pl-4";
       if (activeType === "flower" || activeType === "flowerNum") paddingClass = "pl-8";
 
-      // 💡 將換行間距縮小為 mt-0.5
       const marginTopClass = lIdx === 0 ? "mt-0" : "mt-0.5";
 
       return (
@@ -317,7 +340,6 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
               )}
             </>
           ) : (
-            /* 💡 純換行：與上方標題/階層保持更緊密的行距 */
             <p className={`flex-1 leading-snug pl-5 ${activeType === "heart" || activeType === "flower" ? "text-[11px] font-semibold" : "text-[12px] font-bold"}`} style={{ color: currentTheme.text }}>
               {content}
             </p>
@@ -374,13 +396,8 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
           <div className="flex gap-2 overflow-x-auto scrollbar-none py-1">
             {weatherHourly.length > 0 ? weatherHourly.slice(0, 24).map((h) => (
               <div key={h.timeLabel} className="flex flex-col items-center w-[38px] shrink-0 text-center">
-                {/* 時間 */}
                 <span className="text-[10px] font-medium opacity-85 tabular-nums" style={{ color: currentTheme.accent }}>{h.timeLabel}</span>
-                
-                {/* 天氣圖示 */}
                 <div className="flex items-center justify-center my-2 h-6" style={{ color: currentTheme.main }}>{weatherIcon(h.code)}</div>
-                
-                {/* 溫度 */}
                 <div className="relative inline-flex items-start justify-center tabular-nums">
                   <span className="text-xs font-bold" style={{ color: currentTheme.text }}>{h.temp}</span>
                   <span className="text-[12px] font-bold absolute -right-2.5 top-0" style={{ color: currentTheme.text }}>°</span>
@@ -437,10 +454,10 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
             {(provided) => (
               <div ref={provided.innerRef} {...provided.droppableProps} className="pb-10 relative z-10">
                 {currentItems.map((item, index) => {
-                  const meta = TYPE_META[item.type] || TYPE_META.ATTRACTION;
+                  const branch = getBranchData(item);
+                  const meta = TYPE_META[branch.type] || TYPE_META.ATTRACTION;
                   const TypeIcon = meta.icon;
                   const isOpen = slideOpenId === item.id;
-                  const branch = getBranchData(item);
                   const linkData = getLinkDisplay(branch.link);
                   
                   const shopList = branch.shops || [];
@@ -486,7 +503,9 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                             >
                               {branch.hasBranch && (
                                 <div className="flex items-center justify-between mb-3 pb-2 border-b border-dashed" style={{ borderColor: currentTheme.border }}>
-                                  <div className="text-[10px] font-black tracking-tight uppercase" style={{ color: currentTheme.main }}>方案 {branch.currentIndex + 1}</div>
+                                  <div className="text-[10px] font-black tracking-tight uppercase" style={{ color: currentTheme.main }}>
+                                    {branch.branchNames[branch.currentIndex] || `方案 ${branch.currentIndex + 1}`}
+                                  </div>
                                   <div className="flex gap-1.5">
                                     {[0, 1, 2].slice(0, branch.branchCount).map((idx) => (
                                       <button
@@ -495,7 +514,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                           e.stopPropagation();
                                           setBranchIndexMap(prev => ({ ...prev, [item.id]: idx }));
                                         }}
-                                        className="w-6 h-6 rounded-full text-[10px] font-black transition-all flex items-center justify-center shadow-sm active:scale-95"
+                                        className="px-2 h-6 rounded-full text-[10px] font-black transition-all flex items-center justify-center shadow-sm active:scale-95"
                                         style={{ 
                                           backgroundColor: branch.currentIndex === idx ? currentTheme.main : "white",
                                           borderColor: branch.currentIndex === idx ? currentTheme.main : currentTheme.border,
@@ -504,7 +523,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                           borderStyle: "solid"
                                         }}
                                       >
-                                        {idx + 1}
+                                        {branch.branchNames[idx] || `${idx + 1}`}
                                       </button>
                                     ))}
                                   </div>
@@ -520,7 +539,6 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                 )}
                               </div>
                               
-                              {/* 左右雙欄：右側相片點擊可放大包含 UI 的卡片 */}
                               <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0 flex-1 space-y-3">
                                   <div>
@@ -568,7 +586,6 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                   </div>
                                 </div>
 
-                                {/* 照片區域：點擊傳入 url 與 title */}
                                 {branch.image?.trim() && (
                                   <div 
                                     onClick={(e) => {
@@ -601,7 +618,6 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                 )}
                               </div>
 
-                              {/* 備註 Note 區塊 */}
                               {intro && (
                                 <div className="mt-4 rounded-xl px-3 py-3 flex flex-col text-[12px] leading-relaxed border-2 border-dashed shadow-inner" 
                                   style={{ 
@@ -637,7 +653,6 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                 </div>
                               )}
 
-                              {/* 推薦店家清單 */}
                               {shopList.length > 0 && (
                                 <div className="mt-3">
                                   <button 
@@ -666,7 +681,7 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                                             onClick={(e) => { 
                                               e.stopPropagation(); 
                                               setSelectedShop({ shops: shopList, initialIndex: sIdx, id: item.id }); 
-                                            }}
+                                            }} 
                                             className="bg-white border rounded-xl px-2.5 py-2 text-[11px] text-left hover:opacity-80 active:scale-95 transition-all shadow-sm flex items-center gap-2 overflow-hidden"
                                             style={{ borderColor: currentTheme.border }}
                                           >
@@ -728,7 +743,6 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
         </div>
       )}
 
-      {/* 推薦店家清單瀏覽 Modal */}
       {selectedShop && (
         <ShopListModal
           shops={selectedShop.shops}
@@ -739,7 +753,6 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
         />
       )}
 
-      {/* 編輯行程 Modal */}
       {editingItem && !isViewer && (
         <EditItemModal
           item={editingItem} 
@@ -773,13 +786,11 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
       {editingHero && !isViewer && <EditHeroModal dayData={editingHero} onClose={() => setEditingHero(null)} onSave={saveHero} themeId={themeId} />}
       {viewTicket && <TicketDetail ticket={viewTicket} onClose={() => setViewTicket(null)} themeId={themeId} />}
 
-      {/* 放大後的拍立得卡片 Lightbox */}
       {previewImage && (
         <div 
           className="fixed inset-0 z-[500] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200 cursor-zoom-out"
           onClick={() => setPreviewImage(null)}
         >
-          {/* 右上角關閉按鈕 */}
           <button 
             onClick={() => setPreviewImage(null)}
             className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-all active:scale-90 z-[510]"
@@ -787,12 +798,10 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
             <X className="w-6 h-6" />
           </button>
 
-          {/* 放大後的拍立得卡片主體 */}
           <div 
             className="relative w-[92vw] max-w-[400px] bg-white p-4 pb-5 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200 cursor-default border border-slate-200"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* 照片本體 */}
             <div className="w-full h-[280px] sm:h-[320px] rounded-2xl overflow-hidden bg-slate-100 shadow-inner">
               <img 
                 src={previewImage.url} 
@@ -800,7 +809,6 @@ export default function Plan({ trip, setTrip, dayIndex, themeId }) {
                 className="w-full h-full object-cover"
               />
             </div>
-            {/* 底部相機圖示與標題文字 */}
             <div 
               className="mt-4 text-sm font-bold text-center opacity-90 flex items-center justify-center gap-2" 
               style={{ color: currentTheme.text }}

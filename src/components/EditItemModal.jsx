@@ -23,6 +23,9 @@ import {
   ChevronRight,
   Plus,
   Image as ImageIcon,
+  ArrowLeft,
+  ArrowRight,
+  Pencil
 } from "lucide-react";
 import { THEMES } from "../App";
 import EditShopModal from "./EditShopModal"; // 💡 引入店家編輯 Modal
@@ -65,9 +68,18 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
 
   const [activeTab, setActiveTab] = useState("A"); // 當前選中的方案 Tab: "A" | "B" | "C"
 
+  // 💡 支援自定義方案名稱 (預設為 方案 1 / 方案 2 / 方案 3)
+  const [branchNames, setBranchNames] = useState(() => {
+    const names = item.branchNames;
+    if (Array.isArray(names)) return { A: names[0] || "方案 1", B: names[1] || "方案 2", C: names[2] || "方案 3" };
+    return { A: "方案 1", B: "方案 2", C: "方案 3" };
+  });
+
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editingNameVal, setEditingNameVal] = useState("");
+
   const [baseForm, setBaseForm] = useState({ 
     time: item.time || "", 
-    type: item.type || "ATTRACTION",
     targetDayIndex: currentDayIndex // 用來記錄使用者選擇搬移到哪一天
   });
   
@@ -81,11 +93,12 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
     notes: parseBranch(item.notes),
     link: parseBranch(item.link),
     image: parseBranch(item.image), // 💡 支援每個方案各自獨立的圖片網址
+    type: parseBranch(item.type || item.types), // 💡 支援各方案獨立類別
   }), [item]);
 
-  const [formA, setFormA] = useState({ title: initialData.title.a, subtitle: initialData.subtitle.a, address: initialData.address.a, openingHours: initialData.openingHours.a, offDay: initialData.offDay.a, phone: initialData.phone.a, notes: initialData.notes.a, link: initialData.link.a, image: initialData.image.a });
-  const [formB, setFormB] = useState({ title: initialData.title.b, subtitle: initialData.subtitle.b, address: initialData.address.b, openingHours: initialData.openingHours.b, offDay: initialData.offDay.b, phone: initialData.phone.b, notes: initialData.notes.b, link: initialData.link.b, image: initialData.image.b });
-  const [formC, setFormC] = useState({ title: initialData.title.c, subtitle: initialData.subtitle.c, address: initialData.address.c, openingHours: initialData.openingHours.c, offDay: initialData.offDay.c, phone: initialData.phone.c, notes: initialData.notes.c, link: initialData.link.c, image: initialData.image.c });
+  const [formA, setFormA] = useState({ title: initialData.title.a, subtitle: initialData.subtitle.a, address: initialData.address.a, openingHours: initialData.openingHours.a, offDay: initialData.offDay.a, phone: initialData.phone.a, notes: initialData.notes.a, link: initialData.link.a, image: initialData.image.a, type: initialData.type.a || item.type || "ATTRACTION" });
+  const [formB, setFormB] = useState({ title: initialData.title.b, subtitle: initialData.subtitle.b, address: initialData.address.b, openingHours: initialData.openingHours.b, offDay: initialData.offDay.b, phone: initialData.phone.b, notes: initialData.notes.b, link: initialData.link.b, image: initialData.image.b, type: initialData.type.b || item.type || "ATTRACTION" });
+  const [formC, setFormC] = useState({ title: initialData.title.c, subtitle: initialData.subtitle.c, address: initialData.address.c, openingHours: initialData.openingHours.c, offDay: initialData.offDay.c, phone: initialData.phone.c, notes: initialData.notes.c, link: initialData.link.c, image: initialData.image.c, type: initialData.type.c || item.type || "ATTRACTION" });
 
   const [branchTickets, setBranchTickets] = useState(useMemo(() => {
     let ids = item.ticketIds || [];
@@ -109,6 +122,38 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
     else setFormC(updater);
   };
 
+  // 💡 方案順序對調或移動函式
+  const moveBranch = (fromKey, direction) => {
+    const order = ["A", "B", "C"];
+    const idx = order.indexOf(fromKey);
+    const targetIdx = direction === "left" ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= order.length) return;
+    const toKey = order[targetIdx];
+
+    // 交換 form 資料
+    const forms = { A: formA, B: formB, C: formC };
+    const tempForm = forms[fromKey];
+    forms[fromKey] = forms[toKey];
+    forms[toKey] = tempForm;
+    setFormA(forms.A); setFormB(forms.B); setFormC(forms.C);
+
+    // 交換名稱
+    const names = { ...branchNames };
+    const tempName = names[fromKey];
+    names[fromKey] = names[toKey];
+    names[toKey] = tempName;
+    setBranchNames(names);
+
+    // 交換票券
+    const ticketsMap = { ...branchTickets };
+    const tempT = ticketsMap[fromKey];
+    ticketsMap[fromKey] = ticketsMap[toKey];
+    ticketsMap[toKey] = tempT;
+    setBranchTickets(ticketsMap);
+
+    setActiveTab(toKey);
+  };
+
   const handleSave = () => {
     const hasAnyB = Object.values(formB).some(val => val && val.trim() !== "") || branchTickets.B.length > 0;
     const hasAnyC = Object.values(formC).some(val => val && val.trim() !== "") || branchTickets.C.length > 0;
@@ -125,7 +170,7 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
     onSave({ 
       ...item, 
       time: baseForm.time || "", 
-      type: baseForm.type, 
+      type: combine("type"), // 各方案獨立類別
       title: combine("title"), 
       subtitle: combine("subtitle"), 
       address: combine("address"), 
@@ -136,6 +181,7 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
       link: combine("link"), 
       image: combine("image"), // 💡 儲存各方案獨立的圖片
       shops: shops, // 儲存店家清單
+      branchNames: [branchNames.A, branchNames.B, branchNames.C], // 儲存自定義方案名稱
       ticketIds: hasAnyC 
         ? `${branchTickets.A.join(",")}---${branchTickets.B.join(",")}---${branchTickets.C.join(",")}`
         : hasAnyB 
@@ -263,34 +309,6 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
               </div>
             </div>
 
-            {/* 類別區塊 */}
-            <div className="w-full">
-              <label className="flex items-center gap-1.5 text-[11px] font-bold mb-3 uppercase tracking-widest px-1 opacity-70" style={{ color: currentTheme.text }}>
-                <Layers className="w-3.5 h-3.5" style={{ color: currentTheme.main }} /> 類別
-              </label>
-              <div className="flex flex-wrap sm:flex-nowrap gap-2">
-                {Object.values(TYPE_OPTIONS).map((t) => {
-                  const active = baseForm.type === t.key;
-                  return (
-                    <button 
-                      key={t.key} 
-                      type="button" 
-                      onClick={() => setBaseForm(prev => ({ ...prev, type: t.key }))} 
-                      style={{ 
-                        backgroundColor: active ? t.pillBg : 'white', 
-                        color: active ? t.pillText : currentTheme.text, 
-                        borderColor: active ? t.pillText : `${currentTheme.main}20` 
-                      }} 
-                      className={`flex-1 min-w-[70px] h-14 rounded-2xl flex flex-col items-center justify-center border transition-all gap-1 shadow-sm active:scale-95 ${!active && 'opacity-40'}`}
-                    >
-                      <t.icon className={`w-5 h-5 ${active ? "scale-110" : ""}`} />
-                      <span className="text-[9px] font-bold tracking-tight">{t.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
             {/* 推薦店家管理按鈕區塊 */}
             <div className="w-full space-y-2">
               <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest px-1 opacity-70" style={{ color: currentTheme.text }}>
@@ -340,47 +358,150 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
 
             <div className="w-full h-px" style={{ backgroundColor: `${currentTheme.main}10` }} />
 
-            {/* 方案 Tab 切換按鈕 */}
+            {/* 方案 Tab 切換按鈕與自定義名稱、順序調整 */}
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest px-1 opacity-70" style={{ color: currentTheme.text }}>
-                  <Pin className="w-3.5 h-3.5" style={{ color: currentTheme.main }} /> 方案內容編輯
-                </label>
-                <div className="flex bg-gray-100 p-1 rounded-2xl gap-1">
-                  {[
-                    { key: "A", label: "方案 1" },
-                    { key: "B", label: "方案 2" },
-                    { key: "C", label: "方案 3" },
-                  ].map((tab) => {
-                    const isActive = activeTab === tab.key;
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest px-1 opacity-70" style={{ color: currentTheme.text }}>
+                    <Pin className="w-3.5 h-3.5" style={{ color: currentTheme.main }} /> 方案內容編輯 ({branchNames[activeTab]})
+                  </label>
+                  
+                  {/* 方案重新命名按鈕 */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingName(true);
+                      setEditingNameVal(branchNames[activeTab]);
+                    }}
+                    className="p-1 rounded-lg border bg-white text-slate-500 hover:text-slate-800 transition-all shadow-sm"
+                    style={{ borderColor: `${currentTheme.main}20` }}
+                    title="重新命名當前方案"
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </button>
+                </div>
+
+                {/* 方案切換與順序對調工具 */}
+                <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-2xl">
+                  {["A", "B", "C"].map((key, idx, arr) => {
+                    const isActive = activeTab === key;
                     return (
-                      <button
-                        key={tab.key}
-                        type="button"
-                        onClick={() => setActiveTab(tab.key)}
-                        className={`px-3 py-1.5 rounded-xl text-[11px] font-black transition-all ${
-                          isActive ? "bg-white shadow-sm scale-105" : "opacity-50 hover:opacity-100"
-                        }`}
-                        style={{
-                          color: isActive ? currentTheme.main : currentTheme.text,
-                        }}
-                      >
-                        {tab.label}
-                      </button>
+                      <div key={key} className="flex items-center gap-0.5">
+                        {/* 往左移動按鈕 */}
+                        {isActive && idx > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => moveBranch(key, "left")}
+                            className="p-1 text-slate-400 hover:text-slate-700 transition-colors"
+                            title="往前移動方案"
+                          >
+                            <ArrowLeft className="w-3 h-3" />
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab(key)}
+                          className={`px-3 py-1.5 rounded-xl text-[11px] font-black transition-all ${
+                            isActive ? "bg-white shadow-sm scale-105" : "opacity-50 hover:opacity-100"
+                          }`}
+                          style={{
+                            color: isActive ? currentTheme.main : currentTheme.text,
+                          }}
+                        >
+                          {branchNames[key]}
+                        </button>
+
+                        {/* 往右移動按鈕 */}
+                        {isActive && idx < arr.length - 1 && (
+                          <button
+                            type="button"
+                            onClick={() => moveBranch(key, "right")}
+                            className="p-1 text-slate-400 hover:text-slate-700 transition-colors"
+                            title="往後移動方案"
+                          >
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
               </div>
 
+              {/* 編輯方案名稱浮層小視窗 */}
+              {isEditingName && (
+                <div className="p-4 rounded-2xl border bg-slate-50 flex items-center gap-3 animate-in fade-in duration-200" style={{ borderColor: `${currentTheme.main}30` }}>
+                  <input
+                    type="text"
+                    value={editingNameVal}
+                    onChange={(e) => setEditingNameVal(e.target.value)}
+                    className="flex-1 bg-white border rounded-xl px-3 py-2 text-xs font-bold outline-none"
+                    style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text }}
+                    placeholder="輸入新方案名稱..."
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (editingNameVal.trim()) {
+                        setBranchNames(prev => ({ ...prev, [activeTab]: editingNameVal.trim() }));
+                      }
+                      setIsEditingName(false);
+                    }}
+                    className="px-3 py-2 rounded-xl text-xs font-bold text-white shadow-sm"
+                    style={{ backgroundColor: currentTheme.main }}
+                  >
+                    確定
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingName(false)}
+                    className="px-3 py-2 rounded-xl text-xs font-bold border bg-white text-slate-600"
+                    style={{ borderColor: `${currentTheme.main}20` }}
+                  >
+                    取消
+                  </button>
+                </div>
+              )}
+
               {/* 動態顯示當前選中 Tab 的詳細欄位 */}
               <div className="space-y-5 animate-in fade-in duration-200">
                 {renderField("地點名稱", "title", Pin)}
                 {renderField("副標題", "subtitle", Bookmark)}
+
+                {/* 💡 各方案獨立的類別選擇 */}
+                <div className="w-full">
+                  <label className="flex items-center gap-1.5 text-[11px] font-bold mb-3 uppercase tracking-widest px-1 opacity-70" style={{ color: currentTheme.text }}>
+                    <Layers className="w-3.5 h-3.5" style={{ color: currentTheme.main }} /> 類別 ({branchNames[activeTab]})
+                  </label>
+                  <div className="flex flex-wrap sm:flex-nowrap gap-2">
+                    {Object.values(TYPE_OPTIONS).map((t) => {
+                      const active = currentForm.type === t.key;
+                      return (
+                        <button 
+                          key={t.key} 
+                          type="button" 
+                          onClick={() => setCurrentForm(prev => ({ ...prev, type: t.key }))} 
+                          style={{ 
+                            backgroundColor: active ? t.pillBg : 'white', 
+                            color: active ? t.pillText : currentTheme.text, 
+                            borderColor: active ? t.pillText : `${currentTheme.main}20` 
+                          }} 
+                          className={`flex-1 min-w-[70px] h-14 rounded-2xl flex flex-col items-center justify-center border transition-all gap-1 shadow-sm active:scale-95 ${!active && 'opacity-40'}`}
+                        >
+                          <t.icon className={`w-5 h-5 ${active ? "scale-110" : ""}`} />
+                          <span className="text-[9px] font-bold tracking-tight">{t.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
                 
                 {/* 💡 行程卡片封面圖片 (URL) 欄位移至方案內，讓各方案可獨立設定照片 */}
                 <div className="w-full space-y-2">
                   <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest px-1 opacity-70" style={{ color: currentTheme.text }}>
-                    <ImageIcon className="w-3.5 h-3.5" style={{ color: currentTheme.main }} /> 行程卡片封面圖片 (URL) - ({activeTab === "A" ? "方案 1" : activeTab === "B" ? "方案 2" : "方案 3"})
+                    <ImageIcon className="w-3.5 h-3.5" style={{ color: currentTheme.main }} /> 行程卡片封面圖片 (URL) - ({branchNames[activeTab]})
                   </label>
                   
                   <div 
@@ -432,7 +553,7 @@ export default function EditItemModal({ item, trip, tickets = [], onSave, onClos
                 <div className="border rounded-[2rem] p-5 space-y-4 shadow-sm" style={{ borderColor: `${currentTheme.main}20`, backgroundColor: `${currentTheme.main}05` }}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest" style={{ color: currentTheme.main }}>
-                      <Ticket className="w-4 h-4" /> 票券綁定 ({activeTab === "A" ? "方案 1" : activeTab === "B" ? "方案 2" : "方案 3"})
+                      <Ticket className="w-4 h-4" /> 票券綁定 ({branchNames[activeTab]})
                     </div>
                   </div>
 
