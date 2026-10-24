@@ -13,14 +13,17 @@ import {
   PencilLine,
   CircleDollarSign,
   ShoppingBasket,
-  Loader2
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle2,
+  Check
 } from "lucide-react";
 import PageHeader from "../components/PageHeader";
 import { get, set, del } from "idb-keyval";
 import { THEMES } from "../App";
 
 /* ================== constants ================== */
-// 貨幣符號映射表
 const CURRENCY_MAP = {
   JPY: "¥",
   TWD: "NT$",
@@ -82,7 +85,6 @@ export default function Shopping({ trip, setTrip, themeId }) {
 
   const currentTheme = THEMES[themeId] || THEMES.mochaClassic;
 
-  // 使用全局貨幣系統
   const currentCurrencyCode = trip.currency || "JPY";
   const currentCurrencySymbol = CURRENCY_MAP[currentCurrencyCode] || "$";
 
@@ -92,6 +94,7 @@ export default function Shopping({ trip, setTrip, themeId }) {
   const [editingField, setEditingField] = useState(null); 
   const [draftValue, setDraftValue] = useState("");
   const [imageCache, setImageCache] = useState({});
+  const [isCompletedOpen, setIsCompletedOpen] = useState(false);
 
   useEffect(() => {
     const runMigration = async () => {
@@ -179,8 +182,8 @@ export default function Shopping({ trip, setTrip, themeId }) {
       setLoading(false);
     };
     return (
-      <button type="button" onClick={handleClick} disabled={loading} className={`p-1.5 rounded-full hover:bg-black/5 transition ${isChecked ? "opacity-60" : "opacity-100"}`}>
-        {loading ? <Loader2 className="w-4.5 h-4.5 animate-spin" style={{ color: activeColor }} /> : <ImageIcon className="w-4.5 h-4.5" style={{ color: activeColor }} />}
+      <button type="button" onClick={handleClick} disabled={loading} className={`p-1 rounded-full hover:bg-black/5 transition ${isChecked ? "opacity-60" : "opacity-100"}`}>
+        {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: activeColor }} /> : <ImageIcon className="w-3.5 h-3.5" style={{ color: activeColor }} />}
       </button>
     );
   };
@@ -193,6 +196,10 @@ export default function Shopping({ trip, setTrip, themeId }) {
     backgroundImage: `radial-gradient(${activeStyle.color}40 1.5px, transparent 1px)`,
     backgroundSize: "12px 12px",
   };
+
+  const currentCategoryItems = shopping[activeCategoryIndex]?.items || [];
+  const activeItems = currentCategoryItems.filter(i => !i.checked);
+  const completedItems = currentCategoryItems.filter(i => i.checked);
 
   return (
     <div className="pt-2 pb-24 space-y-4 px-4" onClick={() => { setMenuOpenId(null); }}>
@@ -258,99 +265,194 @@ export default function Shopping({ trip, setTrip, themeId }) {
               </button>
             </div>
 
-            <div className="p-3 space-y-2 min-h-[380px] rounded-b-[24px]" style={dynamicDottedBg}>
-              {shopping[activeCategoryIndex].items.length === 0 ? (
+            <div className="p-3 min-h-[380px] rounded-b-[24px]" style={dynamicDottedBg}>
+              {currentCategoryItems.length === 0 ? (
                 <div className="h-48 flex flex-col items-center justify-center opacity-30 text-xs" style={{ color: currentTheme.accent }}>
                   <ShoppingBasket className="w-10 h-10 mb-2 stroke-[1px]" />
                   尚未加入任何商品
                 </div>
               ) : (
-                [...shopping[activeCategoryIndex].items]
-                  .sort((a, b) => Number(a.checked) - Number(b.checked))
-                  .map((item, index, arr) => {
-                    const shouldOpenUp = index >= 3;
-                    const isChecked = item.checked;
+                <div className="space-y-2">
+                  {/* 1. 待買項目列表 */}
+                  {activeItems.map((item) => {
                     const qty = item.quantity || 1;
                     const hasPrice = typeof item.price === "number";
-                    // 💡 如果沒有填單價，且數量 <= 1，則不顯示右側細節
                     const showDetail = hasPrice || qty > 1;
 
                     return (
-                      <React.Fragment key={item.id}>
-                        <div className={`relative flex items-center h-[52px] px-3.5 rounded-2xl transition-all ${isChecked ? "opacity-100" : "bg-white border shadow-md"}`} 
-                             style={{ 
-                               backgroundColor: isChecked ? `${activeStyle.color}15` : "white",
-                               borderColor: isChecked ? "transparent" : `${activeStyle.color}60` 
-                             }}>
-                          <input type="checkbox" className="shrink-0 w-4.5 h-4.5 cursor-pointer rounded-full" 
-                                 style={{ accentColor: activeStyle.color }}
-                                 checked={isChecked} onChange={(e) => updateItem(activeTab, item.id, { checked: e.target.checked })} />
-                          
-                          <span className={`ml-3.5 min-w-0 flex-1 text-[13.5px] truncate transition ${isChecked ? "line-through font-medium" : "font-bold"}`}
-                                style={{ 
-                                  color: isChecked ? `${activeStyle.color}80` : activeStyle.color,
-                                  filter: isChecked ? "none" : "brightness(0.8)"
-                                }}>
-                            {item.name}
-                          </span>
+                      <div 
+                        key={item.id} 
+                        onClick={() => updateItem(activeTab, item.id, { checked: true })}
+                        className="relative flex items-center h-[46px] px-3 rounded-xl bg-white border shadow-2xs transition-all gap-2.5 cursor-pointer hover:border-slate-300" 
+                        style={{ borderColor: `${activeStyle.color}35` }}
+                      >
+                        {/* 極簡圓點 Checkbox */}
+                        <div 
+                          className="shrink-0 w-4 h-4 rounded-full border flex items-center justify-center transition-all bg-white"
+                          style={{ borderColor: `${activeStyle.color}80` }}
+                        >
+                          <div className="w-2 h-2 rounded-full opacity-0 transition-opacity" style={{ backgroundColor: activeStyle.color }} />
+                        </div>
+                        
+                        {/* 商品名稱（安全截斷） */}
+                        <span className="min-w-0 flex-1 text-[13px] truncate font-bold"
+                              style={{ color: activeStyle.color, filter: "brightness(0.8)" }}>
+                          {item.name}
+                        </span>
 
-                          {showDetail && (
-                            <div className="shrink-0 ml-2 mr-2.5 text-right leading-tight tabular-nums">
-                              {hasPrice ? (
-                                <>
-                                  <div className="text-[10px] font-black" style={{ color: isChecked ? `${activeStyle.color}80` : activeStyle.color }}>{currentCurrencySymbol}{(item.price * qty).toLocaleString()}</div>
-                                  <div className="text-[7.5px] font-bold opacity-60" style={{ color: isChecked ? `${activeStyle.color}80` : activeStyle.color }}>{currentCurrencySymbol}{item.price.toLocaleString()} × {qty}</div>
-                                </>
-                              ) : (
-                                <div className="text-[10px] font-black" style={{ color: isChecked ? `${activeStyle.color}80` : activeStyle.color }}>數量：{qty}</div>
-                              )}
-                            </div>
-                          )}
+                        {showDetail && (
+                          <div className="shrink-0 text-right leading-tight tabular-nums">
+                            {hasPrice ? (
+                              <>
+                                <div className="text-[10px] font-black" style={{ color: activeStyle.color }}>
+                                  {currentCurrencySymbol}{(item.price * qty).toLocaleString()}
+                                </div>
+                                <div className="text-[7.5px] font-bold opacity-60" style={{ color: activeStyle.color }}>
+                                  {currentCurrencySymbol}{item.price.toLocaleString()} × {qty}
+                                </div>
+                              </>
+                            ) : (
+                              <div className="text-[10px] font-black" style={{ color: activeStyle.color }}>數量：{qty}</div>
+                            )}
+                          </div>
+                        )}
 
-                          <div className="shrink-0 flex items-center gap-1">
-                            {item.imageId && <PhotoButton imageId={item.imageId} isChecked={isChecked} activeColor={activeStyle.color} />}
-                            <button className="p-1.5 rounded-full hover:bg-black/5" onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}>
-                              <MoreHorizontal className="w-4.5 h-4.5 opacity-60" style={{ color: activeStyle.color }} />
+                        <div className="shrink-0 flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+                          {item.imageId && <PhotoButton imageId={item.imageId} isChecked={false} activeColor={activeStyle.color} />}
+                          <button className="p-1 rounded-full hover:bg-black/5" onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}>
+                            <MoreHorizontal className="w-4 h-4 opacity-60" style={{ color: activeStyle.color }} />
+                          </button>
+                        </div>
+                        
+                        {menuOpenId === item.id && (
+                          <div className="absolute right-1 top-[42px] z-[110] w-38 bg-white border rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden"
+                               style={{ borderColor: `${activeStyle.color}20` }}
+                               onClick={(e) => e.stopPropagation()}>
+                            <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("name"); setDraftValue(item.name); setMenuOpenId(null); }}>
+                              <div className="w-5 flex-shrink-0"><PencilLine className="w-4 h-4" /></div>
+                              <span className="ml-1">名稱</span>
+                            </button>
+                            <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("price"); setDraftValue(item.price != null ? String(item.price) : ""); setMenuOpenId(null); }}>
+                              <div className="w-5 flex-shrink-0"><CircleDollarSign className="w-4 h-4" /></div>
+                              <span className="ml-1">單價</span>
+                            </button>
+                            <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("quantity"); setDraftValue(item.quantity != null ? String(item.quantity) : "1"); setMenuOpenId(null); }}>
+                              <div className="w-5 flex-shrink-0"><ShoppingBasket className="w-4 h-4" /></div>
+                              <span className="ml-1">數量</span>
+                            </button>
+                            <label className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium cursor-pointer" style={{ color: activeStyle.color }}>
+                              <div className="w-5 flex-shrink-0"><ImageIcon className="w-4 h-4" /></div>
+                              <span className="ml-1">照片</span>
+                              <input type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0], activeTab, item.id, item.imageId); setMenuOpenId(null); }} />
+                            </label>
+                            <div className="h-px my-1 mx-2" style={{ backgroundColor: `${activeStyle.color}10` }} />
+                            <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] text-red-500 font-black hover:bg-red-50 w-full" onClick={() => { deleteItem(activeTab, item.id, item.imageId); setMenuOpenId(null); }}>
+                              <div className="w-5 flex-shrink-0"><Trash2 className="w-4 h-4" /></div>
+                              <span className="ml-1">刪除</span>
                             </button>
                           </div>
-                          
-                          {menuOpenId === item.id && (
-                            <div 
-                              className={`absolute right-1 z-[110] w-38 bg-white border rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden ${
-                                shouldOpenUp ? "bottom-[54px]" : "top-[48px]"
-                              }`}
-                              style={{ borderColor: `${activeStyle.color}20` }}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("name"); setDraftValue(item.name); setMenuOpenId(null); }}>
-                                <div className="w-5 flex-shrink-0"><PencilLine className="w-4 h-4" /></div>
-                                <span className="ml-1">名稱</span>
-                              </button>
-                              <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("price"); setDraftValue(item.price != null ? String(item.price) : ""); setMenuOpenId(null); }}>
-                                <div className="w-5 flex-shrink-0"><CircleDollarSign className="w-4 h-4" /></div>
-                                <span className="ml-1">單價</span>
-                              </button>
-                              <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("quantity"); setDraftValue(item.quantity != null ? String(item.quantity) : "1"); setMenuOpenId(null); }}>
-                                <div className="w-5 flex-shrink-0"><ShoppingBasket className="w-4 h-4" /></div>
-                                <span className="ml-1">數量</span>
-                              </button>
-                              <label className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium cursor-pointer" style={{ color: activeStyle.color }}>
-                                <div className="w-5 flex-shrink-0"><ImageIcon className="w-4 h-4" /></div>
-                                <span className="ml-1">照片</span>
-                                <input type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0], activeTab, item.id, item.imageId); setMenuOpenId(null); }} />
-                              </label>
-                              <div className="h-px my-1 mx-2" style={{ backgroundColor: `${activeStyle.color}10` }} />
-                              <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] text-red-500 font-black hover:bg-red-50 w-full" onClick={() => { deleteItem(activeTab, item.id, item.imageId); setMenuOpenId(null); }}>
-                                <div className="w-5 flex-shrink-0"><Trash2 className="w-4 h-4" /></div>
-                                <span className="ml-1">刪除</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                        {arr[index + 1]?.checked && !isChecked && <div className="my-1.5 h-[1.5px] rounded-full" style={{ backgroundColor: `${activeStyle.color}50` }} />}
-                      </React.Fragment>
+                        )}
+                      </div>
                     );
-                  })
+                  })}
+
+                  {/* 2. 已完成（折疊）區塊 */}
+                  {completedItems.length > 0 && (
+                    <div className="mt-5 pt-2 border-t border-dashed" style={{ borderColor: `${activeStyle.color}40` }}>
+                      <button 
+                        onClick={() => setIsCompletedOpen(!isCompletedOpen)}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all bg-black/5 hover:bg-black/10 active:scale-[0.99]"
+                        style={{ color: activeStyle.color }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>已購入 <span className="inline-block">(๑&gt;◡&lt;๑)</span> ({completedItems.length})</span>
+                        </div>
+                        {isCompletedOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </button>
+
+                      {isCompletedOpen && (
+                        <div className="mt-2 space-y-1.5 animate-in fade-in duration-200">
+                          {completedItems.map((item) => {
+                            const qty = item.quantity || 1;
+                            const hasPrice = typeof item.price === "number";
+                            const showDetail = hasPrice || qty > 1;
+
+                            return (
+                              <div 
+                                key={item.id} 
+                                onClick={() => updateItem(activeTab, item.id, { checked: false })}
+                                className="relative flex items-center h-[46px] px-3 rounded-xl transition-all gap-2.5 cursor-pointer opacity-75 hover:opacity-100" 
+                                style={{ backgroundColor: `${activeStyle.color}12` }}
+                              >
+                                <div 
+                                  className="shrink-0 w-4 h-4 rounded-full border flex items-center justify-center transition-all"
+                                  style={{ backgroundColor: activeStyle.color, borderColor: activeStyle.color }}
+                                >
+                                  <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
+                                </div>
+                                
+                                <span className="min-w-0 flex-1 text-[13px] truncate line-through font-medium"
+                                      style={{ color: activeStyle.color }}>
+                                  {item.name}
+                                </span>
+
+                                {showDetail && (
+                                  <div className="shrink-0 text-right leading-tight tabular-nums opacity-65" style={{ color: activeStyle.color }}>
+                                    {hasPrice ? (
+                                      <>
+                                        <div className="text-[10px] font-black">{currentCurrencySymbol}{(item.price * qty).toLocaleString()}</div>
+                                        <div className="text-[7.5px] font-bold opacity-65">{currentCurrencySymbol}{item.price.toLocaleString()} × {qty}</div>
+                                      </>
+                                    ) : (
+                                      <div className="text-[10px] font-black">數量：{qty}</div>
+                                    )}
+                                  </div>
+                                )}
+
+                                <div className="shrink-0 flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+                                  {item.imageId && <PhotoButton imageId={item.imageId} isChecked={true} activeColor={activeStyle.color} />}
+                                  <button className="p-1 rounded-full hover:bg-black/5" onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}>
+                                    <MoreHorizontal className="w-4 h-4 opacity-60" style={{ color: activeStyle.color }} />
+                                  </button>
+                                </div>
+                                
+                                {menuOpenId === item.id && (
+                                  <div className="absolute right-1 top-[42px] z-[110] w-38 bg-white border rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden"
+                                       style={{ borderColor: `${activeStyle.color}20` }}
+                                       onClick={(e) => e.stopPropagation()}>
+                                    <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("name"); setDraftValue(item.name); setMenuOpenId(null); }}>
+                                      <div className="w-5 flex-shrink-0"><PencilLine className="w-4 h-4" /></div>
+                                      <span className="ml-1">名稱</span>
+                                    </button>
+                                    <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("price"); setDraftValue(item.price != null ? String(item.price) : ""); setMenuOpenId(null); }}>
+                                      <div className="w-5 flex-shrink-0"><CircleDollarSign className="w-4 h-4" /></div>
+                                      <span className="ml-1">單價</span>
+                                    </button>
+                                    <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("quantity"); setDraftValue(item.quantity != null ? String(item.quantity) : "1"); setMenuOpenId(null); }}>
+                                      <div className="w-5 flex-shrink-0"><ShoppingBasket className="w-4 h-4" /></div>
+                                      <span className="ml-1">數量</span>
+                                    </button>
+                                    <label className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium cursor-pointer" style={{ color: activeStyle.color }}>
+                                      <div className="w-5 flex-shrink-0"><ImageIcon className="w-4 h-4" /></div>
+                                      <span className="ml-1">照片</span>
+                                      <input type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0], activeTab, item.id, item.imageId); setMenuOpenId(null); }} />
+                                    </label>
+                                    <div className="h-px my-1 mx-2" style={{ backgroundColor: `${activeStyle.color}10` }} />
+                                    <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] text-red-500 font-black hover:bg-red-50 w-full" onClick={() => { deleteItem(activeTab, item.id, item.imageId); setMenuOpenId(null); }}>
+                                      <div className="w-5 flex-shrink-0"><Trash2 className="w-4 h-4" /></div>
+                                      <span className="ml-1">刪除</span>
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </>
