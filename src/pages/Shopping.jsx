@@ -265,7 +265,7 @@ export default function Shopping({ trip, setTrip, themeId }) {
               </button>
             </div>
 
-            <div className="p-3 min-h-[380px] rounded-b-[24px]" style={dynamicDottedBg}>
+            <div className="p-3 pb-4 rounded-b-[24px]" style={dynamicDottedBg}>
               {currentCategoryItems.length === 0 ? (
                 <div className="h-48 flex flex-col items-center justify-center opacity-30 text-xs" style={{ color: currentTheme.accent }}>
                   <ShoppingBasket className="w-10 h-10 mb-2 stroke-[1px]" />
@@ -274,10 +274,11 @@ export default function Shopping({ trip, setTrip, themeId }) {
               ) : (
                 <div className="space-y-2">
                   {/* 1. 待買項目列表 */}
-                  {activeItems.map((item) => {
+                  {activeItems.map((item, index) => {
                     const qty = item.quantity || 1;
                     const hasPrice = typeof item.price === "number";
                     const showDetail = hasPrice || qty > 1;
+                    const isNearBottom = index >= 3;
 
                     return (
                       <div 
@@ -296,7 +297,7 @@ export default function Shopping({ trip, setTrip, themeId }) {
                         
                         {/* 商品名稱（安全截斷） */}
                         <span className="min-w-0 flex-1 text-[13px] truncate font-bold"
-                              style={{ color: activeStyle.color, filter: "brightness(0.8)" }}>
+                            style={{ color: activeStyle.color, filter: "brightness(0.8)" }}>
                           {item.name}
                         </span>
 
@@ -325,7 +326,7 @@ export default function Shopping({ trip, setTrip, themeId }) {
                         </div>
                         
                         {menuOpenId === item.id && (
-                          <div className="absolute right-1 top-[42px] z-[110] w-38 bg-white border rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden"
+                          <div className={`absolute right-1 z-[110] w-38 bg-white border rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden ${isNearBottom ? "bottom-[42px]" : "top-[42px]"}`}
                                style={{ borderColor: `${activeStyle.color}20` }}
                                onClick={(e) => e.stopPropagation()}>
                             <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("name"); setDraftValue(item.name); setMenuOpenId(null); }}>
@@ -373,10 +374,11 @@ export default function Shopping({ trip, setTrip, themeId }) {
 
                       {isCompletedOpen && (
                         <div className="mt-2 space-y-1.5 animate-in fade-in duration-200">
-                          {completedItems.map((item) => {
+                          {completedItems.map((item, index) => {
                             const qty = item.quantity || 1;
                             const hasPrice = typeof item.price === "number";
                             const showDetail = hasPrice || qty > 1;
+                            const isNearBottom = index >= 3;
 
                             return (
                               <div 
@@ -393,7 +395,7 @@ export default function Shopping({ trip, setTrip, themeId }) {
                                 </div>
                                 
                                 <span className="min-w-0 flex-1 text-[13px] truncate line-through font-medium"
-                                      style={{ color: activeStyle.color }}>
+                                    style={{ color: activeStyle.color }}>
                                   {item.name}
                                 </span>
 
@@ -418,7 +420,7 @@ export default function Shopping({ trip, setTrip, themeId }) {
                                 </div>
                                 
                                 {menuOpenId === item.id && (
-                                  <div className="absolute right-1 top-[42px] z-[110] w-38 bg-white border rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden"
+                                  <div className={`absolute right-1 z-[110] w-38 bg-white border rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden ${isNearBottom ? "bottom-[42px]" : "top-[42px]"}`}
                                        style={{ borderColor: `${activeStyle.color}20` }}
                                        onClick={(e) => e.stopPropagation()}>
                                     <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("name"); setDraftValue(item.name); setMenuOpenId(null); }}>
