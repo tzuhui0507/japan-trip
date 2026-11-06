@@ -309,7 +309,7 @@ export default function Shopping({ trip, setTrip, themeId }) {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* 1. 待買項目列表 (Grid 2欄 - 手機版清晰舒適) */}
+                  {/* 1. 待買項目列表 (Grid 2欄) */}
                   {activeItems.length > 0 && (
                     <div className="grid grid-cols-2 gap-3">
                       {activeItems.map((item, index) => {
@@ -324,45 +324,57 @@ export default function Shopping({ trip, setTrip, themeId }) {
                             className="relative flex flex-col p-3 rounded-2xl bg-white border shadow-2xs transition-all cursor-pointer hover:border-slate-300 justify-between" 
                             style={{ borderColor: `${activeStyle.color}35` }}
                           >
-                            {/* 上方資訊列：圓圈與名稱（寬敞好點） */}
-                            <div className="flex items-center gap-2 mb-2.5" onClick={(e) => e.stopPropagation()}>
+                            {/* 照片上方的控制列：左邊打勾圓圈、右邊三個點 */}
+                            <div className="flex items-center justify-between mb-1.5 px-0.5" onClick={(e) => e.stopPropagation()}>
+                              {/* 左上角打勾圓圈 */}
                               <div 
-                                onClick={() => updateItem(activeTab, item.id, { checked: true })}
-                                className="shrink-0 w-5 h-5 rounded-full border flex items-center justify-center transition-all bg-white cursor-pointer shadow-xs"
-                                style={{ borderColor: `${activeStyle.color}80` }}
+                                onClick={() => updateItem(activeTab, item.id, { checked: !item.checked })}
+                                className="w-5 h-5 rounded-full border flex items-center justify-center transition-all bg-white cursor-pointer shadow-xs"
+                                style={{ borderColor: activeStyle.color, backgroundColor: item.checked ? activeStyle.color : "white" }}
                               >
-                                <div className="w-2 h-2 rounded-full opacity-0 transition-opacity" style={{ backgroundColor: activeStyle.color }} />
+                                {item.checked && <Check className="w-3 h-3 text-white stroke-[3]" />}
                               </div>
-                              <span className="min-w-0 flex-1 text-[13px] font-bold leading-tight"
-                                    style={{ color: activeStyle.color, filter: "brightness(0.8)" }}>
-                                {item.name}
-                              </span>
+
+                              {/* 右上角三個點選單按鈕 */}
+                              <button 
+                                className="w-6 h-6 rounded-full hover:bg-black/5 flex items-center justify-center transition"
+                                onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}
+                              >
+                                <MoreHorizontal className="w-4 h-4 opacity-70" style={{ color: activeStyle.color }} />
+                              </button>
                             </div>
 
                             {/* 圖片縮圖 */}
                             <PhotoThumb imageId={item.imageId} activeColor={activeStyle.color} />
 
-                            {/* 下方金額與三個點選單列 */}
-                            <div className="mt-2.5 flex items-center justify-between text-[11px] font-black leading-tight tabular-nums" style={{ color: activeStyle.color }} onClick={(e) => e.stopPropagation()}>
-                              <div className="min-w-0 flex-1 truncate text-center">
-                                {hasPrice ? (
-                                  <div className="flex items-center justify-center gap-1 truncate">
-                                    <span className="opacity-75">{currentCurrencySymbol}{item.price.toLocaleString()}×{qty}</span>
+                            {/* 名稱在照片下方 */}
+                            <div className="mt-2 text-center">
+                              <span className="block text-[13px] font-bold leading-tight truncate px-1"
+                                    style={{ color: activeStyle.color, filter: "brightness(0.8)" }}>
+                                {item.name}
+                              </span>
+                            </div>
+
+                            {/* 金額顯示（數量 >= 2 顯示單價×數量｜總額；否則僅顯示總金額） */}
+                            <div className="mt-1.5 text-[11px] font-black leading-tight tabular-nums text-center" style={{ color: activeStyle.color }}>
+                              {hasPrice ? (
+                                qty >= 2 ? (
+                                  <div className="flex items-center justify-center gap-1">
+                                    <span className="opacity-70">{currentCurrencySymbol}{item.price.toLocaleString()}×{qty}</span>
                                     <span className="opacity-40">｜</span>
                                     <span>{currentCurrencySymbol}{(item.price * qty).toLocaleString()}</span>
                                   </div>
                                 ) : (
-                                  <div className="opacity-80 text-center">數量：{qty}</div>
-                                )}
-                              </div>
-                              <button className="shrink-0 p-1.5 hover:bg-black/5 transition rounded ml-1" onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}>
-                                <MoreHorizontal className="w-4 h-4 opacity-70" style={{ color: activeStyle.color }} />
-                              </button>
+                                  <div>{currentCurrencySymbol}{item.price.toLocaleString()}</div>
+                                )
+                              ) : (
+                                qty >= 2 ? <div className="opacity-80">數量：{qty}</div> : <div className="opacity-40">-</div>
+                              )}
                             </div>
                             
                             {/* 下拉選單 */}
                             {menuOpenId === item.id && (
-                              <div className={`absolute right-1 z-[110] w-38 bg-white border rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden ${isNearBottom ? "bottom-[42px]" : "top-[50px]}"}`}
+                              <div className={`absolute right-2 z-[110] w-38 bg-white border rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden ${isNearBottom ? "bottom-[42px]" : "top-[50px]}"}`}
                                    style={{ borderColor: `${activeStyle.color}20` }}
                                    onClick={(e) => e.stopPropagation()}>
                                 <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("name"); setDraftValue(item.name); setMenuOpenId(null); }}>
@@ -424,41 +436,50 @@ export default function Shopping({ trip, setTrip, themeId }) {
                                 className="relative flex flex-col p-3 rounded-2xl transition-all cursor-pointer opacity-75 hover:opacity-100 justify-between border" 
                                 style={{ backgroundColor: `${activeStyle.color}12`, borderColor: `${activeStyle.color}30` }}
                               >
-                                <div className="flex items-center gap-2 mb-2.5" onClick={(e) => e.stopPropagation()}>
+                                <div className="flex items-center justify-between mb-1.5 px-0.5" onClick={(e) => e.stopPropagation()}>
                                   <div 
                                     onClick={() => updateItem(activeTab, item.id, { checked: false })}
-                                    className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center shadow-xs cursor-pointer" 
+                                    className="w-5 h-5 rounded-full flex items-center justify-center shadow-xs cursor-pointer" 
                                     style={{ backgroundColor: activeStyle.color }}
                                   >
                                     <Check className="w-3 h-3 text-white stroke-[3]" />
                                   </div>
-                                  <span className="min-w-0 flex-1 text-[13px] line-through font-medium leading-tight"
+
+                                  <button 
+                                    className="w-6 h-6 rounded-full hover:bg-black/5 flex items-center justify-center transition"
+                                    onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}
+                                  >
+                                    <MoreHorizontal className="w-4 h-4 opacity-70" style={{ color: activeStyle.color }} />
+                                  </button>
+                                </div>
+
+                                <PhotoThumb imageId={item.imageId} activeColor={activeStyle.color} />
+
+                                <div className="mt-2 text-center">
+                                  <span className="block text-[13px] line-through font-medium leading-tight truncate px-1"
                                         style={{ color: activeStyle.color }}>
                                     {item.name}
                                   </span>
                                 </div>
 
-                                <PhotoThumb imageId={item.imageId} activeColor={activeStyle.color} />
-
-                                <div className="mt-2.5 flex items-center justify-between text-[11px] font-black leading-tight tabular-nums opacity-80" style={{ color: activeStyle.color }} onClick={(e) => e.stopPropagation()}>
-                                  <div className="min-w-0 flex-1 truncate text-center">
-                                    {hasPrice ? (
-                                      <div className="flex items-center justify-center gap-1 truncate">
-                                        <span className="opacity-75">{currentCurrencySymbol}{item.price.toLocaleString()}×{qty}</span>
+                                <div className="mt-1.5 text-[11px] font-black leading-tight tabular-nums text-center opacity-80" style={{ color: activeStyle.color }}>
+                                  {hasPrice ? (
+                                    qty >= 2 ? (
+                                      <div className="flex items-center justify-center gap-1">
+                                        <span className="opacity-70">{currentCurrencySymbol}{item.price.toLocaleString()}×{qty}</span>
                                         <span className="opacity-40">｜</span>
                                         <span>{currentCurrencySymbol}{(item.price * qty).toLocaleString()}</span>
                                       </div>
                                     ) : (
-                                      <div className="text-center">數量：{qty}</div>
-                                    )}
-                                  </div>
-                                  <button className="shrink-0 p-1.5 hover:bg-black/5 transition rounded ml-1" onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}>
-                                    <MoreHorizontal className="w-4 h-4 opacity-70" style={{ color: activeStyle.color }} />
-                                  </button>
+                                      <div>{currentCurrencySymbol}{item.price.toLocaleString()}</div>
+                                    )
+                                  ) : (
+                                    qty >= 2 ? <div className="opacity-80">數量：{qty}</div> : <div className="opacity-40">-</div>
+                                  )}
                                 </div>
                                 
                                 {menuOpenId === item.id && (
-                                  <div className={`absolute right-1 z-[110] w-38 bg-white border rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden ${isNearBottom ? "bottom-[42px]" : "top-[50px]}"}`}
+                                  <div className={`absolute right-2 z-[110] w-38 bg-white border rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden ${isNearBottom ? "bottom-[42px]" : "top-[50px]}"}`}
                                        style={{ borderColor: `${activeStyle.color}20` }}
                                        onClick={(e) => e.stopPropagation()}>
                                     <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("name"); setDraftValue(item.name); setMenuOpenId(null); }}>
