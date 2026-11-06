@@ -172,19 +172,55 @@ export default function Shopping({ trip, setTrip, themeId }) {
     } catch (err) { alert("圖片處理失敗，請重試"); }
   };
 
-  const PhotoButton = ({ imageId, isChecked, activeColor }) => {
+  const PhotoThumb = ({ imageId, activeColor }) => {
     const [loading, setLoading] = useState(false);
-    const handleClick = async () => {
-      if (imageCache[imageId]) { setPreviewImage(imageCache[imageId]); return; }
-      setLoading(true);
-      const data = await get(imageId);
-      if (data) { setImageCache(prev => ({ ...prev, [imageId]: data })); setPreviewImage(data); }
-      setLoading(false);
+    const [thumbData, setThumbData] = useState(imageCache[imageId] || null);
+
+    useEffect(() => {
+      if (!imageId) return;
+      if (imageCache[imageId]) {
+        setThumbData(imageCache[imageId]);
+        return;
+      }
+      get(imageId).then(data => {
+        if (data) {
+          setImageCache(prev => ({ ...prev, [imageId]: data }));
+          setThumbData(data);
+        }
+      });
+    }, [imageId]);
+
+    const handleClick = (e) => {
+      e.stopPropagation();
+      if (thumbData) setPreviewImage(thumbData);
     };
+
+    if (!imageId) {
+      return (
+        <div className="w-full aspect-square rounded-xl bg-black/5 flex items-center justify-center border border-dashed" style={{ borderColor: `${activeColor}40` }}>
+          <ImageIcon className="w-4 h-4 opacity-30" style={{ color: activeColor }} />
+        </div>
+      );
+    }
+
     return (
-      <button type="button" onClick={handleClick} disabled={loading} className={`p-1 rounded-full hover:bg-black/5 transition ${isChecked ? "opacity-60" : "opacity-100"}`}>
-        {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: activeColor }} /> : <ImageIcon className="w-3.5 h-3.5" style={{ color: activeColor }} />}
-      </button>
+      <div 
+        onClick={handleClick}
+        className="w-full aspect-square rounded-xl overflow-hidden bg-black/5 relative cursor-pointer group shadow-xs border"
+        style={{ borderColor: `${activeColor}30` }}
+      >
+        {loading ? (
+          <div className="w-full h-full flex items-center justify-center">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: activeColor }} />
+          </div>
+        ) : thumbData ? (
+          <img src={thumbData} alt="" className="w-full h-full object-cover group-hover:scale-105 transition duration-200" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <ImageIcon className="w-3.5 h-3.5 opacity-40" style={{ color: activeColor }} />
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -272,90 +308,91 @@ export default function Shopping({ trip, setTrip, themeId }) {
                   尚未加入任何商品
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {/* 1. 待買項目列表 */}
-                  {activeItems.map((item, index) => {
-                    const qty = item.quantity || 1;
-                    const hasPrice = typeof item.price === "number";
-                    const showDetail = hasPrice || qty > 1;
-                    const isNearBottom = index >= 3;
+                <div className="space-y-4">
+                  {/* 1. 待買項目列表 (Grid 4欄) */}
+                  {activeItems.length > 0 && (
+                    <div className="grid grid-cols-4 gap-2">
+                      {activeItems.map((item, index) => {
+                        const qty = item.quantity || 1;
+                        const hasPrice = typeof item.price === "number";
+                        const isNearBottom = index >= 4;
 
-                    return (
-                      <div 
-                        key={item.id} 
-                        onClick={() => updateItem(activeTab, item.id, { checked: true })}
-                        className="relative flex items-center h-[46px] px-3 rounded-xl bg-white border shadow-2xs transition-all gap-2.5 cursor-pointer hover:border-slate-300" 
-                        style={{ borderColor: `${activeStyle.color}35` }}
-                      >
-                        {/* 極簡圓點 Checkbox */}
-                        <div 
-                          className="shrink-0 w-4 h-4 rounded-full border flex items-center justify-center transition-all bg-white"
-                          style={{ borderColor: `${activeStyle.color}80` }}
-                        >
-                          <div className="w-2 h-2 rounded-full opacity-0 transition-opacity" style={{ backgroundColor: activeStyle.color }} />
-                        </div>
-                        
-                        {/* 商品名稱（安全截斷） */}
-                        <span className="min-w-0 flex-1 text-[13px] truncate font-bold"
-                            style={{ color: activeStyle.color, filter: "brightness(0.8)" }}>
-                          {item.name}
-                        </span>
+                        return (
+                          <div 
+                            key={item.id} 
+                            onClick={() => updateItem(activeTab, item.id, { checked: true })}
+                            className="relative flex flex-col p-2 rounded-xl bg-white border shadow-2xs transition-all cursor-pointer hover:border-slate-300 justify-between" 
+                            style={{ borderColor: `${activeStyle.color}35` }}
+                          >
+                            {/* 上方資訊列：圓圈與名稱（完全不擠） */}
+                            <div className="flex items-center gap-1.5 mb-1.5" onClick={(e) => e.stopPropagation()}>
+                              <div 
+                                className="shrink-0 w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-all bg-white"
+                                style={{ borderColor: `${activeStyle.color}80` }}
+                              >
+                                <div className="w-1.5 h-1.5 rounded-full opacity-0 transition-opacity" style={{ backgroundColor: activeStyle.color }} />
+                              </div>
+                              <span className="min-w-0 flex-1 text-[11px] truncate font-bold leading-tight"
+                                    style={{ color: activeStyle.color, filter: "brightness(0.8)" }}>
+                                {item.name}
+                              </span>
+                            </div>
 
-                        {showDetail && (
-                          <div className="shrink-0 text-right leading-tight tabular-nums">
-                            {hasPrice ? (
-                              <>
-                                <div className="text-[10px] font-black" style={{ color: activeStyle.color }}>
-                                  {currentCurrencySymbol}{(item.price * qty).toLocaleString()}
-                                </div>
-                                <div className="text-[7.5px] font-bold opacity-60" style={{ color: activeStyle.color }}>
-                                  {currentCurrencySymbol}{item.price.toLocaleString()} × {qty}
-                                </div>
-                              </>
-                            ) : (
-                              <div className="text-[10px] font-black" style={{ color: activeStyle.color }}>數量：{qty}</div>
+                            {/* 圖片縮圖 */}
+                            <PhotoThumb imageId={item.imageId} activeColor={activeStyle.color} />
+
+                            {/* 下方金額與三個點選單列 */}
+                            <div className="mt-1.5 flex items-center justify-between text-[9px] font-black leading-tight tabular-nums" style={{ color: activeStyle.color }} onClick={(e) => e.stopPropagation()}>
+                              <div className="min-w-0 flex-1 truncate text-center">
+                                {hasPrice ? (
+                                  <div className="flex items-center justify-center gap-0.5 truncate">
+                                    <span className="opacity-70">{currentCurrencySymbol}{item.price.toLocaleString()}×{qty}</span>
+                                    <span className="opacity-40">｜</span>
+                                    <span>{currentCurrencySymbol}{(item.price * qty).toLocaleString()}</span>
+                                  </div>
+                                ) : (
+                                  <div className="opacity-80">數量：{qty}</div>
+                                )}
+                              </div>
+                              <button className="shrink-0 p-1 hover:bg-black/5 transition rounded ml-0.5" onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}>
+                                <MoreHorizontal className="w-3.5 h-3.5 opacity-70" style={{ color: activeStyle.color }} />
+                              </button>
+                            </div>
+                            
+                            {/* 下拉選單 */}
+                            {menuOpenId === item.id && (
+                              <div className={`absolute right-1 z-[110] w-36 bg-white border rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden ${isNearBottom ? "bottom-[42px]" : "top-[50px]}"}`}
+                                   style={{ borderColor: `${activeStyle.color}20` }}
+                                   onClick={(e) => e.stopPropagation()}>
+                                <button className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("name"); setDraftValue(item.name); setMenuOpenId(null); }}>
+                                  <PencilLine className="w-3.5 h-3.5 shrink-0" />
+                                  <span>名稱</span>
+                                </button>
+                                <button className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("price"); setDraftValue(item.price != null ? String(item.price) : ""); setMenuOpenId(null); }}>
+                                  <CircleDollarSign className="w-3.5 h-3.5 shrink-0" />
+                                  <span>單價</span>
+                                </button>
+                                <button className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("quantity"); setDraftValue(item.quantity != null ? String(item.quantity) : "1"); setMenuOpenId(null); }}>
+                                  <ShoppingBasket className="w-3.5 h-3.5 shrink-0" />
+                                  <span>數量</span>
+                                </button>
+                                <label className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-black/5 w-full font-medium cursor-pointer" style={{ color: activeStyle.color }}>
+                                  <ImageIcon className="w-3.5 h-3.5 shrink-0" />
+                                  <span>照片</span>
+                                  <input type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0], activeTab, item.id, item.imageId); setMenuOpenId(null); }} />
+                                </label>
+                                <div className="h-px my-1 mx-2" style={{ backgroundColor: `${activeStyle.color}10` }} />
+                                <button className="flex items-center gap-2 px-3 py-1.5 text-[11px] text-red-500 font-black hover:bg-red-50 w-full" onClick={() => { deleteItem(activeTab, item.id, item.imageId); setMenuOpenId(null); }}>
+                                  <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                                  <span>刪除</span>
+                                </button>
+                              </div>
                             )}
                           </div>
-                        )}
-
-                        <div className="shrink-0 flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
-                          {item.imageId && <PhotoButton imageId={item.imageId} isChecked={false} activeColor={activeStyle.color} />}
-                          <button className="p-1 rounded-full hover:bg-black/5" onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}>
-                            <MoreHorizontal className="w-4 h-4 opacity-60" style={{ color: activeStyle.color }} />
-                          </button>
-                        </div>
-                        
-                        {menuOpenId === item.id && (
-                          <div className={`absolute right-1 z-[110] w-38 bg-white border rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden ${isNearBottom ? "bottom-[42px]" : "top-[42px]"}`}
-                               style={{ borderColor: `${activeStyle.color}20` }}
-                               onClick={(e) => e.stopPropagation()}>
-                            <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("name"); setDraftValue(item.name); setMenuOpenId(null); }}>
-                              <div className="w-5 flex-shrink-0"><PencilLine className="w-4 h-4" /></div>
-                              <span className="ml-1">名稱</span>
-                            </button>
-                            <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("price"); setDraftValue(item.price != null ? String(item.price) : ""); setMenuOpenId(null); }}>
-                              <div className="w-5 flex-shrink-0"><CircleDollarSign className="w-4 h-4" /></div>
-                              <span className="ml-1">單價</span>
-                            </button>
-                            <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("quantity"); setDraftValue(item.quantity != null ? String(item.quantity) : "1"); setMenuOpenId(null); }}>
-                              <div className="w-5 flex-shrink-0"><ShoppingBasket className="w-4 h-4" /></div>
-                              <span className="ml-1">數量</span>
-                            </button>
-                            <label className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium cursor-pointer" style={{ color: activeStyle.color }}>
-                              <div className="w-5 flex-shrink-0"><ImageIcon className="w-4 h-4" /></div>
-                              <span className="ml-1">照片</span>
-                              <input type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0], activeTab, item.id, item.imageId); setMenuOpenId(null); }} />
-                            </label>
-                            <div className="h-px my-1 mx-2" style={{ backgroundColor: `${activeStyle.color}10` }} />
-                            <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] text-red-500 font-black hover:bg-red-50 w-full" onClick={() => { deleteItem(activeTab, item.id, item.imageId); setMenuOpenId(null); }}>
-                              <div className="w-5 flex-shrink-0"><Trash2 className="w-4 h-4" /></div>
-                              <span className="ml-1">刪除</span>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
+                    </div>
+                  )}
 
                   {/* 2. 已完成（折疊）區塊 */}
                   {completedItems.length > 0 && (
@@ -373,77 +410,73 @@ export default function Shopping({ trip, setTrip, themeId }) {
                       </button>
 
                       {isCompletedOpen && (
-                        <div className="mt-2 space-y-1.5 animate-in fade-in duration-200">
+                        <div className="mt-2.5 grid grid-cols-4 gap-2 animate-in fade-in duration-200">
                           {completedItems.map((item, index) => {
                             const qty = item.quantity || 1;
                             const hasPrice = typeof item.price === "number";
-                            const showDetail = hasPrice || qty > 1;
-                            const isNearBottom = index >= 3;
+                            const isNearBottom = index >= 4;
 
                             return (
                               <div 
                                 key={item.id} 
                                 onClick={() => updateItem(activeTab, item.id, { checked: false })}
-                                className="relative flex items-center h-[46px] px-3 rounded-xl transition-all gap-2.5 cursor-pointer opacity-75 hover:opacity-100" 
-                                style={{ backgroundColor: `${activeStyle.color}12` }}
+                                className="relative flex flex-col p-2 rounded-xl transition-all cursor-pointer opacity-75 hover:opacity-100 justify-between border" 
+                                style={{ backgroundColor: `${activeStyle.color}12`, borderColor: `${activeStyle.color}30` }}
                               >
-                                <div 
-                                  className="shrink-0 w-4 h-4 rounded-full border flex items-center justify-center transition-all"
-                                  style={{ backgroundColor: activeStyle.color, borderColor: activeStyle.color }}
-                                >
-                                  <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
+                                <div className="flex items-center gap-1.5 mb-1.5" onClick={(e) => e.stopPropagation()}>
+                                  <div className="shrink-0 w-3.5 h-3.5 rounded-full flex items-center justify-center shadow-xs" style={{ backgroundColor: activeStyle.color }}>
+                                    <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
+                                  </div>
+                                  <span className="min-w-0 flex-1 text-[11px] truncate line-through font-medium leading-tight"
+                                        style={{ color: activeStyle.color }}>
+                                    {item.name}
+                                  </span>
                                 </div>
-                                
-                                <span className="min-w-0 flex-1 text-[13px] truncate line-through font-medium"
-                                    style={{ color: activeStyle.color }}>
-                                  {item.name}
-                                </span>
 
-                                {showDetail && (
-                                  <div className="shrink-0 text-right leading-tight tabular-nums opacity-65" style={{ color: activeStyle.color }}>
+                                <PhotoThumb imageId={item.imageId} activeColor={activeStyle.color} />
+
+                                <div className="mt-1.5 flex items-center justify-between text-[9px] font-black leading-tight tabular-nums opacity-80" style={{ color: activeStyle.color }} onClick={(e) => e.stopPropagation()}>
+                                  <div className="min-w-0 flex-1 truncate text-center">
                                     {hasPrice ? (
-                                      <>
-                                        <div className="text-[10px] font-black">{currentCurrencySymbol}{(item.price * qty).toLocaleString()}</div>
-                                        <div className="text-[7.5px] font-bold opacity-65">{currentCurrencySymbol}{item.price.toLocaleString()} × {qty}</div>
-                                      </>
+                                      <div className="flex items-center justify-center gap-0.5 truncate">
+                                        <span className="opacity-70">{currentCurrencySymbol}{item.price.toLocaleString()}×{qty}</span>
+                                        <span className="opacity-40">｜</span>
+                                        <span>{currentCurrencySymbol}{(item.price * qty).toLocaleString()}</span>
+                                      </div>
                                     ) : (
-                                      <div className="text-[10px] font-black">數量：{qty}</div>
+                                      <div>數量：{qty}</div>
                                     )}
                                   </div>
-                                )}
-
-                                <div className="shrink-0 flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
-                                  {item.imageId && <PhotoButton imageId={item.imageId} isChecked={true} activeColor={activeStyle.color} />}
-                                  <button className="p-1 rounded-full hover:bg-black/5" onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}>
-                                    <MoreHorizontal className="w-4 h-4 opacity-60" style={{ color: activeStyle.color }} />
+                                  <button className="shrink-0 p-1 hover:bg-black/5 transition rounded ml-0.5" onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}>
+                                    <MoreHorizontal className="w-3.5 h-3.5 opacity-70" style={{ color: activeStyle.color }} />
                                   </button>
                                 </div>
                                 
                                 {menuOpenId === item.id && (
-                                  <div className={`absolute right-1 z-[110] w-38 bg-white border rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden ${isNearBottom ? "bottom-[42px]" : "top-[42px]"}`}
+                                  <div className={`absolute right-1 z-[110] w-36 bg-white border rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden ${isNearBottom ? "bottom-[42px]" : "top-[50px]}"}`}
                                        style={{ borderColor: `${activeStyle.color}20` }}
                                        onClick={(e) => e.stopPropagation()}>
-                                    <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("name"); setDraftValue(item.name); setMenuOpenId(null); }}>
-                                      <div className="w-5 flex-shrink-0"><PencilLine className="w-4 h-4" /></div>
-                                      <span className="ml-1">名稱</span>
+                                    <button className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("name"); setDraftValue(item.name); setMenuOpenId(null); }}>
+                                      <PencilLine className="w-3.5 h-3.5 shrink-0" />
+                                      <span>名稱</span>
                                     </button>
-                                    <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("price"); setDraftValue(item.price != null ? String(item.price) : ""); setMenuOpenId(null); }}>
-                                      <div className="w-5 flex-shrink-0"><CircleDollarSign className="w-4 h-4" /></div>
-                                      <span className="ml-1">單價</span>
+                                    <button className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("price"); setDraftValue(item.price != null ? String(item.price) : ""); setMenuOpenId(null); }}>
+                                      <CircleDollarSign className="w-3.5 h-3.5 shrink-0" />
+                                      <span>單價</span>
                                     </button>
-                                    <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("quantity"); setDraftValue(item.quantity != null ? String(item.quantity) : "1"); setMenuOpenId(null); }}>
-                                      <div className="w-5 flex-shrink-0"><ShoppingBasket className="w-4 h-4" /></div>
-                                      <span className="ml-1">數量</span>
+                                    <button className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-black/5 w-full font-medium" style={{ color: activeStyle.color }} onClick={() => { setEditingItem({ catId: activeTab, item }); setEditingField("quantity"); setDraftValue(item.quantity != null ? String(item.quantity) : "1"); setMenuOpenId(null); }}>
+                                      <ShoppingBasket className="w-3.5 h-3.5 shrink-0" />
+                                      <span>數量</span>
                                     </button>
-                                    <label className="flex items-center gap-2.5 px-4 py-2 text-[12px] hover:bg-black/5 w-full font-medium cursor-pointer" style={{ color: activeStyle.color }}>
-                                      <div className="w-5 flex-shrink-0"><ImageIcon className="w-4 h-4" /></div>
-                                      <span className="ml-1">照片</span>
+                                    <label className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-black/5 w-full font-medium cursor-pointer" style={{ color: activeStyle.color }}>
+                                      <ImageIcon className="w-3.5 h-3.5 shrink-0" />
+                                      <span>照片</span>
                                       <input type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0], activeTab, item.id, item.imageId); setMenuOpenId(null); }} />
                                     </label>
                                     <div className="h-px my-1 mx-2" style={{ backgroundColor: `${activeStyle.color}10` }} />
-                                    <button className="flex items-center gap-2.5 px-4 py-2 text-[12px] text-red-500 font-black hover:bg-red-50 w-full" onClick={() => { deleteItem(activeTab, item.id, item.imageId); setMenuOpenId(null); }}>
-                                      <div className="w-5 flex-shrink-0"><Trash2 className="w-4 h-4" /></div>
-                                      <span className="ml-1">刪除</span>
+                                    <button className="flex items-center gap-2 px-3 py-1.5 text-[11px] text-red-500 font-black hover:bg-red-50 w-full" onClick={() => { deleteItem(activeTab, item.id, item.imageId); setMenuOpenId(null); }}>
+                                      <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                                      <span>刪除</span>
                                     </button>
                                   </div>
                                 )}
