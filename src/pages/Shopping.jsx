@@ -198,7 +198,7 @@ export default function Shopping({ trip, setTrip, themeId }) {
     if (!imageId) {
       return (
         <div className="w-full aspect-square rounded-xl bg-black/5 flex items-center justify-center border border-dashed" style={{ borderColor: `${activeColor}40` }}>
-          <ImageIcon className="w-4 h-4 opacity-30" style={{ color: activeColor }} />
+          <ImageIcon className="w-5 h-5 opacity-30" style={{ color: activeColor }} />
         </div>
       );
     }
@@ -211,13 +211,13 @@ export default function Shopping({ trip, setTrip, themeId }) {
       >
         {loading ? (
           <div className="w-full h-full flex items-center justify-center">
-            <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: activeColor }} />
+            <Loader2 className="w-4 h-4 animate-spin" style={{ color: activeColor }} />
           </div>
         ) : thumbData ? (
           <img src={thumbData} alt="" className="w-full h-full object-cover group-hover:scale-105 transition duration-200" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <ImageIcon className="w-3.5 h-3.5 opacity-40" style={{ color: activeColor }} />
+            <ImageIcon className="w-4 h-4 opacity-40" style={{ color: activeColor }} />
           </div>
         )}
       </div>
@@ -309,30 +309,30 @@ export default function Shopping({ trip, setTrip, themeId }) {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* 1. 待買項目列表 (Grid 4欄) */}
+                  {/* 1. 待買項目列表 (Grid 3欄) */}
                   {activeItems.length > 0 && (
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-3 gap-2.5">
                       {activeItems.map((item, index) => {
                         const qty = item.quantity || 1;
                         const hasPrice = typeof item.price === "number";
-                        const isNearBottom = index >= 4;
+                        const isNearBottom = index >= 3;
 
                         return (
                           <div 
                             key={item.id} 
                             onClick={() => updateItem(activeTab, item.id, { checked: true })}
-                            className="relative flex flex-col p-2 rounded-xl bg-white border shadow-2xs transition-all cursor-pointer hover:border-slate-300 justify-between" 
+                            className="relative flex flex-col p-2.5 rounded-xl bg-white border shadow-2xs transition-all cursor-pointer hover:border-slate-300 justify-between" 
                             style={{ borderColor: `${activeStyle.color}35` }}
                           >
-                            {/* 上方資訊列：圓圈與名稱（完全不擠） */}
-                            <div className="flex items-center gap-1.5 mb-1.5" onClick={(e) => e.stopPropagation()}>
+                            {/* 上方資訊列：圓圈與名稱 */}
+                            <div className="flex items-center gap-2 mb-2" onClick={(e) => e.stopPropagation()}>
                               <div 
-                                className="shrink-0 w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-all bg-white"
+                                className="shrink-0 w-4 h-4 rounded-full border flex items-center justify-center transition-all bg-white"
                                 style={{ borderColor: `${activeStyle.color}80` }}
                               >
-                                <div className="w-1.5 h-1.5 rounded-full opacity-0 transition-opacity" style={{ backgroundColor: activeStyle.color }} />
+                                <div className="w-2 h-2 rounded-full opacity-0 transition-opacity" style={{ backgroundColor: activeStyle.color }} />
                               </div>
-                              <span className="min-w-0 flex-1 text-[11px] truncate font-bold leading-tight"
+                              <span className="min-w-0 flex-1 text-[12px] truncate font-bold leading-tight"
                                     style={{ color: activeStyle.color, filter: "brightness(0.8)" }}>
                                 {item.name}
                               </span>
@@ -342,19 +342,19 @@ export default function Shopping({ trip, setTrip, themeId }) {
                             <PhotoThumb imageId={item.imageId} activeColor={activeStyle.color} />
 
                             {/* 下方金額與三個點選單列 */}
-                            <div className="mt-1.5 flex items-center justify-between text-[9px] font-black leading-tight tabular-nums" style={{ color: activeStyle.color }} onClick={(e) => e.stopPropagation()}>
+                            <div className="mt-2 flex items-center justify-between text-[10px] font-black leading-tight tabular-nums" style={{ color: activeStyle.color }} onClick={(e) => e.stopPropagation()}>
                               <div className="min-w-0 flex-1 truncate text-center">
                                 {hasPrice ? (
-                                  <div className="flex items-center justify-center gap-0.5 truncate">
-                                    <span className="opacity-70">{currentCurrencySymbol}{item.price.toLocaleString()}×{qty}</span>
+                                  <div className="flex items-center justify-center gap-1 truncate">
+                                    <span className="opacity-75">{currentCurrencySymbol}{item.price.toLocaleString()}×{qty}</span>
                                     <span className="opacity-40">｜</span>
                                     <span>{currentCurrencySymbol}{(item.price * qty).toLocaleString()}</span>
                                   </div>
                                 ) : (
-                                  <div className="opacity-80">數量：{qty}</div>
+                                  <div className="opacity-80 text-center">數量：{qty}</div>
                                 )}
                               </div>
-                              <button className="shrink-0 p-1 hover:bg-black/5 transition rounded ml-0.5" onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}>
+                              <button className="shrink-0 p-1 hover:bg-black/5 transition rounded ml-1" onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}>
                                 <MoreHorizontal className="w-3.5 h-3.5 opacity-70" style={{ color: activeStyle.color }} />
                               </button>
                             </div>
@@ -410,24 +410,24 @@ export default function Shopping({ trip, setTrip, themeId }) {
                       </button>
 
                       {isCompletedOpen && (
-                        <div className="mt-2.5 grid grid-cols-4 gap-2 animate-in fade-in duration-200">
+                        <div className="mt-2.5 grid grid-cols-3 gap-2.5 animate-in fade-in duration-200">
                           {completedItems.map((item, index) => {
                             const qty = item.quantity || 1;
                             const hasPrice = typeof item.price === "number";
-                            const isNearBottom = index >= 4;
+                            const isNearBottom = index >= 3;
 
                             return (
                               <div 
                                 key={item.id} 
                                 onClick={() => updateItem(activeTab, item.id, { checked: false })}
-                                className="relative flex flex-col p-2 rounded-xl transition-all cursor-pointer opacity-75 hover:opacity-100 justify-between border" 
+                                className="relative flex flex-col p-2.5 rounded-xl transition-all cursor-pointer opacity-75 hover:opacity-100 justify-between border" 
                                 style={{ backgroundColor: `${activeStyle.color}12`, borderColor: `${activeStyle.color}30` }}
                               >
-                                <div className="flex items-center gap-1.5 mb-1.5" onClick={(e) => e.stopPropagation()}>
-                                  <div className="shrink-0 w-3.5 h-3.5 rounded-full flex items-center justify-center shadow-xs" style={{ backgroundColor: activeStyle.color }}>
+                                <div className="flex items-center gap-2 mb-2" onClick={(e) => e.stopPropagation()}>
+                                  <div className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center shadow-xs" style={{ backgroundColor: activeStyle.color }}>
                                     <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
                                   </div>
-                                  <span className="min-w-0 flex-1 text-[11px] truncate line-through font-medium leading-tight"
+                                  <span className="min-w-0 flex-1 text-[12px] truncate line-through font-medium leading-tight"
                                         style={{ color: activeStyle.color }}>
                                     {item.name}
                                   </span>
@@ -435,19 +435,19 @@ export default function Shopping({ trip, setTrip, themeId }) {
 
                                 <PhotoThumb imageId={item.imageId} activeColor={activeStyle.color} />
 
-                                <div className="mt-1.5 flex items-center justify-between text-[9px] font-black leading-tight tabular-nums opacity-80" style={{ color: activeStyle.color }} onClick={(e) => e.stopPropagation()}>
+                                <div className="mt-2 flex items-center justify-between text-[10px] font-black leading-tight tabular-nums opacity-80" style={{ color: activeStyle.color }} onClick={(e) => e.stopPropagation()}>
                                   <div className="min-w-0 flex-1 truncate text-center">
                                     {hasPrice ? (
-                                      <div className="flex items-center justify-center gap-0.5 truncate">
-                                        <span className="opacity-70">{currentCurrencySymbol}{item.price.toLocaleString()}×{qty}</span>
+                                      <div className="flex items-center justify-center gap-1 truncate">
+                                        <span className="opacity-75">{currentCurrencySymbol}{item.price.toLocaleString()}×{qty}</span>
                                         <span className="opacity-40">｜</span>
                                         <span>{currentCurrencySymbol}{(item.price * qty).toLocaleString()}</span>
                                       </div>
                                     ) : (
-                                      <div>數量：{qty}</div>
+                                      <div className="text-center">數量：{qty}</div>
                                     )}
                                   </div>
-                                  <button className="shrink-0 p-1 hover:bg-black/5 transition rounded ml-0.5" onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}>
+                                  <button className="shrink-0 p-1 hover:bg-black/5 transition rounded ml-1" onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === item.id ? null : item.id); }}>
                                     <MoreHorizontal className="w-3.5 h-3.5 opacity-70" style={{ color: activeStyle.color }} />
                                   </button>
                                 </div>
