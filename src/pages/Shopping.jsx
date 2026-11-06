@@ -315,7 +315,7 @@ export default function Shopping({ trip, setTrip, themeId }) {
                 <div className="space-y-4">
                   {/* 1. 待買項目列表 (Grid 2欄) */}
                   {activeItems.length > 0 && (
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       {activeItems.map((item, index) => {
                         const qty = item.quantity || 1;
                         const hasPrice = typeof item.price === "number";
