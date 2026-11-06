@@ -349,7 +349,7 @@ export default function Shopping({ trip, setTrip, themeId }) {
                             {/* 圖片縮圖 */}
                             <PhotoThumb imageId={item.imageId} activeColor={activeStyle.color} />
 
-                            {/* 雙行商品資訊：第一行品牌、第二行名稱（字體大小粗細一致，視覺平衡） */}
+                            {/* 雙行商品資訊：第一行品牌、第二行名稱 */}
                             <div className="mt-2 text-center space-y-0.5">
                               {item.brand && (
                                 <span className="block text-[12px] font-bold leading-tight truncate px-1 opacity-70"
@@ -363,7 +363,7 @@ export default function Shopping({ trip, setTrip, themeId }) {
                               </span>
                             </div>
 
-                            {/* 金額顯示 */}
+                            {/* 金額或數量顯示 */}
                             <div className="mt-1.5 text-[11px] font-black leading-tight tabular-nums text-center min-h-[16px]" style={{ color: activeStyle.color }}>
                               {hasPrice ? (
                                 qty >= 2 ? (
@@ -375,7 +375,9 @@ export default function Shopping({ trip, setTrip, themeId }) {
                                 ) : (
                                   <div>{currentCurrencySymbol}{item.price.toLocaleString()}</div>
                                 )
-                              ) : null}
+                              ) : (
+                                qty >= 2 ? <div className="opacity-80">數量：{qty}</div> : null
+                              )}
                             </div>
                             
                             {/* 下拉選單 */}
@@ -477,7 +479,9 @@ export default function Shopping({ trip, setTrip, themeId }) {
                                     ) : (
                                       <div>{currentCurrencySymbol}{item.price.toLocaleString()}</div>
                                     )
-                                  ) : null}
+                                  ) : (
+                                    qty >= 2 ? <div className="opacity-80">數量：{qty}</div> : null
+                                  )}
                                 </div>
                                 
                                 {menuOpenId === item.id && (
