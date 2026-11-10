@@ -152,7 +152,16 @@ export default function Shopping({ trip, setTrip, themeId }) {
   };
 
   const addItem = (catId) => {
-    updateShopping((list) => list.map((c) => c.id === catId ? { ...c, items: [...c.items, { id: `item-${Date.now()}`, brand: "", name: "新的項目", checked: false, imageId: null, price: null, quantity: 1 }] } : c));
+    const newItemId = `item-${Date.now()}`;
+    const newItem = { id: newItemId, brand: "", name: "", checked: false, imageId: null, price: null, quantity: 1 };
+    
+    updateShopping((list) => list.map((c) => c.id === catId ? { ...c, items: [...c.items, newItem] } : c));
+    
+    setEditingItem({ catId, item: newItem });
+    setDraftBrand("");
+    setDraftName("");
+    setDraftPrice("");
+    setDraftQuantity("1");
   };
 
   const updateItem = (catId, itemId, patch) => {
@@ -176,7 +185,7 @@ export default function Shopping({ trip, setTrip, themeId }) {
     } catch (err) { alert("圖片處理失敗，請重試"); }
   };
 
-  const PhotoThumb = ({ imageId, activeColor }) => {
+  const PhotoThumb = ({ imageId, activeColor, categoryIcon }) => {
     const [loading, setLoading] = useState(false);
     const [thumbData, setThumbData] = useState(imageCache[imageId] || null);
 
@@ -201,8 +210,15 @@ export default function Shopping({ trip, setTrip, themeId }) {
 
     if (!imageId) {
       return (
-        <div className="w-full aspect-square rounded-2xl bg-black/5 flex items-center justify-center border border-dashed" style={{ borderColor: `${activeColor}40` }}>
-          <ImageIcon className="w-6 h-6 opacity-30" style={{ color: activeColor }} />
+        <div 
+          className="w-full aspect-square rounded-2xl flex flex-col items-center justify-center relative border shadow-2xs overflow-hidden" 
+          style={{ backgroundColor: `${activeColor}15`, borderColor: `${activeColor}40` }}
+        >
+          {/* 適中柔和的質感底座與圖示 */}
+          <div className="absolute w-20 h-20 rounded-full opacity-25 blur-lg" style={{ backgroundColor: activeColor }} />
+          <div className="relative z-10 w-12 h-12 rounded-full bg-white/90 shadow-xs border flex items-center justify-center" style={{ borderColor: `${activeColor}50` }}>
+            {React.createElement(categoryIcon, { className: "w-5 h-5", style: { color: activeColor } })}
+          </div>
         </div>
       );
     }
@@ -347,7 +363,7 @@ export default function Shopping({ trip, setTrip, themeId }) {
                             </div>
 
                             {/* 圖片縮圖 */}
-                            <PhotoThumb imageId={item.imageId} activeColor={activeStyle.color} />
+                            <PhotoThumb imageId={item.imageId} activeColor={activeStyle.color} categoryIcon={activeStyle.icon} />
 
                             {/* 雙行商品資訊：第一行品牌、第二行名稱 */}
                             <div className="mt-2 text-center space-y-0.5">
@@ -453,7 +469,7 @@ export default function Shopping({ trip, setTrip, themeId }) {
                                   </button>
                                 </div>
 
-                                <PhotoThumb imageId={item.imageId} activeColor={activeStyle.color} />
+                                <PhotoThumb imageId={item.imageId} activeColor={activeStyle.color} categoryIcon={activeStyle.icon} />
 
                                 <div className="mt-2 text-center space-y-0.5">
                                   {item.brand && (
@@ -518,13 +534,31 @@ export default function Shopping({ trip, setTrip, themeId }) {
         )}
       </div>
 
-      {/* 統一的商品編輯彈窗 */}
+      {/* 統一的商品編輯彈窗（含拍照上傳功能） */}
       {editingItem && (
         <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-md flex items-center justify-center p-4">
           <div className="rounded-[2rem] border shadow-2xl p-6 w-full max-w-[320px] animate-in zoom-in-95 duration-200 bg-white" style={{ borderColor: `${activeStyle.color}40` }}>
             <h3 className="text-[14px] font-bold mb-4 tracking-wider text-center" style={{ color: activeStyle.color }}>編輯商品資訊</h3>
             
             <div className="space-y-3">
+              {/* 照片上傳捷徑 */}
+              <div className="flex flex-col items-center justify-center mb-2">
+                <label className="w-full py-2.5 px-4 rounded-xl border border-dashed flex items-center justify-center gap-2 cursor-pointer transition hover:bg-black/5" style={{ borderColor: `${activeStyle.color}60`, color: activeStyle.color }}>
+                  <ImageIcon className="w-4 h-4" />
+                  <span className="text-[12px] font-bold">上傳 / 更換商品照片</span>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        handleImageUpload(e.target.files[0], editingItem.catId, editingItem.item.id, editingItem.item.imageId);
+                      }
+                    }} 
+                  />
+                </label>
+              </div>
+
               <div>
                 <label className="block text-[11px] font-bold mb-1 opacity-70" style={{ color: activeStyle.color }}>品牌</label>
                 <input 
@@ -576,8 +610,17 @@ export default function Shopping({ trip, setTrip, themeId }) {
             </div>
 
             <div className="grid grid-cols-2 gap-2 mt-6">
-              <button onClick={() => setEditingItem(null)} className="py-2.5 rounded-xl border text-[12px] font-bold bg-white active:scale-95 transition-all" style={{ borderColor: `${currentTheme.border}`, color: currentTheme.text }}>取消</button>
-              <button onClick={() => {
+              <button 
+                onClick={() => {
+                  setEditingItem(null);
+                }} 
+                className="py-2.5 rounded-xl border text-[12px] font-bold bg-white active:scale-95 transition-all" 
+                style={{ borderColor: `${currentTheme.border}`, color: currentTheme.text }}
+              >
+                取消
+              </button>
+              <button 
+                onClick={() => {
                   updateItem(editingItem.catId, editingItem.item.id, {
                     brand: draftBrand.trim(),
                     name: draftName.trim() || "未命名商品",
@@ -585,7 +628,12 @@ export default function Shopping({ trip, setTrip, themeId }) {
                     quantity: draftQuantity === "" ? 1 : Number(draftQuantity)
                   });
                   setEditingItem(null);
-                }} className="py-2.5 text-white rounded-xl flex items-center justify-center gap-1 text-[12px] font-bold shadow-md active:scale-95 transition-all" style={{ backgroundColor: activeStyle.color }}>確定</button>
+                }} 
+                className="py-2.5 text-white rounded-xl flex items-center justify-center gap-1 text-[12px] font-bold shadow-md active:scale-95 transition-all" 
+                style={{ backgroundColor: activeStyle.color }}
+              >
+                確定
+              </button>
             </div>
           </div>
         </div>
