@@ -568,8 +568,8 @@ export default function Expenses({ trip, setTrip, themeId }) {
 
       {/* 代墊與智慧互抵結算清單 Modal */}
       {advanceModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm p-4 pt-10">
-          <div className="w-full max-w-md rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white max-h-[78vh]" style={{ borderColor: currentTheme.border }}>
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="fixed top-12 bottom-20 left-4 right-4 max-w-md mx-auto rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white" style={{ borderColor: currentTheme.border }}>
             <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/95 backdrop-blur border-b shrink-0 z-10" style={{ borderColor: `${currentTheme.border}40` }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>
@@ -653,10 +653,10 @@ export default function Expenses({ trip, setTrip, themeId }) {
         </div>
       )}
 
-      {/* Expense Modal (新增/編輯花費) - 靠上對齊 (items-start pt-10)，完美消除上方留白 */}
+      {/* Expense Modal (新增/編輯花費) - 上方留白精簡、底部絕對安全不被導覽列切到 */}
       {expenseModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm p-4 pt-10">
-          <div className="w-full max-w-md rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white max-h-[78vh]" style={{ borderColor: currentTheme.border }}>
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="fixed top-12 bottom-20 left-4 right-4 max-w-md mx-auto rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white" style={{ borderColor: currentTheme.border }}>
             
             {/* 固定的標題列 */}
             <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/95 backdrop-blur border-b shrink-0 z-10 shadow-sm" style={{ borderColor: `${currentTheme.border}40` }}>
@@ -806,8 +806,8 @@ export default function Expenses({ trip, setTrip, themeId }) {
 
       {/* Member Modal */}
       {memberModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm p-4 pt-10">
-          <div className="w-full max-w-md rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white max-h-[78vh]" style={{ borderColor: currentTheme.border }}>
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="fixed top-12 bottom-20 left-4 right-4 max-w-md mx-auto rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white" style={{ borderColor: currentTheme.border }}>
             <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/95 backdrop-blur border-b shrink-0 z-10" style={{ borderColor: `${currentTheme.border}40` }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>
