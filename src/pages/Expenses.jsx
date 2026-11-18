@@ -30,7 +30,8 @@ import {
   Rabbit,
   Dog,
   Squirrel,
-  CheckCircle2
+  CheckCircle2,
+  Calendar
 } from "lucide-react";
 import { THEMES } from "../App";
 
@@ -567,9 +568,9 @@ export default function Expenses({ trip, setTrip, themeId }) {
 
       {/* 代墊與智慧互抵結算清單 Modal */}
       {advanceModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-16">
-          <div className="w-full max-w-lg rounded-[32px] border shadow-xl overflow-hidden flex flex-col bg-white" style={{ borderColor: currentTheme.border }}>
-            <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/50 border-b" style={{ borderColor: `${currentTheme.border}40` }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-[32px] border shadow-xl overflow-hidden flex flex-col bg-white max-h-[85vh]" style={{ borderColor: currentTheme.border }}>
+            <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/50 border-b shrink-0" style={{ borderColor: `${currentTheme.border}40` }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>
                   <HandCoins className="w-5 h-5" />
@@ -584,8 +585,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
               </button>
             </div>
             
-            <div className="p-6 space-y-5 overflow-y-auto max-h-[65vh] scrollbar-hide">
-              
+            <div className="p-6 space-y-5 overflow-y-auto flex-1">
               <div>
                 <p className="text-[11px] font-black uppercase tracking-wider mb-2 opacity-50" style={{ color: currentTheme.text }}>✨ 我們的旅費小結算</p>
 
@@ -648,16 +648,15 @@ export default function Expenses({ trip, setTrip, themeId }) {
                   </div>
                 )}
               </div>
-
             </div>
           </div>
         </div>
       )}
 
-      {/* Expense Modal (新增/編輯花費) - 完美滿版捲動、絕不被切到 */}
+      {/* Expense Modal (新增/編輯花費) - 完美置中、絕對不被切到、美化日期欄位 */}
       {expenseModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="w-full max-w-lg rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white my-8 max-h-[88vh]" style={{ borderColor: currentTheme.border }}>
+          <div className="w-full max-w-lg rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white my-auto max-h-[85vh]" style={{ borderColor: currentTheme.border }}>
             <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/90 backdrop-blur border-b shrink-0 z-10" style={{ borderColor: `${currentTheme.border}40` }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>
@@ -674,9 +673,25 @@ export default function Expenses({ trip, setTrip, themeId }) {
               </div>
             </div>
             
-            {/* 捲動區塊與底部足夠間距 pb-32，確保絕對不會被遮擋 */}
-            <div className="p-6 space-y-5 overflow-y-auto flex-1 pb-32">
-              <div><label className="block text-[10px] font-black mb-2 uppercase tracking-widest opacity-40" style={{ color: currentTheme.text }}>日期</label><input type="date" value={form.date} onChange={(e) => updateForm({ date: e.target.value })} className="w-full h-11 border rounded-xl px-4 text-[13px] font-bold bg-white outline-none focus:ring-2" style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text, "--tw-ring-color": `${currentTheme.main}10` }} /></div>
+            {/* 捲動區塊與底部充足留白 pb-28 */}
+            <div className="p-6 space-y-5 overflow-y-auto flex-1 pb-28">
+              
+              {/* 日期選擇美化：完美解決排版歪掉問題 */}
+              <div>
+                <label className="block text-[10px] font-black mb-2 uppercase tracking-widest opacity-40" style={{ color: currentTheme.text }}>日期</label>
+                <div className="relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: currentTheme.main }}>
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  <input 
+                    type="date" 
+                    value={form.date} 
+                    onChange={(e) => updateForm({ date: e.target.value })} 
+                    className="w-full h-12 border rounded-2xl pl-11 pr-4 text-[13px] font-black bg-white outline-none focus:ring-2 appearance-none cursor-pointer" 
+                    style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text, "--tw-ring-color": `${currentTheme.main}15` }} 
+                  />
+                </div>
+              </div>
               
               <div>
                 <label className="block text-[10px] font-black mb-2 uppercase tracking-widest opacity-40" style={{ color: currentTheme.text }}>類別</label>
@@ -757,7 +772,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
               {/* 是哪位夥伴幫你付的？：一排四個網格 */}
               {form.payer === "THEM" && (
                 <div className="rounded-2xl p-4 border animate-in slide-in-from-top-2" style={{ backgroundColor: `${currentTheme.main}05`, borderColor: `${currentTheme.main}20` }}>
-                  <label className="text-[10px] font-black mb-3 block uppercase tracking-widest opacity-60" style={{ color: currentTheme.text }}>是誰先幫你付的？</label>
+                  <label className="text-[10px] font-black mb-3 block uppercase tracking-widest opacity-60" style={{ color: currentTheme.text }}>是哪位夥伴幫你付的？</label>
                   {members.length > 0 ? (
                     <div className="grid grid-cols-4 gap-2">
                       {members.map((m) => {
@@ -789,9 +804,9 @@ export default function Expenses({ trip, setTrip, themeId }) {
 
       {/* Member Modal */}
       {memberModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-12">
-          <div className="w-full max-w-lg rounded-[32px] border shadow-xl overflow-hidden flex flex-col bg-white" style={{ borderColor: currentTheme.border }}>
-            <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/50 border-b" style={{ borderColor: `${currentTheme.border}40` }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-[32px] border shadow-xl overflow-hidden flex flex-col bg-white max-h-[85vh]" style={{ borderColor: currentTheme.border }}>
+            <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/50 border-b shrink-0" style={{ borderColor: `${currentTheme.border}40` }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>
                   <Users className="w-5 h-5" />
@@ -804,7 +819,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
               <button onClick={() => setMemberModalOpen(false)} className="w-8 h-8 rounded-full border flex items-center justify-center bg-white" style={{ borderColor: currentTheme.border }}><X className="w-4 h-4" style={{ color: currentTheme.main }} /></button>
             </div>
             
-            <div className="p-6 space-y-3 overflow-y-auto max-h-[60vh] scrollbar-hide">
+            <div className="p-6 space-y-3 overflow-y-auto flex-1">
               {members.map((m, index) => {
                 const currentIconId = m.avatarIcon || "Cat";
                 const SelectedIconComp = getMemberIconComponent(currentIconId);
@@ -882,7 +897,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
               <button onClick={() => setMembers((prev) => [...prev, { id: `m-${Date.now()}`, name: "", avatarIcon: "Cat" }])} className="w-full py-3 border-2 border-dashed rounded-2xl text-[11px] font-black transition-all hover:bg-gray-50 active:scale-[0.98]" style={{ borderColor: `${currentTheme.main}30`, color: currentTheme.main }}> + 新增夥伴 </button>
             </div>
             
-            <div className="p-6 border-t" style={{ borderColor: `${currentTheme.border}10` }}>
+            <div className="p-6 border-t shrink-0" style={{ borderColor: `${currentTheme.border}10` }}>
               <button onClick={() => setMemberModalOpen(false)} className="w-full py-4 text-white rounded-2xl font-black shadow-md active:scale-95 transition-all" style={{ backgroundColor: currentTheme.main }}>確認儲存</button>
             </div>
           </div>
