@@ -10,6 +10,7 @@ import {
   ShoppingBag,
   Wallet,
   CreditCard,
+  Coins,
   Trash2,
   Pencil,
   X,
@@ -18,6 +19,7 @@ import {
   ReceiptText,
   RefreshCcw,
   ChevronRight,
+  MoreHorizontal,
   Cat,
   PawPrint,
   Smile,
@@ -28,8 +30,7 @@ import {
   Rabbit,
   Dog,
   Squirrel,
-  Banknote,
-  Coins
+  CheckCircle2
 } from "lucide-react";
 import { THEMES } from "../App";
 
@@ -174,52 +175,151 @@ export default function Expenses({ trip, setTrip, themeId }) {
   const [memberModalOpen, setMemberModalOpen] = useState(false);
   const [advanceModalOpen, setAdvanceModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [menuOpenId, setMenuOpenId] = useState(null);
 
   const [activeIconPickerId, setActiveIconPickerId] = useState(null);
 
   const [form, setForm] = useState({
-    date: todayString(), category: "TRANSPORT", title: "", amount: "", mode: "PERSONAL", advanceFor: [], payer: "ME", payMethod: "CASH",
+    date: todayString(), category: "TRANSPORT", title: "", amount: "", mode: "PERSONAL", advanceFor: [], payer: "ME", paidByMemberId: "", payMethod: "CASH",
   });
 
   const [filterCategory, setFilterCategory] = useState("ALL");
   const TO_TWD = exchangeRate?.RATE_TWD || 0;
 
-  const totalBase = useMemo(() => expenses.reduce((s, e) => s + Number(e.amount), 0), [expenses]);
+  const totalBase = useMemo(() => {
+    return expenses
+      .filter((e) => e.payer !== "THEM")
+      .reduce((s, e) => s + Number(e.amount), 0);
+  }, [expenses]);
+  
   const totalTwd = Math.round(totalBase * TO_TWD);
 
   const categoryTotals = useMemo(() => {
     const r = { TRANSPORT: 0, FOOD: 0, SIGHT: 0, SHOP: 0 };
     expenses.forEach((e) => {
-      if (r[e.category] !== undefined) r[e.category] += Number(e.amount);
+      if (e.payer !== "THEM" && r[e.category] !== undefined) {
+        r[e.category] += Number(e.amount);
+      }
     });
     return r;
   }, [expenses]);
 
-  const advanceSummary = useMemo(() => {
+  // 1. 大家欠我（我代墊的總結）：支援固定分攤額或依據鎖定額累計
+  const advanceSummaryMap = useMemo(() => {
     const map = {};
     expenses.forEach((e) => {
       if (e.mode !== "ADVANCE" || e.payer !== "ME") return;
+      
+      const shares = e.fixedShares;
       const advanceList = Array.isArray(e.advanceFor) ? e.advanceFor : [];
-      if (advanceList.length === 0) return;
-      const share = Number(e.amount) / advanceList.length;
-      advanceList.forEach((id) => { 
-        map[id] = (map[id] || 0) + share; 
+      
+      if (shares && typeof shares === "object") {
+        advanceList.forEach((id) => {
+          const amt = Number(shares[id]) || 0;
+          map[id] = (map[id] || 0) + amt;
+        });
+      } else if (advanceList.length > 0) {
+        const share = Number(e.amount) / advanceList.length;
+        advanceList.forEach((id) => { 
+          map[id] = (map[id] || 0) + share; 
+        });
+      }
+    });
+    return map;
+  }, [expenses]);
+
+  // 2. 我欠別人（別人幫我付的結算：依據 paidByMemberId 分組統計）
+  const owedToOthersMap = useMemo(() => {
+    const map = {};
+    let totalOwed = 0;
+    expenses.forEach((e) => {
+      if (e.payer !== "THEM") return;
+      const amt = Number(e.amount) || 0;
+      totalOwed += amt;
+      const memberId = e.paidByMemberId || "unknown";
+      if (!map[memberId]) map[memberId] = 0;
+      map[memberId] += amt;
+    });
+    return { totalOwed, map };
+  }, [expenses]);
+
+  // 3. 整合互抵後的結算清單 (每一個夥伴獨立計算：你欠他 vs 他欠你)
+  const netSettlementList = useMemo(() => {
+    const memberIds = new Set([...Object.keys(advanceSummaryMap), ...Object.keys(owedToOthersMap.map)]);
+    const list = [];
+
+    memberIds.forEach((id) => {
+      const theyOweMe = advanceSummaryMap[id] || 0; // 他欠我
+      const iOweThem = owedToOthersMap.map[id] || 0; // 我欠他
+      const net = theyOweMe - iOweThem; // 淨差額 (正數代表對方要給你，負數代表你要給對方)
+
+      const foundMember = members.find((m) => m.id === id);
+      list.push({
+        id,
+        name: foundMember ? foundMember.name : "指定夥伴",
+        avatarIcon: foundMember?.avatarIcon || "Cat",
+        theyOweMe: Math.round(theyOweMe),
+        iOweThem: Math.round(iOweThem),
+        net: Math.round(net),
       });
     });
-    return Object.entries(map).map(([id, amt]) => {
-      const foundMember = members.find((m) => m.id === id);
-      return {
-        id, 
-        name: foundMember ? foundMember.name : "未知夥伴", 
-        avatarIcon: foundMember?.avatarIcon || "Cat",
-        amount: Math.round(amt),
-      };
-    });
-  }, [expenses, members]);
 
-  const totalAdvanceAmount = useMemo(() => {
-    return advanceSummary.reduce((s, a) => s + a.amount, 0);
-  }, [advanceSummary]);
+    return list;
+  }, [advanceSummaryMap, owedToOthersMap, members]);
+
+  // 總結卡片上要顯示的總額預覽（將所有未結清的金額加總展示）
+  const totalSummaryDisplayAmount = useMemo(() => {
+    return netSettlementList.reduce((s, item) => s + Math.abs(item.net), 0);
+  }, [netSettlementList]);
+
+  // 🛡️ 鐵壁級安全一鍵結清：
+  // 1. 代墊部分：凍結分攤額，結清某人時僅將該人金額歸零，絕不影響其他人。
+  // 2. 個人花費（別人幫我付）部分：結清時自動轉為「我付」（保留在 Total 口袋花費中），不直接蒸發。
+  const handleOneTouchSettle = (memberId, memberName) => {
+    if (!window.confirm(`確定要與「${memberName}」結清嗎？這會將該夥伴欠你的代墊份額歸零（不影響其他人），並將他幫你付的個人花費轉為你的實際支出計入 Total。`)) return;
+
+    setExpenses((prev) => 
+      prev.map((e) => {
+        let nextE = { ...e };
+
+        // 1. 如果是「該夥伴幫我付」的項目 (payer === "THEM" 且 paidByMemberId === memberId)
+        // 既然晚上結清了（代表你實質付錢給他了），這筆應轉為「我付」的個人花費，保留在 Total 中！
+        if (nextE.payer === "THEM" && nextE.paidByMemberId === memberId) {
+          return {
+            ...nextE,
+            payer: "ME",
+            paidByMemberId: ""
+          };
+        }
+
+        // 2. 如果是「我代墊給多人的項目」，且 advanceFor 包含該夥伴
+        if (nextE.mode === "ADVANCE" && nextE.payer === "ME" && Array.isArray(nextE.advanceFor) && nextE.advanceFor.includes(memberId)) {
+          let currentShares = nextE.fixedShares;
+          if (!currentShares) {
+            currentShares = {};
+            const defaultShare = Number(nextE.amount) / nextE.advanceFor.length;
+            nextE.advanceFor.forEach(id => { currentShares[id] = defaultShare; });
+          }
+
+          const nextAdvanceFor = nextE.advanceFor.filter(id => id !== memberId);
+          const nextFixedShares = { ...currentShares };
+          nextFixedShares[memberId] = 0; // 該人已結清，欠款歸零
+
+          if (nextAdvanceFor.length === 0) {
+            return null; // 如果全部人都結清了，整筆代墊紀錄自動歸檔移除
+          } else {
+            return {
+              ...nextE,
+              advanceFor: nextAdvanceFor,
+              fixedShares: nextFixedShares // 凍結其他人的分攤額，保證其他人數字完全不變！
+            };
+          }
+        }
+
+        return nextE;
+      }).filter(Boolean)
+    );
+  };
 
   const groupedByDate = useMemo(() => {
     const map = {};
@@ -229,19 +329,24 @@ export default function Expenses({ trip, setTrip, themeId }) {
       map[e.date].push(e);
     });
     return Object.entries(map).sort(([a], [b]) => (a < b ? 1 : -1)).map(([date, items]) => ({
-      date, dayTotal: items.reduce((s, e) => s + Number(e.amount), 0), items,
+      date, dayTotal: items.reduce((s, e) => (e.payer !== "THEM" ? s + Number(e.amount) : s), 0), items,
     }));
   }, [expenses, filterCategory]);
 
   const openAdd = () => {
     setEditingId(null);
-    setForm({ date: todayString(), category: "TRANSPORT", title: "", amount: "", mode: "PERSONAL", advanceFor: [], payer: "ME", payMethod: "CASH" });
+    setForm({ date: todayString(), category: "TRANSPORT", title: "", amount: "", mode: "PERSONAL", advanceFor: [], payer: "ME", paidByMemberId: members[0]?.id || "", payMethod: "CASH" });
     setExpenseModalOpen(true);
   };
 
   const openEdit = (exp) => {
     setEditingId(exp.id);
-    setForm({ ...exp, amount: String(exp.amount), advanceFor: Array.isArray(exp.advanceFor) ? exp.advanceFor : [] });
+    setForm({ 
+      ...exp, 
+      amount: String(exp.amount), 
+      advanceFor: Array.isArray(exp.advanceFor) ? exp.advanceFor : [],
+      paidByMemberId: exp.paidByMemberId || members[0]?.id || "" 
+    });
     setExpenseModalOpen(true);
   };
 
@@ -257,7 +362,25 @@ export default function Expenses({ trip, setTrip, themeId }) {
 
   const saveExpense = () => {
     if (!form.title.trim() || !form.amount || Number(form.amount) <= 0) return alert("請檢查輸入內容");
-    const newItem = { ...form, id: editingId || `e-${Date.now()}`, amount: Number(form.amount), createdAt: editingId ? expenses.find((e) => e.id === editingId)?.createdAt : Date.now() };
+    
+    let initialFixedShares = form.fixedShares;
+    if (form.mode === "ADVANCE" && Array.isArray(form.advanceFor) && form.advanceFor.length > 0) {
+      if (!initialFixedShares || editingId === null) {
+        initialFixedShares = {};
+        const shareAmt = Number(form.amount) / form.advanceFor.length;
+        form.advanceFor.forEach(id => { initialFixedShares[id] = shareAmt; });
+      }
+    }
+
+    const newItem = { 
+      ...form, 
+      id: editingId || `e-${Date.now()}`, 
+      amount: Number(form.amount), 
+      paidByMemberId: form.payer === "THEM" ? form.paidByMemberId : "",
+      fixedShares: initialFixedShares,
+      createdAt: editingId ? expenses.find((e) => e.id === editingId)?.createdAt : Date.now() 
+    };
+
     if (editingId) { setExpenses((prev) => prev.map((e) => (e.id === editingId ? newItem : e))); }
     else { setExpenses((prev) => [...prev, newItem]); }
     setExpenseModalOpen(false);
@@ -279,7 +402,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
   };
 
   return (
-    <div className="px-4 py-6 pb-24">
+    <div className="px-4 py-6 pb-24" onClick={() => setMenuOpenId(null)}>
       <PageHeader icon={Wallet} title="花費總覽" subtitle="EXPENSES" themeId={themeId} />
 
       <div className="flex justify-between items-center mb-6">
@@ -327,7 +450,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
               <HandCoins className="w-4 h-4" style={{ color: currentTheme.main }} />
               <p className="text-[14px] font-black uppercase tracking-widest" style={{ color: currentTheme.main }}>代墊總結</p>
             </div>
-            <p className="text-2xl font-black leading-tight truncate" style={{ color: currentTheme.text }}>{formatCurrency(totalAdvanceAmount)}</p>
+            <p className="text-2xl font-black leading-tight truncate" style={{ color: currentTheme.text }}>{formatCurrency(totalSummaryDisplayAmount)}</p>
           </div>
           
           <div className="flex items-center justify-between mt-3 pt-2 border-t w-full" style={{ borderColor: `${currentTheme.main}15` }}>
@@ -384,32 +507,67 @@ export default function Expenses({ trip, setTrip, themeId }) {
               <span>{group.date}</span>
               <span>當日 {formatCurrency(group.dayTotal)}</span>
             </div>
-            {group.items.map((e) => {
+            {group.items.map((e, index) => {
               const isCard = e.payMethod === "CARD";
               const cat = CATEGORY_MAP[e.category] || CATEGORY_MAP.TRANSPORT;
+              const isNearBottom = index >= group.items.length - 2;
+              const paidMember = members.find(m => m.id === e.paidByMemberId);
+
               return (
-                <div key={e.id} className="bg-white rounded-2xl border px-4 py-3 flex items-center justify-between shadow-sm" style={{ borderColor: currentTheme.border }}>
+                <div key={e.id} className="relative bg-white rounded-2xl border px-4 py-3 flex items-center justify-between shadow-sm" style={{ borderColor: currentTheme.border }}>
                   <div className="flex items-start gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${currentTheme.main}10` }}>
                       {isCard ? <CreditCard className="w-5 h-5" style={{ color: currentTheme.main }} /> : <Coins className="w-5 h-5" style={{ color: currentTheme.main }} />}
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-black truncate" style={{ color: currentTheme.text }}>{e.title}</p>
-                      <div className="flex gap-1 mt-1">
+                      <div className="flex flex-wrap gap-1 mt-1">
                         <span className="px-2 py-0.5 rounded-full text-[9px] font-black" style={{ backgroundColor: cat.pillBg, color: cat.pillText }}>{cat.label}</span>
                         {e.mode === "ADVANCE" && <span className="px-2 py-0.5 rounded-full text-[9px] font-black" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>代墊</span>}
+                        {e.payer === "THEM" && (
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-gray-100 text-gray-600">
+                            {paidMember ? `${paidMember.name}付` : "他付"}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2 shrink-0">
+                  <div className="flex items-center gap-3 shrink-0">
                     <span className="text-sm font-black" style={{ color: currentTheme.text }}>{formatCurrency(e.amount)}</span>
-                    <div className="flex gap-1">
-                      <button onClick={() => openEdit(e)} className="p-1.5 rounded-lg border hover:bg-black/5" style={{ borderColor: currentTheme.border }}>
-                        <Pencil className="w-3 h-3 opacity-40" />
+                    
+                    {/* 三個點選單按鈕 */}
+                    <div className="relative">
+                      <button 
+                        onClick={(ev) => { ev.stopPropagation(); setMenuOpenId(menuOpenId === e.id ? null : e.id); }}
+                        className="w-7 h-7 rounded-full hover:bg-black/5 flex items-center justify-center transition"
+                      >
+                        <MoreHorizontal className="w-4 h-4 opacity-50" style={{ color: currentTheme.main }} />
                       </button>
-                      <button onClick={() => deleteExpense(e.id)} className="p-1.5 rounded-lg border hover:bg-red-50" style={{ borderColor: currentTheme.border }}>
-                        <Trash2 className="w-3 h-3 text-red-400 opacity-60" />
-                      </button>
+
+                      {/* 下拉選單 */}
+                      {menuOpenId === e.id && (
+                        <div 
+                          className={`absolute right-0 z-35 w-32 bg-white border rounded-2xl shadow-xl py-2 animate-in fade-in zoom-in-95 duration-150 overflow-hidden ${isNearBottom ? "bottom-9" : "top-9"}`}
+                          style={{ borderColor: currentTheme.border }}
+                          onClick={(ev) => ev.stopPropagation()}
+                        >
+                          <button 
+                            onClick={() => { openEdit(e); setMenuOpenId(null); }}
+                            className="flex items-center gap-2 px-3.5 py-2 text-[12px] font-bold hover:bg-black/5 w-full text-left transition"
+                            style={{ color: currentTheme.text }}
+                          >
+                            <Pencil className="w-3.5 h-3.5 opacity-60" />
+                            <span>編輯</span>
+                          </button>
+                          <button 
+                            onClick={() => { deleteExpense(e.id); setMenuOpenId(null); }}
+                            className="flex items-center gap-2 px-3.5 py-2 text-[12px] font-black text-red-500 hover:bg-red-50 w-full text-left transition"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>刪除</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -419,7 +577,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
         ))}
       </div>
 
-      {/* 代墊總結詳情 Modal */}
+      {/* 代墊與智慧互抵結算清單 Modal (鐵壁防呆結清版) */}
       {advanceModalOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-16">
           <div className="w-full max-w-lg rounded-[32px] border shadow-xl overflow-hidden flex flex-col bg-white" style={{ borderColor: currentTheme.border }}>
@@ -429,8 +587,8 @@ export default function Expenses({ trip, setTrip, themeId }) {
                   <HandCoins className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black" style={{ color: currentTheme.text }}>代墊總結清單</h2>
-                  <p className="text-[10px] tracking-[0.2em] uppercase font-black opacity-40" style={{ color: currentTheme.main }}>Advance Summary</p>
+                  <h2 className="text-lg font-black" style={{ color: currentTheme.text }}>智慧互抵結算清單</h2>
+                  <p className="text-[10px] tracking-[0.2em] uppercase font-black opacity-40" style={{ color: currentTheme.main }}>Net Settlement</p>
                 </div>
               </div>
               <button onClick={() => setAdvanceModalOpen(false)} className="w-8 h-8 rounded-full border flex items-center justify-center bg-white shadow-sm" style={{ borderColor: currentTheme.border }}>
@@ -438,32 +596,76 @@ export default function Expenses({ trip, setTrip, themeId }) {
               </button>
             </div>
             
-            <div className="p-6 space-y-3 overflow-y-auto max-h-[60vh] scrollbar-hide">
-              <div className="p-4 rounded-2xl flex justify-between items-center mb-2" style={{ backgroundColor: `${currentTheme.main}10` }}>
-                <span className="text-xs font-black" style={{ color: currentTheme.main }}>代墊總金額</span>
-                <span className="text-lg font-black" style={{ color: currentTheme.main }}>{formatCurrency(totalAdvanceAmount)}</span>
+            <div className="p-6 space-y-5 overflow-y-auto max-h-[65vh] scrollbar-hide">
+              
+              {/* 夥伴獨立互抵清單 */}
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-wider mb-2 opacity-50" style={{ color: currentTheme.text }}>結算小幫手 ᕦ(ò_óˇ)ᕤ</p>
+
+                {netSettlementList.length > 0 ? (
+                  <div className="space-y-3">
+                    {netSettlementList.map(item => {
+                      const IconComp = getMemberIconComponent(item.avatarIcon);
+                      const isPositive = item.net > 0; // 對方要給你
+                      const isNegative = item.net < 0; // 你要給對方
+                      const absNet = Math.abs(item.net);
+
+                      return (
+                        <div key={item.id} className="p-4 rounded-2xl border bg-white shadow-sm space-y-3" style={{ borderColor: `${currentTheme.main}20` }}>
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ backgroundColor: `${currentTheme.main}10`, color: currentTheme.main }}>
+                                <IconComp className="w-4 h-4" />
+                              </div>
+                              <span className="text-sm font-black" style={{ color: currentTheme.text }}>{item.name}</span>
+                            </div>
+                            
+                            {/* 最終狀態標籤 */}
+                            <div className="text-right">
+                              {item.net === 0 ? (
+                                <span className="px-3 py-1 rounded-full text-xs font-black bg-gray-100 text-gray-500">已互抵結清</span>
+                              ) : isPositive ? (
+                                <span className="px-3 py-1 rounded-full text-xs font-black" style={{ backgroundColor: `${currentTheme.main}20`, color: currentTheme.main }}>
+                                  需要給你 {formatCurrency(absNet)}
+                                </span>
+                              ) : (
+                                <span className="px-3 py-1 rounded-full text-xs font-black bg-orange-50 text-orange-600">
+                                  需要給他 {formatCurrency(absNet)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* 細節明細與一鍵結清按鈕 */}
+                          <div className="flex justify-between items-center pt-2 border-t" style={{ borderColor: `${currentTheme.border}30` }}>
+                            <div className="text-[11px] font-bold opacity-60" style={{ color: currentTheme.text }}>
+                              <span>他要給你: {formatCurrency(item.theyOweMe)}</span>
+                              <span className="ml-2">你要給他: {formatCurrency(item.iOweThem)}</span>
+                            </div>
+
+                            {/* 一鍵結清按鈕 */}
+                            {(item.theyOweMe > 0 || item.iOweThem > 0) && (
+                              <button
+                                onClick={() => handleOneTouchSettle(item.id, item.name)}
+                                className="px-3 py-1.5 rounded-xl text-[11px] font-black flex items-center gap-1 shadow-sm active:scale-95 transition-all text-white"
+                                style={{ backgroundColor: currentTheme.main }}
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                一鍵結清
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="py-12 text-center">
+                    <p className="text-xs font-bold opacity-40 italic" style={{ color: currentTheme.text }}>目前尚無任何代墊或代付紀錄</p>
+                  </div>
+                )}
               </div>
 
-              {advanceSummary.length > 0 ? (
-                advanceSummary.map(a => {
-                  const IconComp = getMemberIconComponent(a.avatarIcon);
-                  return (
-                    <div key={a.id} className="flex justify-between items-center px-4 py-3.5 rounded-2xl border bg-white shadow-sm" style={{ borderColor: `${currentTheme.main}20` }}>
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-2xl flex items-center justify-center shadow-sm" style={{ backgroundColor: `${currentTheme.main}10`, color: currentTheme.main }}>
-                          <IconComp className="w-4 h-4" />
-                        </div>
-                        <span className="text-sm font-black" style={{ color: currentTheme.text }}>{a.name}</span>
-                      </div>
-                      <span className="text-sm font-black" style={{ color: currentTheme.main }}>{formatCurrency(a.amount)}</span>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="py-12 text-center">
-                  <p className="text-xs font-bold opacity-40 italic" style={{ color: currentTheme.text }}>目前尚無任何代墊紀錄</p>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -544,9 +746,56 @@ export default function Expenses({ trip, setTrip, themeId }) {
               )}
 
               <div className="grid grid-cols-2 gap-4 pt-2">
-                <div><label className="text-[10px] font-black mb-2 block uppercase tracking-widest opacity-40" style={{ color: currentTheme.text }}>付款人</label><div className="flex gap-2">{["ME", "THEM"].map((p) => ( <button key={p} onClick={() => updateForm({ payer: p })} className={`flex-1 py-2.5 rounded-xl text-[12px] font-black border transition-all ${form.payer === p ? "text-white shadow-sm" : "bg-white opacity-40 hover:opacity-100"}`} style={{ backgroundColor: form.payer === p ? currentTheme.main : "white", borderColor: `${currentTheme.main}20`, color: form.payer === p ? "white" : currentTheme.text }}> {p === "ME" ? "我付" : "他付"} </button> ))}</div></div>
-                <div><label className="text-[10px] font-black mb-2 block uppercase tracking-widest opacity-40" style={{ color: currentTheme.text }}>方式</label><div className="flex gap-2">{["CASH", "CARD"].map((m) => ( <button key={m} onClick={() => updateForm({ payMethod: m })} className={`flex-1 py-2.5 rounded-xl text-[12px] font-black border transition-all ${form.payMethod === m ? "text-white shadow-sm" : "bg-white opacity-40 hover:opacity-100"}`} style={{ backgroundColor: form.payMethod === m ? currentTheme.main : "white", borderColor: `${currentTheme.main}20`, color: form.payMethod === m ? "white" : currentTheme.text }}> {m === "CASH" ? "現金" : "刷卡"} </button> ))}</div></div>
+                <div>
+                  <label className="text-[10px] font-black mb-2 block uppercase tracking-widest opacity-40" style={{ color: currentTheme.text }}>付款人</label>
+                  <div className="flex gap-2">
+                    {["ME", "THEM"].map((p) => ( 
+                      <button key={p} onClick={() => updateForm({ payer: p })} className={`flex-1 py-2.5 rounded-xl text-[12px] font-black border transition-all ${form.payer === p ? "text-white shadow-sm" : "bg-white opacity-40 hover:opacity-100"}`} style={{ backgroundColor: form.payer === p ? currentTheme.main : "white", borderColor: `${currentTheme.main}20`, color: form.payer === p ? "white" : currentTheme.text }}> 
+                        {p === "ME" ? "我付" : "他付"} 
+                      </button> 
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black mb-2 block uppercase tracking-widest opacity-40" style={{ color: currentTheme.text }}>方式</label>
+                  <div className="flex gap-2">
+                    {["CASH", "CARD"].map((m) => ( 
+                      <button key={m} onClick={() => updateForm({ payMethod: m })} className={`flex-1 py-2.5 rounded-xl text-[12px] font-black border transition-all ${form.payMethod === m ? "text-white shadow-sm" : "bg-white opacity-40 hover:opacity-100"}`} style={{ backgroundColor: form.payMethod === m ? currentTheme.main : "white", borderColor: `${currentTheme.main}20`, color: form.payMethod === m ? "white" : currentTheme.text }}> 
+                        {m === "CASH" ? "現金" : "刷卡"} 
+                      </button> 
+                    ))}
+                  </div>
+                </div>
               </div>
+
+              {/* 如果選擇「他付」，展開選擇是哪一位夥伴幫忙付的 */}
+              {form.payer === "THEM" && (
+                <div className="rounded-2xl p-4 border animate-in slide-in-from-top-2" style={{ backgroundColor: `${currentTheme.main}05`, borderColor: `${currentTheme.main}20` }}>
+                  <label className="text-[10px] font-black mb-3 block uppercase tracking-widest opacity-60" style={{ color: currentTheme.text }}>是哪位夥伴幫你付的？</label>
+                  {members.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {members.map((m) => {
+                        const isSelected = form.paidByMemberId === m.id;
+                        const IconComp = getMemberIconComponent(m.avatarIcon);
+                        return (
+                          <button 
+                            key={m.id} 
+                            onClick={() => updateForm({ paidByMemberId: m.id })} 
+                            className={`px-4 py-1.5 rounded-full text-[11px] font-black border flex items-center gap-1.5 transition-all ${isSelected ? "shadow-sm" : "bg-white opacity-50"}`} 
+                            style={{ backgroundColor: isSelected ? `${currentTheme.main}20` : "white", borderColor: `${currentTheme.main}20`, color: currentTheme.text }}
+                          >
+                            <IconComp className="w-3.5 h-3.5" />
+                            {m.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-xs opacity-50 italic">尚未新增行程夥伴，請先至上方「夥伴」按鈕新增。</p>
+                  )}
+                </div>
+              )}
+
             </div>
           </div>
         </div>
