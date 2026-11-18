@@ -204,7 +204,6 @@ export default function Expenses({ trip, setTrip, themeId }) {
     return r;
   }, [expenses]);
 
-  // 1. 大家欠我（我代墊的總結）：支援固定分攤額或依據鎖定額累計
   const advanceSummaryMap = useMemo(() => {
     const map = {};
     expenses.forEach((e) => {
@@ -228,7 +227,6 @@ export default function Expenses({ trip, setTrip, themeId }) {
     return map;
   }, [expenses]);
 
-  // 2. 我欠別人（別人幫我付的結算：依據 paidByMemberId 分組統計）
   const owedToOthersMap = useMemo(() => {
     const map = {};
     let totalOwed = 0;
@@ -243,15 +241,14 @@ export default function Expenses({ trip, setTrip, themeId }) {
     return { totalOwed, map };
   }, [expenses]);
 
-  // 3. 整合互抵後的結算清單 (每一個夥伴獨立計算：你欠他 vs 他欠你)
   const netSettlementList = useMemo(() => {
     const memberIds = new Set([...Object.keys(advanceSummaryMap), ...Object.keys(owedToOthersMap.map)]);
     const list = [];
 
     memberIds.forEach((id) => {
-      const theyOweMe = advanceSummaryMap[id] || 0; // 他欠我
-      const iOweThem = owedToOthersMap.map[id] || 0; // 我欠他
-      const net = theyOweMe - iOweThem; // 淨差額 (正數代表對方要給你，負數代表你要給對方)
+      const theyOweMe = advanceSummaryMap[id] || 0; 
+      const iOweThem = owedToOthersMap.map[id] || 0; 
+      const net = theyOweMe - iOweThem; 
 
       const foundMember = members.find((m) => m.id === id);
       list.push({
@@ -267,23 +264,17 @@ export default function Expenses({ trip, setTrip, themeId }) {
     return list;
   }, [advanceSummaryMap, owedToOthersMap, members]);
 
-  // 總結卡片上要顯示的總額預覽（將所有未結清的金額加總展示）
   const totalSummaryDisplayAmount = useMemo(() => {
     return netSettlementList.reduce((s, item) => s + Math.abs(item.net), 0);
   }, [netSettlementList]);
 
-  // 🛡️ 鐵壁級安全一鍵結清：
-  // 1. 代墊部分：凍結分攤額，結清某人時僅將該人金額歸零，絕不影響其他人。
-  // 2. 個人花費（別人幫我付）部分：結清時自動轉為「我付」（保留在 Total 口袋花費中），不直接蒸發。
   const handleOneTouchSettle = (memberId, memberName) => {
-    if (!window.confirm(`確定要與「${memberName}」結清嗎？這會將該夥伴欠你的代墊份額歸零（不影響其他人），並將他幫你付的個人花費轉為你的實際支出計入 Total。`)) return;
+    if (!window.confirm(`要把跟「${memberName + "♪"}」的帳目一次結清嗎？這會幫你把代墊歸零，並把幫付的個人花費記錄收進 Total 唷！`)) return;
 
     setExpenses((prev) => 
       prev.map((e) => {
         let nextE = { ...e };
 
-        // 1. 如果是「該夥伴幫我付」的項目 (payer === "THEM" 且 paidByMemberId === memberId)
-        // 既然晚上結清了（代表你實質付錢給他了），這筆應轉為「我付」的個人花費，保留在 Total 中！
         if (nextE.payer === "THEM" && nextE.paidByMemberId === memberId) {
           return {
             ...nextE,
@@ -292,7 +283,6 @@ export default function Expenses({ trip, setTrip, themeId }) {
           };
         }
 
-        // 2. 如果是「我代墊給多人的項目」，且 advanceFor 包含該夥伴
         if (nextE.mode === "ADVANCE" && nextE.payer === "ME" && Array.isArray(nextE.advanceFor) && nextE.advanceFor.includes(memberId)) {
           let currentShares = nextE.fixedShares;
           if (!currentShares) {
@@ -303,15 +293,15 @@ export default function Expenses({ trip, setTrip, themeId }) {
 
           const nextAdvanceFor = nextE.advanceFor.filter(id => id !== memberId);
           const nextFixedShares = { ...currentShares };
-          nextFixedShares[memberId] = 0; // 該人已結清，欠款歸零
+          nextFixedShares[memberId] = 0;
 
           if (nextAdvanceFor.length === 0) {
-            return null; // 如果全部人都結清了，整筆代墊紀錄自動歸檔移除
+            return null; 
           } else {
             return {
               ...nextE,
               advanceFor: nextAdvanceFor,
-              fixedShares: nextFixedShares // 凍結其他人的分攤額，保證其他人數字完全不變！
+              fixedShares: nextFixedShares
             };
           }
         }
@@ -535,7 +525,6 @@ export default function Expenses({ trip, setTrip, themeId }) {
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="text-sm font-black" style={{ color: currentTheme.text }}>{formatCurrency(e.amount)}</span>
                     
-                    {/* 三個點選單按鈕 */}
                     <div className="relative">
                       <button 
                         onClick={(ev) => { ev.stopPropagation(); setMenuOpenId(menuOpenId === e.id ? null : e.id); }}
@@ -544,7 +533,6 @@ export default function Expenses({ trip, setTrip, themeId }) {
                         <MoreHorizontal className="w-4 h-4 opacity-50" style={{ color: currentTheme.main }} />
                       </button>
 
-                      {/* 下拉選單 */}
                       {menuOpenId === e.id && (
                         <div 
                           className={`absolute right-0 z-35 w-32 bg-white border rounded-2xl shadow-xl py-2 animate-in fade-in zoom-in-95 duration-150 overflow-hidden ${isNearBottom ? "bottom-9" : "top-9"}`}
@@ -577,7 +565,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
         ))}
       </div>
 
-      {/* 代墊與智慧互抵結算清單 Modal (鐵壁防呆結清版) */}
+      {/* 代墊與智慧互抵結算清單 Modal */}
       {advanceModalOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-16">
           <div className="w-full max-w-lg rounded-[32px] border shadow-xl overflow-hidden flex flex-col bg-white" style={{ borderColor: currentTheme.border }}>
@@ -598,16 +586,14 @@ export default function Expenses({ trip, setTrip, themeId }) {
             
             <div className="p-6 space-y-5 overflow-y-auto max-h-[65vh] scrollbar-hide">
               
-              {/* 夥伴獨立互抵清單 */}
               <div>
-                <p className="text-[11px] font-black uppercase tracking-wider mb-2 opacity-50" style={{ color: currentTheme.text }}>結算小幫手 ᕦ(ò_óˇ)ᕤ</p>
+                <p className="text-[11px] font-black uppercase tracking-wider mb-2 opacity-50" style={{ color: currentTheme.text }}>✨ 我們的旅費小結算</p>
 
                 {netSettlementList.length > 0 ? (
                   <div className="space-y-3">
                     {netSettlementList.map(item => {
                       const IconComp = getMemberIconComponent(item.avatarIcon);
-                      const isPositive = item.net > 0; // 對方要給你
-                      const isNegative = item.net < 0; // 你要給對方
+                      const isPositive = item.net > 0; 
                       const absNet = Math.abs(item.net);
 
                       return (
@@ -620,30 +606,27 @@ export default function Expenses({ trip, setTrip, themeId }) {
                               <span className="text-sm font-black" style={{ color: currentTheme.text }}>{item.name}</span>
                             </div>
                             
-                            {/* 最終狀態標籤 */}
                             <div className="text-right">
                               {item.net === 0 ? (
-                                <span className="px-3 py-1 rounded-full text-xs font-black bg-gray-100 text-gray-500">已互抵結清</span>
+                                <span className="px-3 py-1 rounded-full text-xs font-black bg-gray-100 text-gray-500">已完美互抵 ✨</span>
                               ) : isPositive ? (
                                 <span className="px-3 py-1 rounded-full text-xs font-black" style={{ backgroundColor: `${currentTheme.main}20`, color: currentTheme.main }}>
-                                  需要給你 {formatCurrency(absNet)}
+                                  🎉 準備收回 {formatCurrency(absNet)}
                                 </span>
                               ) : (
                                 <span className="px-3 py-1 rounded-full text-xs font-black bg-orange-50 text-orange-600">
-                                  需要給他 {formatCurrency(absNet)}
+                                  💌 準備給他 {formatCurrency(absNet)}
                                 </span>
                               )}
                             </div>
                           </div>
 
-                          {/* 細節明細與一鍵結清按鈕 */}
                           <div className="flex justify-between items-center pt-2 border-t" style={{ borderColor: `${currentTheme.border}30` }}>
                             <div className="text-[11px] font-bold opacity-60" style={{ color: currentTheme.text }}>
-                              <span>他要給你: {formatCurrency(item.theyOweMe)}</span>
-                              <span className="ml-2">你要給他: {formatCurrency(item.iOweThem)}</span>
+                              <span>夥伴先幫墊: {formatCurrency(item.theyOweMe)}</span>
+                              <span className="ml-3">你幫夥伴代付: {formatCurrency(item.iOweThem)}</span>
                             </div>
 
-                            {/* 一鍵結清按鈕 */}
                             {(item.theyOweMe > 0 || item.iOweThem > 0) && (
                               <button
                                 onClick={() => handleOneTouchSettle(item.id, item.name)}
@@ -661,7 +644,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
                   </div>
                 ) : (
                   <div className="py-12 text-center">
-                    <p className="text-xs font-bold opacity-40 italic" style={{ color: currentTheme.text }}>目前尚無任何代墊或代付紀錄</p>
+                    <p className="text-xs font-bold opacity-40 italic" style={{ color: currentTheme.text }}>目前大家帳目都很清爽，沒有待結算紀錄唷～</p>
                   </div>
                 )}
               </div>
@@ -671,11 +654,11 @@ export default function Expenses({ trip, setTrip, themeId }) {
         </div>
       )}
 
-      {/* Expense Modal (新增/編輯花費) */}
+      {/* Expense Modal (新增/編輯花費) - 已修正高度與底部被切到問題 */}
       {expenseModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-12">
-          <div className="w-full max-w-lg rounded-[32px] border shadow-xl overflow-hidden flex flex-col bg-white" style={{ borderColor: currentTheme.border }}>
-            <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/50 border-b" style={{ borderColor: `${currentTheme.border}40` }}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-8 overflow-y-auto">
+          <div className="w-full max-w-lg rounded-[32px] border shadow-xl overflow-hidden flex flex-col bg-white my-auto" style={{ borderColor: currentTheme.border }}>
+            <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/50 border-b shrink-0" style={{ borderColor: `${currentTheme.border}40` }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>
                   <ReceiptText className="w-5 h-5" />
@@ -690,7 +673,9 @@ export default function Expenses({ trip, setTrip, themeId }) {
                 <button onClick={saveExpense} className="w-9 h-9 rounded-full flex items-center justify-center shadow-sm" style={{ backgroundColor: currentTheme.main }}><Check className="w-4 h-4 text-white" /></button>
               </div>
             </div>
-            <div className="p-6 space-y-5 overflow-y-auto max-h-[75vh] scrollbar-hide">
+            
+            {/* 捲動區塊與底部足夠間距，確保絕對不會被切到 */}
+            <div className="p-6 space-y-5 overflow-y-auto max-h-[72vh] pb-12">
               <div><label className="block text-[10px] font-black mb-2 uppercase tracking-widest opacity-40" style={{ color: currentTheme.text }}>日期</label><input type="date" value={form.date} onChange={(e) => updateForm({ date: e.target.value })} className="w-full h-11 border rounded-xl px-4 text-[13px] font-bold bg-white outline-none focus:ring-2" style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text, "--tw-ring-color": `${currentTheme.main}10` }} /></div>
               
               <div>
@@ -727,17 +712,18 @@ export default function Expenses({ trip, setTrip, themeId }) {
                 </div>
               </div>
 
+              {/* 為誰代墊：改為 grid-cols-4 一排四個 */}
               {form.mode === "ADVANCE" && (
                 <div className="rounded-2xl p-4 border animate-in slide-in-from-top-2" style={{ backgroundColor: `${currentTheme.main}05`, borderColor: `${currentTheme.main}20` }}>
                   <label className="text-[10px] font-black mb-3 block uppercase tracking-widest opacity-60" style={{ color: currentTheme.text }}>為誰代墊</label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     {members.map((m) => {
                       const isSelected = Array.isArray(form.advanceFor) && form.advanceFor.includes(m.id);
                       const IconComp = getMemberIconComponent(m.avatarIcon);
                       return (
-                        <button key={m.id} onClick={() => toggleAdvance(m.id)} className={`px-4 py-1.5 rounded-full text-[11px] font-black border flex items-center gap-1.5 transition-all ${isSelected ? "shadow-sm" : "bg-white opacity-50"}`} style={{ backgroundColor: isSelected ? `${currentTheme.main}20` : "white", borderColor: `${currentTheme.main}20`, color: currentTheme.text }}>
-                          <IconComp className="w-3.5 h-3.5" />
-                          {m.name}
+                        <button key={m.id} onClick={() => toggleAdvance(m.id)} className={`py-2 px-1 rounded-xl text-[11px] font-black border flex flex-col items-center justify-center gap-1 transition-all ${isSelected ? "shadow-sm scale-105" : "bg-white opacity-50"}`} style={{ backgroundColor: isSelected ? `${currentTheme.main}20` : "white", borderColor: `${currentTheme.main}20`, color: currentTheme.text }}>
+                          <IconComp className="w-4 h-4 shrink-0" />
+                          <span className="truncate w-full text-center">{m.name}</span>
                         </button>
                       );
                     })}
@@ -768,12 +754,12 @@ export default function Expenses({ trip, setTrip, themeId }) {
                 </div>
               </div>
 
-              {/* 如果選擇「他付」，展開選擇是哪一位夥伴幫忙付的 */}
+              {/* 是哪位夥伴幫你付的？：改為 grid-cols-4 一排四個 */}
               {form.payer === "THEM" && (
                 <div className="rounded-2xl p-4 border animate-in slide-in-from-top-2" style={{ backgroundColor: `${currentTheme.main}05`, borderColor: `${currentTheme.main}20` }}>
                   <label className="text-[10px] font-black mb-3 block uppercase tracking-widest opacity-60" style={{ color: currentTheme.text }}>是哪位夥伴幫你付的？</label>
                   {members.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid grid-cols-4 gap-2">
                       {members.map((m) => {
                         const isSelected = form.paidByMemberId === m.id;
                         const IconComp = getMemberIconComponent(m.avatarIcon);
@@ -781,11 +767,11 @@ export default function Expenses({ trip, setTrip, themeId }) {
                           <button 
                             key={m.id} 
                             onClick={() => updateForm({ paidByMemberId: m.id })} 
-                            className={`px-4 py-1.5 rounded-full text-[11px] font-black border flex items-center gap-1.5 transition-all ${isSelected ? "shadow-sm" : "bg-white opacity-50"}`} 
+                            className={`py-2 px-1 rounded-xl text-[11px] font-black border flex flex-col items-center justify-center gap-1 transition-all ${isSelected ? "shadow-sm scale-105" : "bg-white opacity-50"}`} 
                             style={{ backgroundColor: isSelected ? `${currentTheme.main}20` : "white", borderColor: `${currentTheme.main}20`, color: currentTheme.text }}
                           >
-                            <IconComp className="w-3.5 h-3.5" />
-                            {m.name}
+                            <IconComp className="w-4 h-4 shrink-0" />
+                            <span className="truncate w-full text-center">{m.name}</span>
                           </button>
                         );
                       })}
@@ -801,7 +787,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
         </div>
       )}
 
-      {/* Member Modal (前三個往下開，第四個以後自動往上開) */}
+      {/* Member Modal */}
       {memberModalOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-12">
           <div className="w-full max-w-lg rounded-[32px] border shadow-xl overflow-hidden flex flex-col bg-white" style={{ borderColor: currentTheme.border }}>
@@ -854,7 +840,6 @@ export default function Expenses({ trip, setTrip, themeId }) {
                       <Trash2 className="w-4 h-4" />
                     </button>
 
-                    {/* 彈跳選擇面板：前三個往下開，第四個以後往上開 */}
                     {isPickerOpen && (
                       <div 
                         className={`absolute left-3 z-20 bg-white rounded-2xl border p-3 shadow-xl w-[260px] animate-in fade-in zoom-in-95 ${
