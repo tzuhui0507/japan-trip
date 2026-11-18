@@ -569,8 +569,8 @@ export default function Expenses({ trip, setTrip, themeId }) {
       {/* 代墊與智慧互抵結算清單 Modal */}
       {advanceModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg rounded-[32px] border shadow-xl overflow-hidden flex flex-col bg-white max-h-[75vh]" style={{ borderColor: currentTheme.border }}>
-            <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/50 border-b shrink-0" style={{ borderColor: `${currentTheme.border}40` }}>
+          <div className="w-full max-w-lg rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white max-h-[85vh]" style={{ borderColor: currentTheme.border }}>
+            <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/95 backdrop-blur border-b shrink-0 z-10" style={{ borderColor: `${currentTheme.border}40` }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>
                   <HandCoins className="w-5 h-5" />
@@ -585,7 +585,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
               </button>
             </div>
             
-            <div className="p-6 space-y-5 overflow-y-auto flex-1 pb-8">
+            <div className="p-6 space-y-5 overflow-y-auto flex-1 pb-12">
               <div>
                 <p className="text-[11px] font-black uppercase tracking-wider mb-2 opacity-50" style={{ color: currentTheme.text }}>結算小幫手 ᕦ(ò_óˇ)ᕤ</p>
 
@@ -653,10 +653,10 @@ export default function Expenses({ trip, setTrip, themeId }) {
         </div>
       )}
 
-      {/* Expense Modal (新增/編輯花費) - 完美高度限制 max-h-[75vh] 與內部滾動，絕不被底部導覽列切到 */}
+      {/* Expense Modal (新增/編輯花費) - 完美固定外框、中間滾輪滑動、絕不被切到 */}
       {expenseModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="w-full max-w-lg rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white my-auto max-h-[75vh]" style={{ borderColor: currentTheme.border }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white max-h-[85vh]" style={{ borderColor: currentTheme.border }}>
             
             {/* 固定的標題列 */}
             <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/95 backdrop-blur border-b shrink-0 z-10 shadow-sm" style={{ borderColor: `${currentTheme.border}40` }}>
@@ -675,8 +675,8 @@ export default function Expenses({ trip, setTrip, themeId }) {
               </div>
             </div>
             
-            {/* 中間可滾動的表單內容區塊，帶有充足的 pb-12 底部留白 */}
-            <div className="p-6 space-y-5 overflow-y-auto flex-1 pb-12">
+            {/* 中間可滾動的表單內容區塊，帶有充足的 pb-16 底部留白，絕對不被切到 */}
+            <div className="p-6 space-y-5 overflow-y-auto flex-1 pb-16">
               
               {/* 日期選擇區塊 */}
               <div>
@@ -807,7 +807,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
       {/* Member Modal */}
       {memberModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg rounded-[32px] border shadow-xl overflow-hidden flex flex-col bg-white max-h-[75vh]" style={{ borderColor: currentTheme.border }}>
+          <div className="w-full max-w-lg rounded-[32px] border shadow-xl overflow-hidden flex flex-col bg-white max-h-[85vh]" style={{ borderColor: currentTheme.border }}>
             <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/50 border-b shrink-0" style={{ borderColor: `${currentTheme.border}40` }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>
@@ -821,7 +821,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
               <button onClick={() => setMemberModalOpen(false)} className="w-8 h-8 rounded-full border flex items-center justify-center bg-white" style={{ borderColor: currentTheme.border }}><X className="w-4 h-4" style={{ color: currentTheme.main }} /></button>
             </div>
             
-            <div className="p-6 space-y-3 overflow-y-auto flex-1 pb-8">
+            <div className="p-6 space-y-3 overflow-y-auto flex-1 pb-12">
               {members.map((m, index) => {
                 const currentIconId = m.avatarIcon || "Cat";
                 const SelectedIconComp = getMemberIconComponent(currentIconId);
