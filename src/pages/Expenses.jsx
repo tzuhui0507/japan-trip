@@ -654,11 +654,11 @@ export default function Expenses({ trip, setTrip, themeId }) {
         </div>
       )}
 
-      {/* Expense Modal (新增/編輯花費) - 已修正高度與底部被切到問題 */}
+      {/* Expense Modal (新增/編輯花費) - 完美滿版捲動、絕不被切到 */}
       {expenseModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-8 overflow-y-auto">
-          <div className="w-full max-w-lg rounded-[32px] border shadow-xl overflow-hidden flex flex-col bg-white my-auto" style={{ borderColor: currentTheme.border }}>
-            <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/50 border-b shrink-0" style={{ borderColor: `${currentTheme.border}40` }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="w-full max-w-lg rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white my-8 max-h-[88vh]" style={{ borderColor: currentTheme.border }}>
+            <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/90 backdrop-blur border-b shrink-0 z-10" style={{ borderColor: `${currentTheme.border}40` }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>
                   <ReceiptText className="w-5 h-5" />
@@ -674,8 +674,8 @@ export default function Expenses({ trip, setTrip, themeId }) {
               </div>
             </div>
             
-            {/* 捲動區塊與底部足夠間距，確保絕對不會被切到 */}
-            <div className="p-6 space-y-5 overflow-y-auto max-h-[72vh] pb-12">
+            {/* 捲動區塊與底部足夠間距 pb-32，確保絕對不會被遮擋 */}
+            <div className="p-6 space-y-5 overflow-y-auto flex-1 pb-32">
               <div><label className="block text-[10px] font-black mb-2 uppercase tracking-widest opacity-40" style={{ color: currentTheme.text }}>日期</label><input type="date" value={form.date} onChange={(e) => updateForm({ date: e.target.value })} className="w-full h-11 border rounded-xl px-4 text-[13px] font-bold bg-white outline-none focus:ring-2" style={{ borderColor: `${currentTheme.main}20`, color: currentTheme.text, "--tw-ring-color": `${currentTheme.main}10` }} /></div>
               
               <div>
@@ -712,7 +712,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
                 </div>
               </div>
 
-              {/* 為誰代墊：改為 grid-cols-4 一排四個 */}
+              {/* 為誰代墊：一排四個網格 */}
               {form.mode === "ADVANCE" && (
                 <div className="rounded-2xl p-4 border animate-in slide-in-from-top-2" style={{ backgroundColor: `${currentTheme.main}05`, borderColor: `${currentTheme.main}20` }}>
                   <label className="text-[10px] font-black mb-3 block uppercase tracking-widest opacity-60" style={{ color: currentTheme.text }}>為誰代墊</label>
@@ -754,10 +754,10 @@ export default function Expenses({ trip, setTrip, themeId }) {
                 </div>
               </div>
 
-              {/* 是哪位夥伴幫你付的？：改為 grid-cols-4 一排四個 */}
+              {/* 是哪位夥伴幫你付的？：一排四個網格 */}
               {form.payer === "THEM" && (
                 <div className="rounded-2xl p-4 border animate-in slide-in-from-top-2" style={{ backgroundColor: `${currentTheme.main}05`, borderColor: `${currentTheme.main}20` }}>
-                  <label className="text-[10px] font-black mb-3 block uppercase tracking-widest opacity-60" style={{ color: currentTheme.text }}>是哪位夥伴幫你付的？</label>
+                  <label className="text-[10px] font-black mb-3 block uppercase tracking-widest opacity-60" style={{ color: currentTheme.text }}>是誰先幫你付的？</label>
                   {members.length > 0 ? (
                     <div className="grid grid-cols-4 gap-2">
                       {members.map((m) => {
