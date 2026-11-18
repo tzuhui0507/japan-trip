@@ -587,7 +587,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
             
             <div className="p-6 space-y-5 overflow-y-auto flex-1">
               <div>
-                <p className="text-[11px] font-black uppercase tracking-wider mb-2 opacity-50" style={{ color: currentTheme.text }}>✨ 我們的旅費小結算</p>
+                <p className="text-[11px] font-black uppercase tracking-wider mb-2 opacity-50" style={{ color: currentTheme.text }}>結算小幫手 ୧(๑○̀ᴗ○́๑)૭</p>
 
                 {netSettlementList.length > 0 ? (
                   <div className="space-y-3">
@@ -611,11 +611,11 @@ export default function Expenses({ trip, setTrip, themeId }) {
                                 <span className="px-3 py-1 rounded-full text-xs font-black bg-gray-100 text-gray-500">已完美互抵 ✨</span>
                               ) : isPositive ? (
                                 <span className="px-3 py-1 rounded-full text-xs font-black" style={{ backgroundColor: `${currentTheme.main}20`, color: currentTheme.main }}>
-                                  🎉 準備收回 {formatCurrency(absNet)}
+                                  需要給你 {formatCurrency(absNet)}
                                 </span>
                               ) : (
                                 <span className="px-3 py-1 rounded-full text-xs font-black bg-orange-50 text-orange-600">
-                                  💌 準備給他 {formatCurrency(absNet)}
+                                  需要給他 {formatCurrency(absNet)}
                                 </span>
                               )}
                             </div>
@@ -623,8 +623,8 @@ export default function Expenses({ trip, setTrip, themeId }) {
 
                           <div className="flex justify-between items-center pt-2 border-t" style={{ borderColor: `${currentTheme.border}30` }}>
                             <div className="text-[11px] font-bold opacity-60" style={{ color: currentTheme.text }}>
-                              <span>夥伴先幫墊: {formatCurrency(item.theyOweMe)}</span>
-                              <span className="ml-3">你幫夥伴代付: {formatCurrency(item.iOweThem)}</span>
+                              <span>要給他： {formatCurrency(item.theyOweMe)}</span>
+                              <span className="ml-3">要給你： {formatCurrency(item.iOweThem)}</span>
                             </div>
 
                             {(item.theyOweMe > 0 || item.iOweThem > 0) && (
@@ -653,11 +653,13 @@ export default function Expenses({ trip, setTrip, themeId }) {
         </div>
       )}
 
-      {/* Expense Modal (新增/編輯花費) - 完美置中、絕對不被切到、美化日期欄位 */}
+      {/* Expense Modal (新增/編輯花費) - 完整固定外框、中間滾輪滑動、絕不被切到 */}
       {expenseModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="w-full max-w-lg rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white my-auto max-h-[85vh]" style={{ borderColor: currentTheme.border }}>
-            <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/90 backdrop-blur border-b shrink-0 z-10" style={{ borderColor: `${currentTheme.border}40` }}>
+          <div className="w-full max-w-lg rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white my-auto max-h-[82vh]" style={{ borderColor: currentTheme.border }}>
+            
+            {/* 固定的標題列 */}
+            <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/95 backdrop-blur border-b shrink-0 z-10 shadow-sm" style={{ borderColor: `${currentTheme.border}40` }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>
                   <ReceiptText className="w-5 h-5" />
@@ -673,10 +675,10 @@ export default function Expenses({ trip, setTrip, themeId }) {
               </div>
             </div>
             
-            {/* 捲動區塊與底部充足留白 pb-28 */}
-            <div className="p-6 space-y-5 overflow-y-auto flex-1 pb-28">
+            {/* 中間可滾動的表單內容區塊 */}
+            <div className="p-6 space-y-5 overflow-y-auto flex-1">
               
-              {/* 日期選擇美化：完美解決排版歪掉問題 */}
+              {/* 日期選擇區塊 */}
               <div>
                 <label className="block text-[10px] font-black mb-2 uppercase tracking-widest opacity-40" style={{ color: currentTheme.text }}>日期</label>
                 <div className="relative">
