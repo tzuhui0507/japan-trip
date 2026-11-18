@@ -568,8 +568,8 @@ export default function Expenses({ trip, setTrip, themeId }) {
 
       {/* 代墊與智慧互抵結算清單 Modal */}
       {advanceModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white max-h-[72vh]" style={{ borderColor: currentTheme.border }}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm p-4 pt-10">
+          <div className="w-full max-w-md rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white max-h-[78vh]" style={{ borderColor: currentTheme.border }}>
             <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/95 backdrop-blur border-b shrink-0 z-10" style={{ borderColor: `${currentTheme.border}40` }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>
@@ -653,10 +653,10 @@ export default function Expenses({ trip, setTrip, themeId }) {
         </div>
       )}
 
-      {/* Expense Modal (新增/編輯花費) - 背景滿版黑幕 + 置中精緻小視窗 + 內部順暢捲動 */}
+      {/* Expense Modal (新增/編輯花費) - 靠上對齊 (items-start pt-10)，完美消除上方留白 */}
       {expenseModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white max-h-[72vh]" style={{ borderColor: currentTheme.border }}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm p-4 pt-10">
+          <div className="w-full max-w-md rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white max-h-[78vh]" style={{ borderColor: currentTheme.border }}>
             
             {/* 固定的標題列 */}
             <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/95 backdrop-blur border-b shrink-0 z-10 shadow-sm" style={{ borderColor: `${currentTheme.border}40` }}>
@@ -675,7 +675,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
               </div>
             </div>
             
-            {/* 中間可滾動的表單內容區塊，帶有充足的 pb-16 底部留白，絕不被切到 */}
+            {/* 中間可滾動的表單內容區塊，帶有充足的 pb-16 底部留白 */}
             <div className="p-6 space-y-5 overflow-y-auto flex-1 pb-16">
               
               {/* 日期選擇區塊 */}
@@ -806,8 +806,8 @@ export default function Expenses({ trip, setTrip, themeId }) {
 
       {/* Member Modal */}
       {memberModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white max-h-[72vh]" style={{ borderColor: currentTheme.border }}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm p-4 pt-10">
+          <div className="w-full max-w-md rounded-[32px] border shadow-2xl overflow-hidden flex flex-col bg-white max-h-[78vh]" style={{ borderColor: currentTheme.border }}>
             <div className="px-6 pt-5 pb-3 flex items-start justify-between bg-white/95 backdrop-blur border-b shrink-0 z-10" style={{ borderColor: `${currentTheme.border}40` }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ backgroundColor: `${currentTheme.main}15`, color: currentTheme.main }}>
