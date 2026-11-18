@@ -27,7 +27,9 @@ import {
   Ghost,
   Rabbit,
   Dog,
-  Squirrel
+  Squirrel,
+  Banknote,
+  Coins
 } from "lucide-react";
 import { THEMES } from "../App";
 
@@ -389,7 +391,7 @@ export default function Expenses({ trip, setTrip, themeId }) {
                 <div key={e.id} className="bg-white rounded-2xl border px-4 py-3 flex items-center justify-between shadow-sm" style={{ borderColor: currentTheme.border }}>
                   <div className="flex items-start gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${currentTheme.main}10` }}>
-                      {isCard ? <CreditCard className="w-5 h-5" style={{ color: currentTheme.main }} /> : <Wallet className="w-5 h-5" style={{ color: currentTheme.main }} />}
+                      {isCard ? <CreditCard className="w-5 h-5" style={{ color: currentTheme.main }} /> : <Coins className="w-5 h-5" style={{ color: currentTheme.main }} />}
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-black truncate" style={{ color: currentTheme.text }}>{e.title}</p>
@@ -402,16 +404,12 @@ export default function Expenses({ trip, setTrip, themeId }) {
                   <div className="flex flex-col items-end gap-2 shrink-0">
                     <span className="text-sm font-black" style={{ color: currentTheme.text }}>{formatCurrency(e.amount)}</span>
                     <div className="flex gap-1">
-                      {!isViewer && (
-                        <>
-                          <button onClick={() => openEdit(e)} className="p-1.5 rounded-lg border hover:bg-black/5" style={{ borderColor: currentTheme.border }}>
-                            <Pencil className="w-3 h-3 opacity-40" />
-                          </button>
-                          <button onClick={() => deleteExpense(e.id)} className="p-1.5 rounded-lg border hover:bg-red-50" style={{ borderColor: currentTheme.border }}>
-                            <Trash2 className="w-3 h-3 text-red-400 opacity-60" />
-                          </button>
-                        </>
-                      )}
+                      <button onClick={() => openEdit(e)} className="p-1.5 rounded-lg border hover:bg-black/5" style={{ borderColor: currentTheme.border }}>
+                        <Pencil className="w-3 h-3 opacity-40" />
+                      </button>
+                      <button onClick={() => deleteExpense(e.id)} className="p-1.5 rounded-lg border hover:bg-red-50" style={{ borderColor: currentTheme.border }}>
+                        <Trash2 className="w-3 h-3 text-red-400 opacity-60" />
+                      </button>
                     </div>
                   </div>
                 </div>
